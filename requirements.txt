@@ -1,0 +1,15 @@
+# OCR / 图纸 / 匹配 Python 依赖
+# Lockfile 风格的"必装清单"，环境初始化时跑一次：
+#   "C:/Users/Administrator/.workbuddy/binaries/python/envs/default/Scripts/python.exe" -m pip install -r requirements.txt
+
+# 图纸/OCR 引擎（核心，缺一不可）
+Pillow>=9.0
+numpy>=1.24
+opencv-contrib-python>=4.7        # 含 QR/条码识别 contrib 模块
+rapidocr-onnxruntime>=1.3         # OCR 主路径（ONNX 路线，无 AVX2 依赖）
+onnxruntime>=1.13                 # 切图 ONNX 推理
+pypdf>=3.0                        # PDF 拆页
+
+# ⭐ v19.15 新增：zxing-cpp（高鲁棒 QR 解码，纯 pip、无 DLL 依赖，替代缺失的 pyzbar libzbar-64.dll）
+#   用作 find_qr 的 primary；pyzbar 仍作为兜底（按需安装）。
+zxing-cpp>=2.3.0

@@ -1,0 +1,1 @@
+{"drawingId": 8888, "source": "8888_full.png", "width": 2339, "height": 1653, "blocks": [{"idx": 0, "x": 244, "y": 108, "w": 1164, "h": 381, "file": "blocks/8888_blk_00.png", "type": "engineering"}, {"idx": 1, "x": 347, "y": 746, "w": 1076, "h": 458, "file": "blocks/8888_blk_01.png", "type": "engineering"}], "algorithm": "v7-auto-paddlev3", "mode": "auto-paddlev3"}

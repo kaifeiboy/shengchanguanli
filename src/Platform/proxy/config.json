@@ -1,0 +1,61 @@
+{
+  "listenPort": 5001,
+  "targetBaseUrl": "https://10.10.10.68:7443",
+  "comment_target": "目标系统=「分寸云/精益化智能制造平台」(广东知业)。前端 :7443 反代到后端 API :343（本机直连 :343 被拒，必须走 :7443）。鉴权方式为 JWT：请求头 Authorization: Bearer <token>。",
+  "rejectUnauthorized": false,
+  "cors": true,
+  "mock": false,
+  "comment_mock": "false=转发到真实目标系统；true=返回 mockData 演示数据（不请求真实系统）。拿到真实接口后保持 false。",
+  "token": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxOTgzNzk1NDE0MzEzNjExMjY1IiwiaWF0IjoxNzg2OTQ0MzExLCJleHAiOjE3ODk1MzYzMTEsInVzZXJJZCI6MTk4Mzc5NTQxNDMxMzYxMTI2NSwiYWNjb3VudCI6IjE3ODMwODUxNjcwIiwidXNlcktleSI6Inh4eHgifQ.Oi0BjzPvw3sgwbF1-vQ1U_8xfU90mieVcqF-tHeg8ecTfLfp4L_Q9r3NYliFMsiKlBcO8FV1Nw4bUET8go7eWg",
+  "comment_token": "目标系统 JWT（注入到 Authorization: Bearer）。可手动填，也可由「自动续期」自动刷新并回写此处。当前值有效期约 30 天。",
+  "refreshLeadDays": 5,
+  "comment_refreshLeadDays": "到期前 N 天自动重新登录换发新 token（配合 secrets.json 里的加密账号密码）。设为 0 则只在遇 401 时刷新。",
+  "secretsFile": "secrets.json",
+  "comment_secretsFile": "加密存储的账号密码文件（AES-256-GCM 本机密钥密文）。由「更多→解绑账号」录入后自动生成，切勿提交到 git；配套密钥文件 secrets.key 同样本机隔离。",
+  "login": {
+    "path": "/login",
+    "method": "form",
+    "comment_method": "登录接口提交方式：form=application/x-www-form-urlencoded。",
+    "usernameField": "username",
+    "passwordField": "password",
+    "comment_fields": "登录请求字段名（已实测：账号=username，密码=password）。",
+    "tokenPath": "data",
+    "comment_tokenPath": "登录响应里 token 所在字段路径（已实测：响应体 data 字段，如 {\"code\":200,\"data\":\"<JWT>\",\"message\":\"请求成功\"}）。"
+  },
+  "comment_login": "目标系统登录接口配置。账号+密码登录，无验证码/短信/SSO。命中路径 POST /login（表单）。",
+  "cookie": "",
+  "comment_cookie": "可选。目标系统主要靠 Bearer token 鉴权，一般无需填 cookie；若个别接口额外需要 session cookie 再填。",
+  "mockData": {
+    "sample": {
+      "上盖码": "SG-A1B2C3-20260721",
+      "大板码": "DB-D4E5F6-20260721",
+      "小板码": "XB-G7H8I9-20260721",
+      "外箱码": "WX-J1K2L3-20260721",
+      "创建时间": "2026-07-21 14:30:00"
+    }
+  },
+  "routes": {
+    "search": {
+      "method": "GET",
+      "path": "/smt/scanRecord/unbindList",
+      "comment": "GET 查询解绑记录列表；支持 coverCode/bigCode/smallCode/boxCode 过滤，分页 page/limit。"
+    },
+    "outer": {
+      "method": "POST",
+      "path": "/smt/scanRecord/unbind",
+      "unbindType": "UNBIND_BOX",
+      "comment": "POST 外箱解绑；query: ids[] + unbindType=UNBIND_BOX"
+    },
+    "repair": {
+      "method": "POST",
+      "path": "/smt/scanRecord/unbind",
+      "unbindType": "UNBIND_REPAIR",
+      "comment": "POST 维修解绑；query: ids[] + unbindType=UNBIND_REPAIR"
+    }
+  },
+  "fieldMap": {
+    "request": {},
+    "response": {},
+    "comment": "H5 直接发送 coverCode/bigCode/smallCode/boxCode，与目标系统字段名一致，无需映射。"
+  }
+}

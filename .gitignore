@@ -1,0 +1,48 @@
+# 自动续期：加密存储的账号密码（DPAPI LocalMachine 密文，仅本机可解，切勿入库）
+src/Platform/proxy/secrets.json
+src/Platform/proxy/secrets.json.tmp
+src/Platform/proxy/secrets.key
+
+# 构建产物
+bin/
+obj/
+*.user
+
+# 运行日志
+data/*.log
+
+# 大体积/运行时数据（切勿入库）
+data/
+e/
+seg_vis_output/
+_archived_debug/
+certs/
+temp/
+*.pyc
+__pycache__/
+.venv*/
+.whl_cache/
+node_modules/
+
+# 二进制与第三方工具
+cloudflared.exe
+
+# 本机工作记忆（不入库）
+.workbuddy/
+
+# 临时调试脚本
+temp_*.py
+temp_*.json
+
+# 残留垃圾文件（0 字节 Windows 保留名，无法被 git stat）
+/src/Platform/nul
+
+# 已删除文件备份（切勿入库）
+_deleted_*/
+
+# natapp 第三方隧道客户端（含运行态，不入库）
+natapp/
+
+# 通过隧道下发的临时运行态
+data/tunnel_url.txt
+data/natapp_token.txt
