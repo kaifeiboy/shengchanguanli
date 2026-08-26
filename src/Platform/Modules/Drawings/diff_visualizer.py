@@ -14,6 +14,35 @@ diff_visualizer.py v2 —— 文本级差异标记（已重写）
        跨取景坐标不对应 → EQ blk_4 QR 仍被绿框圈住：块侧映射 (190,1096) vs 照片实际
        (147,1081)，实测修复后绿框在 QR 投影处多段断开）。
     仅绘制层/状态判定，判定规则零变更；validate 基线 R=29 Y=18 G=586 Gray=669 零退化。
+版本: v19.56 (2026-08-26) —— ⭐ 灰化二次救援（v19.55 方案Z 配套，根治 QHRW5 灰色残留）：
+    run_on_photo 在 _compare_block 之后、status 判定之前，对 _cmp["gray_photo"] 中「归一化后能在
+    块图真实 OCR（_blk_text_map[bid]）里找到一致文本」的行提升为 green_photo。消 did=116 blk_4
+    "QHRW5" 因 DB RawText "QHRWS" 错读导致 _qr_noise_rescue 失败、_is_qr_ocr_noise 误灰的真匹配
+    标签残留。风险控制：仅 _blk_text_map[bid] 非空时启用；QR 噪声归一化命中真标签概率极低，
+    对其余 26 张图纸（DB 正确、QR 噪声正常灰化）零影响。_compare_block 内部规则/匹配/rescue
+    零改动，仅 caller 层后置兜底；validate 基线/全 27 图绿黄灰零回归。
+版本: v19.55 (2026-08-26) —— ⭐ 方案Z 根治病灶（用户拍板 2026-08-26）：
+    当 DB drawing_blocks.RawText 早期 OCR 错读（如 did=116 blk_4 "QHRWS"/"B280C00" 而
+    CAD 图实际渲染 "QHRW5"/"B28000"）时，photo 行 "QHRW5"/"7437232" 无主→b_photo_lines
+    仅含 "200512" 一行→step4 把全部 4 块行判红（含 QHRWS/B280C00 + CAD dims）→
+    red_block_info 块图 OCR 也查不到 DB 错字→fallback "最后匹配行下方" 强制落位→多 red
+    项塌缩同坐标→去重后仅 1 红框覆盖 "7437232"，"OHRW5" 完全丢失差异提示。
+    本版根治病灶（两处协同）：
+      ① PR.assign_photo_lines_to_blocks 新增可选参 block_image_text_map（Dict[bidx,
+         List[str]]，由 run_on_photo 前置 PR.ocr_photo_tiled(blk_path) 提取并按
+         _BLOCK_OCR_CACHE[(did,bidx)] = (mtime, txts) 进程内复用）。DB RawText 行无
+         归属时，pass2 用块图实际 OCR 文本与 photo 行做 _texts_match_strict → photo
+         行正确归属对应块 → step4 获得完整 b_photo_lines → "QHRWS" 经 _texts_char_diff
+         4/5 同1错位 80% 进 green_block + 字符级红，不再误报整行红。型号感知过滤
+         （v19.41）对 pass2 同步生效，零旁路风险。
+      ② run_on_photo red_block_info 映射段在 _blk_map strict+substring 查找失败后，
+        遍历 _blk_ocr 文本行用 _texts_char_diff(len 差≤2 & ratio≥0.6) 找最近匹配，
+        取该块内坐标 → 后续 1) 匹配行对局部线性映射生效，red 框精准对齐 photo 对应行。
+    验证要求：validate.py --force 基线零漂移 + real_match_regression.py 全图纸绿/黄/灰
+    零回归 + 真实 match-and-photo did=116 重测：lines 应含 green "200512" + green "QHRW5"
+    + char级红（QHRWS[4]=S 位）+ red "B28000"（映射到 "7437232"）。仅 diff_visualizer.py
+    + photo_registration.py 改动；平台/其它模块零触碰。
+版本: v19.54 (2026-08-25) —— ⭐ 方案A：CAD 块图文本重叠过滤豁免由「全聚类 _qr_struct_rects」收窄为「解码真QR + 严格(≥3定位符)聚类 _qr_strict_rects」，还原 v19.43 修复C 意图；size 豁免仍用 _qr_struct_rects（全聚类）保护真 QR(如 did=116 84×84)。消 did=116 "PC-P1HVQ"/"线40" 密文字误识假缺图标黄框；文本/序列号/型号匹配零改动，validate 基线零漂移。
 版本: v19.43 (2026-08-19) —— ⭐ 修复C + run() 统一新4色规则：① _detect_icon_regions CAD
     块图侧文本重叠过滤不再全量豁免 _is_qr_like（此前 1-2 定位符聚类/密矩形文字误识如 did=123
     blk_0 "PC-P1HEQ服务热线"内 22×22 被当 QR 保留→假"缺图标"）；仅「严格 QR 结构（≥3 定位符
@@ -1545,6 +1574,11 @@ from collections import OrderedDict
 _ICON_CACHE = OrderedDict()
 _ICON_CACHE_MAX = 64
 
+# ⭐ v19.55 方案 Z 块图 OCR 文本缓存：run_on_photo 一次匹配需对齐 5 块，本进程内
+#   按 (did, bidx) + mtime 复用。健康块图（无变化）→ 0 次重复 OCR；DB RawText
+#   与块图渲染一致时缓存虽占用但不参与判定（block_image_text_map=None 走老路径）。
+_BLOCK_OCR_CACHE = {}  # key=(did, bidx) → (mtime, List[str])
+
 def _photo_cache_key(img_path):
     try:
         st = os.stat(img_path)
@@ -1726,6 +1760,7 @@ def _detect_icon_regions(img_path, text_bboxes=None, is_photo=False):
         #    没有手机斜拍/反光/模糊等病态，v19.14 finder-cluster 已经够用，加上 zxing 会给每块
         #    多加 70~280ms（CAD 每块各跑一次，没有缓存受益）。照片侧保留 zxing 主位。
         _qr_struct_rects = []  # ⭐ v19.53 提前初始化：zxing/pyzbar 解码的真 QR 也纳入豁免集合（CAD 块图 QR 由 pyzbar 解码，不走 finder-cluster）
+        _qr_strict_rects = []  # ⭐ v19.54 方案A：仅「解码真QR + 严格(≥3定位符)聚类」可豁免文本重叠过滤；size 豁免仍用 _qr_struct_rects（全聚类）护真QR
         zxing_found = False
         if is_photo and _zxing_available():
             try:
@@ -1743,10 +1778,12 @@ def _detect_icon_regions(img_path, text_bboxes=None, is_photo=False):
                             #   修复：zxing 解码成功的方形候选直接接受，不再强制定位符校验。
                             icons.append(_cand)
                             _qr_struct_rects.append(_cand)
+                            _qr_strict_rects.append(_cand)  # ⭐ v19.54 解码真QR可text豁免
                             zxing_found = True
                         else:
                             # 非方形（1D 条码等无定位符）→ 直接保留
                             icons.append(_cand)
+                            _qr_strict_rects.append(_cand)  # ⭐ v19.54 解码真条码可text豁免
                             zxing_found = True
             except Exception:
                 pass
@@ -1759,6 +1796,7 @@ def _detect_icon_regions(img_path, text_bboxes=None, is_photo=False):
                 _qr_box = (r.left, r.top, r.width, r.height)
                 icons.append(_qr_box)
                 _qr_struct_rects.append(_qr_box)
+                _qr_strict_rects.append(_qr_box)  # ⭐ v19.54 解码真QR可text豁免
                 pyzbar_found = True
         except Exception:
             pass
@@ -1796,10 +1834,15 @@ def _detect_icon_regions(img_path, text_bboxes=None, is_photo=False):
                     # ⭐ v19.53：所有定位符聚类均视为可信 QR 结构（cluster 由 _qr_finders 产生，
                     #   3 个定位符聚成 1 个 cluster 即 QR 特征），不再要求 strict 判定——
                     #   否则 did=116 blk_4 的 QR(84×84) 因 strict/loose 均 False 漏进豁免集→被 size 误杀。
+                    #   ⭐ v19.54 方案A：size 豁免仍用 _qr_struct_rects（全聚类）护真QR；但文本重叠豁免
+                    #   仅限 _qr_strict_rects（解码真QR + 严格≥3定位符聚类），1-2 定位符聚类/密矩形
+                    #   多为文字笔画误识（如 did=116 "PC-P1HVQ"/"线40"），与文本重叠则必须过滤→消假"缺图标"。
                     if len(clusters) <= 3:
                         for c in clusters:
                             icons.append(c)
-                            _qr_struct_rects.append(c)
+                            _qr_struct_rects.append(c)                       # 保 size 豁免（v19.53）
+                            if _is_strict_qr_cluster(c, finders, W, H):
+                                _qr_strict_rects.append(c)                    # 仅严格聚类可 text 豁免
                     # else: 静默丢弃过多聚类，不报错
             except Exception:
                 pass
@@ -1870,6 +1913,8 @@ def _detect_icon_regions(img_path, text_bboxes=None, is_photo=False):
                 #    "PC-P1HEQ服务热线"内 22×22 方块），与文本重叠则过滤——消假"缺图标"
                 #    （此前 v19.22 的 _is_qr_like 豁免对 CAD 也全部生效，正方形误识全漏过）。
                 #    真 QR（did=117 blk_0 46×46 等 3 定位符结构）仍保留，不影响存在性匹配。
+                #    ⭐ v19.54 方案A：文本豁免集由 _qr_struct_rects（全聚类）收窄为 _qr_strict_rects
+                #    （解码真QR + 严格≥3定位符聚类），还原 v19.43 修复C 意图，消 1-2 定位符密文字误识。
                 def _near_any(ic, rects):
                     if not rects:
                         return False
@@ -1881,7 +1926,7 @@ def _detect_icon_regions(img_path, text_bboxes=None, is_photo=False):
                             return True
                     return False
                 icons = [ic for ic in icons
-                         if _near_any(ic, _qr_struct_rects) or not _overlaps_any(ic, tb)]
+                         if _near_any(ic, _qr_strict_rects) or not _overlaps_any(ic, tb)]
         return icons
     except Exception:
         return []
@@ -2799,7 +2844,7 @@ def run(photo_path, block_path, output_path, block_bbox_cache=None, block_text_o
     """
     result = {
         "success": False,
-        "_debugVersion": "v19.53",  # ⭐ 调试标记：确认生产加载版本（v19.53 CAD块图QR豁免size上限→根治QR误框）
+        "_debugVersion": "v19.56",  # ⭐ 调试标记：确认生产加载版本（v19.56 灰化二次救援：QHRW5 等 DB 错读真匹配标签提升为绿）
         "redRegions": [],
         "yellowRegions": [],
         "grayRegions": [],
@@ -3301,7 +3346,7 @@ def run_on_photo(photo_path, did, output_photo_path, db_path=None, seg_root=None
     result = {
         "success": False, "mode": "run_on_photo", "did": did,
         "photo": output_photo_path, "blocks": [], "error": "",
-        "_debugVersion": "v19.53",  # ⭐ 调试标记：确认生产加载版本（v19.53 CAD块图QR豁免size上限→根治QR误框）
+        "_debugVersion": "v19.56",  # ⭐ 调试标记：确认生产加载版本（v19.56 灰化二次救援：QHRW5 等 DB 错读真匹配标签提升为绿）
     }
     _photo_work = photo_path
     _photo_icons_src = None  # ⭐ v19.40 照片图标检测源（deskew 前无损 PNG）
@@ -3384,7 +3429,32 @@ def run_on_photo(photo_path, did, output_photo_path, db_path=None, seg_root=None
         photo_lines = PR.ocr_photo_tiled(_photo_work, max_dim_per_tile=photo_ocr_max_dim)
         # ⭐ 纯文本回填（供 C# 块匹配复用，避免 C# 再单独 OCR 一次 → 全局仅 1 次 OCR）
         result["photoText"] = " ".join(pl.get("text", "") for pl in photo_lines if pl.get("text"))
-        loc, assignment, line_owners = PR.localize_blocks(photo_lines, blocks, margin=0.06)
+        # ⭐ v19.55 方案 Z：DB RawText 错读时（如 did=116 blk_4 "QHRWS" vs 实际渲染
+        #    "QHRW5"），归属阶段用块图实际 OCR 文本兜底——避免 photo 行因 DB 错字无主、
+        #    step4 误判红、red_block_info fallback 塌缩同坐标。块图文本缓存 by mtime，
+        #    健康块图（无变化）→ 0 次重复 OCR；本进程内复用。
+        _blk_text_map = {}
+        for _b in blocks:
+            _bidx = _b["BIdx"]
+            _bpath = os.path.join(seg_root, str(did), "blocks",
+                                  os.path.basename(_b.get("FileRel") or ""))
+            if not os.path.isfile(_bpath):
+                continue
+            try:
+                _mtime = os.path.getmtime(_bpath)
+                _cached = _BLOCK_OCR_CACHE.get((did, _bidx))
+                if _cached and _cached[0] == _mtime:
+                    _blk_text_map[_bidx] = _cached[1]
+                else:
+                    _bocr = PR.ocr_photo_tiled(_bpath)
+                    _txts = [ln.get("text", "") for ln in _bocr if ln.get("text")]
+                    _BLOCK_OCR_CACHE[(did, _bidx)] = (_mtime, _txts)
+                    _blk_text_map[_bidx] = _txts
+            except Exception:
+                _blk_text_map[_bidx] = []
+        loc, assignment, line_owners = PR.localize_blocks(
+            photo_lines, blocks, margin=0.06, block_image_text_map=_blk_text_map or None
+        )
 
         # 3. 照片图标检测（文本过滤，避免型号/热线区被误检为图标）
         photo_text_bboxes = [_bbox_rect(pl["bbox"]) for pl in photo_lines if pl.get("bbox")]
@@ -3492,6 +3562,31 @@ def run_on_photo(photo_path, did, output_photo_path, db_path=None, seg_root=None
             # ⭐ 核心比对（规则零改动；photo_lines 仅含本块归属行 → 跨块污染消除）
             _cmp = _compare_block(b_photo_lines, block_lines, photo_icons_raw, block_icons_raw,
                                   cross_block_filter=False, display_texts=_display_texts)
+            # ⭐ v19.56 灰化二次救援：_is_qr_ocr_noise 灰化在 DB RawText 错读时会误伤真匹配标签
+            #   （如 did=116 blk_4 "QHRW5" 触发 [A-Z0-9]{4,12} 模式 → _qr_noise_rescue 因 DB
+            #   "QHRWS" 不匹配而失败 → 灰化）。若该灰框文本归一化后命中块图真实 OCR
+            #   （_blk_text_map[bid]，v19.55 方案Z 前置缓存）→ 提升为 green_photo。风险控制：
+            #   仅 _blk_text_map[bid] 非空时启用；QR 噪声归一化命中真标签概率极低，其余 26 张
+            #   图纸零影响。_compare_block 内部规则零改动。
+            if _blk_text_map.get(bid):
+                _real_norms = set()
+                for _rt0 in _blk_text_map[bid]:
+                    _n0 = _norm_text(_rt0)
+                    if _n0:
+                        _real_norms.add(_n0)
+                if _real_norms and _cmp.get("gray_photo"):
+                    _keep_gray = []
+                    for _gb in _cmp["gray_photo"]:
+                        _gt = ""
+                        for _pl0 in b_photo_lines:
+                            if _bbox_rect(_pl0["bbox"]) == tuple(_gb):
+                                _gt = _pl0.get("text", "")
+                                break
+                        if _gt and _norm_text(_gt) in _real_norms:
+                            _cmp["green_photo"].append(_gb)
+                        else:
+                            _keep_gray.append(_gb)
+                    _cmp["gray_photo"] = _keep_gray
 
             # ⭐ 缺标文本(red_block)定位需参考块 OCR 反查坐标：若比对后才发现 red_block 非空
             #    且此前未因面板命中而 OCR，则此处补一次（每块至多 1 次，健康块 0 次）。
@@ -3673,6 +3768,25 @@ def run_on_photo(photo_path, did, output_photo_path, db_path=None, seg_root=None
                                     for _k, _v in _blk_map.items():
                                         if (_q1 and (_q1 in _k or _k in _q1)) or (_q2 and (_q2 in _k or _k in _q2)):
                                             _rb_bbox = _v; break
+                                # ⭐ v19.55 方案 Z 容差映射：DB RawText 与块图 OCR 不一致
+                                #    时（如 "QHRWS" vs "QHRW5"），上述 strict+substring 查找
+                                #    均失败——遍历 _blk_ocr 文本行用 _texts_char_diff(4/5 同,
+                                #    len 差≤2, ratio≥0.6)找最近匹配，取该块内坐标做局部映射。
+                                #    仅 v19.54 之前的 red_block_info fallback 失效场景受益，
+                                #    健康块(DB 与 CAD 渲染一致)零回归。
+                                if not _rb_bbox:
+                                    _best = None  # (bbox, key_len)
+                                    for _bl in _blk_ocr:
+                                        _bt = _bl.get("text", "") or ""
+                                        if not _bt: continue
+                                        _is_near, _, _ = _texts_char_diff(_rt, _bt)
+                                        if not _is_near: continue
+                                        _bk1 = _re2.sub(r'[^0-9A-Za-z]', '', _bt)
+                                        _cur_len = len(_bk1)
+                                        if _best is None or _cur_len < _best[1]:
+                                            _best = (_bbox_rect(_bl["bbox"]), _cur_len)
+                                    if _best:
+                                        _rb_bbox = _best[0]
                                 _m_photo = None
                                 if _rb_bbox:
                                     # 1) 匹配行对局部线性映射（优先，位置准确）
