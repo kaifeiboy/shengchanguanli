@@ -789,7 +789,7 @@ def cmd_meta(args):
             handles.add(hd)
     wb.close()
     result = {"ok": True, "file": BOOK_NAME, "sheet": SHEET_NAME, "totalRows": len(rows),
-              "months": [{"month": k, "count": v} for k, v in sorted(stats.items())],
+              "months": [{"month": k, "count": v} for k, v in sorted(stats.items(), reverse=True)],
               "lines": sorted(lines), "stages": sorted(stages), "handles": sorted(handles),
               "minDate": (min(dates).strftime("%Y-%m-%d") if dates else None),
               "maxDate": (max(dates).strftime("%Y-%m-%d") if dates else None)}
@@ -1427,6 +1427,52 @@ def _analysis_data(root, month, model=None):
     return title, line_order, models, data
 
 
+def _analysis_data_all(root, model=None):
+    """跨所有月份统计：按 (月份 × 拉线 × 型号) 聚合 IPQC/QA。
+    返回 (title, months_desc, lines, models, data)；data=[{month,line,model,ipqc,qa,total}]，
+    months_desc 倒序（最新在前），与前端下拉一致。"""
+    path = book_path(root)
+    wb = load_workbook(path, data_only=True)
+    ws = wb[SHEET_NAME]
+    agg = {}
+    line_order, model_set, month_set = [], set(), set()
+    for vals in read_rows(ws):
+        d = parse_date(vals[0])
+        if d is None:
+            continue
+        m = d.strftime("%Y-%m")
+        line = str(vals[1] or "").strip() or "未填写"
+        model_v = str(vals[2] or "").strip()
+        stage = str(vals[5] or "").strip().upper()
+        if model and norm_model(model) not in norm_model(model_v):
+            continue
+        if stage not in ("IPQC", "QA"):
+            continue
+        month_set.add(m)
+        if line not in line_order:
+            line_order.append(line)
+        model_set.add(model_v)
+        key = (m, line, model_v)
+        a = agg.setdefault(key, {"IPQC": 0, "QA": 0})
+        a[stage] += 1
+    wb.close()
+    months_desc = sorted(month_set, reverse=True)
+    models = sorted(model_set)
+    data = []
+    for m in months_desc:
+        for line in line_order:
+            for mv in models:
+                key = (m, line, mv)
+                if key not in agg:
+                    continue
+                v = agg[key]
+                data.append({"month": m, "line": line, "model": mv,
+                             "ipqc": v["IPQC"], "qa": v["QA"], "total": v["IPQC"] + v["QA"]})
+    title = "全月份品质数据"
+    title += ("·型号：" + model) if model else "·全型号"
+    return title, months_desc, line_order, models, data
+
+
 def _write_analysis_xlsx(out, month, title, lines, models, data):
     """生成分析报告 xlsx：数据表(拉线|型号|IPQC|QA|合计，表头+框线)
     + openpyxl 原生堆叠柱状图（X=拉线，每型号一段，颜色=型号）
@@ -1546,26 +1592,150 @@ def _write_analysis_xlsx(out, month, title, lines, models, data):
     return out
 
 
+def _write_analysis_all_xlsx(out, months, title, lines, models, data):
+    """跨月分析 xlsx：数据表(月份|拉线|型号|IPQC|QA|合计，表头+框线)
+    + openpyxl 原生堆叠柱状图（X=月份倒序，柱内按型号或拉线分段着色）。
+    页面设置：A4 竖向，标题/表头每页重复打印。"""
+    is_model_mode = title.endswith("·型号：") or ("·型号：" in title)
+    seg_keys = lines if is_model_mode else models  # 已选型号→按拉线堆叠；全型号→按型号堆叠
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "跨月分析"
+    # 标题
+    ws.merge_cells("A1:F1")
+    c = ws.cell(1, 1, title)
+    c.font = Font(bold=True, size=14)
+    c.alignment = Alignment(horizontal="center", vertical="center")
+    ws.row_dimensions[1].height = 28
+    # 表头
+    hdr = ["月份", "拉线", "型号", "IPQC 次数", "QA 次数", "合计"]
+    for ci, h in enumerate(hdr, start=1):
+        cell = ws.cell(2, ci, h)
+        cell.font = Font(bold=True)
+        cell.fill = HEAD_FILL
+        cell.alignment = Alignment(horizontal="center")
+        cell.border = BORDER
+    # 数据行：月份倒序 → 拉线 → 型号
+    r = 3
+    for m in months:
+        for line in lines:
+            for mv in models:
+                d = next((x for x in data if x["month"] == m and x["line"] == line and x["model"] == mv), None)
+                if not d:
+                    continue
+                ws.cell(r, 1, m).border = BORDER
+                ws.cell(r, 2, line).border = BORDER
+                ws.cell(r, 3, mv).border = BORDER
+                ws.cell(r, 4, d["ipqc"]).border = BORDER
+                ws.cell(r, 5, d["qa"]).border = BORDER
+                ws.cell(r, 6, d["total"]).border = BORDER
+                for ci in (4, 5, 6):
+                    ws.cell(r, ci).alignment = Alignment(horizontal="center")
+                r += 1
+    # 图表数据矩阵：行=月份（倒序），列=seg_keys；值=该月该分段总单数
+    col0 = 8  # H 列起
+    cat_col = col0 + len(seg_keys)
+    for si, seg in enumerate(seg_keys):
+        ws.cell(2, col0 + si, seg).font = Font(bold=True, size=10)
+    ws.cell(2, cat_col, "月份").font = Font(bold=True, size=10)
+    for mi, m in enumerate(months):
+        rr = 3 + mi
+        acc = 0
+        for si, seg in enumerate(seg_keys):
+            v = 0
+            for d in data:
+                if d["month"] == m and ((not is_model_mode and d["model"] == seg) or (is_model_mode and d["line"] == seg)):
+                    v += d["total"]
+            ws.cell(rr, col0 + si, v)
+            acc += v
+        ws.cell(rr, cat_col, m)
+    chart = BarChart()
+    chart.type = "col"
+    chart.grouping = "stacked"
+    chart.overlap = 100
+    chart.title = title
+    chart.style = 10
+    data_ref = Reference(ws, min_col=col0, min_row=2, max_col=cat_col - 1, max_row=2 + len(months))
+    cats = Reference(ws, min_col=cat_col, min_row=3, max_row=2 + len(months))
+    chart.add_data(data_ref, titles_from_data=True)
+    chart.set_categories(cats)
+    n_seg = len(seg_keys)
+    for si in range(n_seg):
+        try:
+            chart.series[si].graphicalProperties.solidFill = MODEL_COLORS[si % len(MODEL_COLORS)]
+            chart.series[si].graphicalProperties.line.noFill = True
+        except Exception:
+            pass
+    try:
+        chart.legend.position = "b"
+    except Exception:
+        pass
+    chart.height = 10
+    chart.width = 22
+    chart.y_axis.title = "单数"
+    chart.x_axis.title = "月份"
+    ws.add_chart(chart, "H2")
+    # 列宽
+    ws.column_dimensions["A"].width = 12
+    ws.column_dimensions["B"].width = 16
+    ws.column_dimensions["C"].width = 20
+    ws.column_dimensions["D"].width = 12
+    ws.column_dimensions["E"].width = 12
+    ws.column_dimensions["F"].width = 10
+    # === A4 竖向打印设置 ===
+    ws.page_setup.orientation = ws.ORIENTATION_PORTRAIT
+    ws.page_setup.paperSize = ws.PAPERSIZE_A4
+    ws.page_setup.fitToWidth = 1
+    ws.page_setup.fitToHeight = 0
+    ws.sheet_properties.pageSetUpPr.fitToPage = True
+    ws.page_margins.left = 0.4
+    ws.page_margins.right = 0.4
+    ws.page_margins.top = 0.5
+    ws.page_margins.bottom = 0.5
+    ws.page_margins.header = 0.3
+    ws.page_margins.footer = 0.3
+    ws.print_options.horizontalCentered = True
+    ws.print_title_rows = "1:2"
+    os.makedirs(os.path.dirname(out), exist_ok=True)
+    wb.save(out)
+    wb.close()
+    return out
+
+
 def cmd_analysis(args):
     root = args.get("root")
     month = (args.get("month") or "").strip()
-    if not root or not month:
-        raise ValueError("缺少 --root 或 --month(YYYY-MM)")
+    if not root:
+        raise ValueError("缺少 --root")
     model = (args.get("model") or "").strip() or None
-    title, lines, models, data = _analysis_data(root, month, model)
+    all_mode = (month.lower() == "all")
+    if all_mode:
+        title, months_desc, lines, models, data = _analysis_data_all(root, model)
+        month_out, months_out = "all", months_desc
+    else:
+        if not month:
+            raise ValueError("缺少 --month(YYYY-MM 或 all)")
+        title, lines, models, data = _analysis_data(root, month, model)
+        months_out = [month]
+        month_out = month
     out = args.get("out")
     out_path = None
     if out:
+        if all_mode:
+            # 跨月仅支持 Excel（X=月份 堆叠图，Y=型号/拉线）
+            if not out.lower().endswith(".xlsx"):
+                out = os.path.splitext(out)[0] + ".xlsx"
+            out_path = _write_analysis_all_xlsx(out, months_out, title, lines, models, data)
         # 输出格式由扩展名决定：.xlsx=旧 Excel（openpyxl 原生图表）；.docx=可编辑 Word（A4 打印）；其它=PDF（A4 直接打印）
-        if out.lower().endswith(".xlsx"):
+        elif out.lower().endswith(".xlsx"):
             out_path = _write_analysis_xlsx(out, month, title, lines, models, data)
         elif out.lower().endswith(".docx"):
             from _analysis_docx import _write_analysis_docx
             out_path = _write_analysis_docx(out, title, lines, models, data)
         else:
             out_path = _write_analysis_pdf(out, title, lines, models, data)
-    return {"ok": True, "month": month, "model": model or None, "title": title,
-            "lines": lines, "models": models, "data": data, "out": out_path}
+    return {"ok": True, "all": all_mode, "month": month_out, "model": model or None, "title": title,
+            "months": months_out, "lines": lines, "models": models, "data": data, "out": out_path}
 
 
 def cmd_analysis_auto(args):

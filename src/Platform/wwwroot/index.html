@@ -2161,6 +2161,7 @@ let dhBatchPreview = null;      // 批量导入预览结果（确认后真实导
 let dhBatchFile = null;
 let dhSelected = new Set();      // 当前查询结果中勾选的条目：数据行索引（单 Sheet 汇总表）
 let dhPageNonce = Date.now();    // 图片 URL 缓存破坏符（每页加载一次，绕过陈旧缓存条目）
+let dhAddFiles = [];             // 单条录入待上传图片：{file, url, anno:[], baked, bakedUrl}（含标注烘焙结果）
 
 function dhAPI(path){ return 'api/defecthistory/' + path; }
 function dhEnc(s){ return encodeURIComponent(s); }
@@ -2249,13 +2250,11 @@ async function dhPageQuery(){
     </div>
     <div id="dhQResult"></div>`;
   navPush(dhRenderMenu); $('#dhBack').onclick = navBack;
-  // 月份下拉
+  // 月份下拉（统一走缓存加载，倒序已在加载时完成）
   const sel = $('#dhQMonth');
-  try{
-    const m = await (await fetch(dhAPI('meta'))).json();
-    dhMonths = (m.months || []);
+  dhLoadDropOpts().then(() => {
     sel.innerHTML = '<option value="">全部月份</option>' + dhMonths.map(x=>`<option value="${esc(x.month)}">${esc(x.month)}（${x.count||0} 条）</option>`).join('');
-  }catch(e){ toast('月份列表加载失败'); }
+  }).catch(() => { toast('月份列表加载失败'); });
   $('#dhQBtn').onclick = dhDoQuery;
   $('#dhQExport').onclick = dhExportCurrent;
   $('#dhQModel').addEventListener('keydown', e => { if(e.key==='Enter') dhDoQuery(); });
@@ -2490,7 +2489,11 @@ function dhReadMetaCache(){
 }
 function dhWriteMetaCache(m){
   if (!m || (!(m.lines||[]).length && !(m.stages||[]).length && !(m.handles||[]).length)) return;
-  try{ localStorage.setItem('dh_meta_cache', JSON.stringify({ ts: Date.now(), lines: m.lines||[], stages: m.stages||[], handles: m.handles||[] })); }catch(e){}
+  try{ localStorage.setItem('dh_meta_cache', JSON.stringify({ ts: Date.now(), months: m.months||[], lines: m.lines||[], stages: m.stages||[], handles: m.handles||[] })); }catch(e){}
+}
+// 月份倒序（最新在前）：与后端 cmd_meta 倒序一致，前端再防御性排序一次
+function dhSortMonthsDesc(arr){
+  return (arr||[]).slice().sort((a, b) => String(b.month||'').localeCompare(String(a.month||'')));
 }
 function dhApplyMeta(m){
   dhLineOpts = dhMergeOpts(m.lines||[], dhLocalGet('lines'));
@@ -2498,18 +2501,21 @@ function dhApplyMeta(m){
   dhHandleOpts = dhMergeOpts(m.handles||[], dhLocalGet('handles'));
 }
 function dhLoadDropOpts(){
-  // 1) 本地缓存（5 分钟内）→ 秒开；后台静默刷新
+  // 统一加载：月份下拉 + 线别/工程/处理方式下拉，全部走本地缓存（5 分钟内秒开），后台静默刷新
   const c = dhReadMetaCache();
-  if (c && Date.now() - c.ts < 5 * 60 * 1000){
+  if (c && Date.now() - c.ts < 5 * 60 * 1000 && (c.months||[]).length){
     dhApplyMeta(c);
-    fetch(dhAPI('meta')).then(r=>r.json()).then(m => { dhWriteMetaCache(m); dhApplyMeta(m); }).catch(()=>{});
+    dhMonths = dhSortMonthsDesc(c.months);
+    // 后台静默刷新，保持下拉选项最新
+    fetch(dhAPI('meta')).then(r=>r.json()).then(m => { dhWriteMetaCache(m); dhApplyMeta(m); dhMonths = dhSortMonthsDesc(m.months); }).catch(()=>{});
     return Promise.resolve();
   }
-  // 2) 无缓存/过期 → fetch（结果写缓存）
-  if (dhLineOpts.length && dhStageOpts.length && dhHandleOpts.length) return Promise.resolve();
+  // 无缓存/过期 → 单次 fetch（结果写缓存，含月份）
+  if (dhLineOpts.length && dhStageOpts.length && dhHandleOpts.length && dhMonths.length) return Promise.resolve();
   return fetch(dhAPI('meta')).then(r=>r.json()).then(m => {
     dhWriteMetaCache(m);
     dhApplyMeta(m);
+    dhMonths = dhSortMonthsDesc(m.months);
   }).catch(()=>{});
 }
 // 通用自定义下拉：点击/输入展开、过滤、支持"使用新值"、点外部关闭（手机端兼容，替代 datalist）
@@ -2603,13 +2609,9 @@ function dhPageAdd(){
     </div>`;
   navPush(dhRenderMenu); $('#dhBack').onclick = navBack;
   $('#dhAImg').addEventListener('change', e => {
-    const box = $('#dhAPreview'); box.innerHTML = '';
-    Array.from(e.target.files || []).forEach((f) => {
-      const url = URL.createObjectURL(f);
-      const im = document.createElement('img');
-      im.src = url; im.style.cssText = 'width:72px;height:54px;object-fit:cover;border-radius:8px;border:1px solid var(--line);';
-      im.title = f.name; box.appendChild(im);
-    });
+    const files = Array.from(e.target.files || []);
+    if (files.length) dhAddFiles = files.map(f => ({ file: f, url: URL.createObjectURL(f), anno: [], baked: null, bakedUrl: null }));
+    dhRenderAddPreviews();
   });
   dhLoadDropOpts().then(() => {
     dhInitDropdown({ input: '#dhALine', list: '#dhALineList', btn: '#dhALineBtn', options: () => dhLineOpts });
@@ -2635,7 +2637,10 @@ async function dhSubmitAdd(){
   fd.append('model', model); fd.append('reason', reason); fd.append('qty', qty);
   fd.append('stage', stage); fd.append('handle', handle);
   const files = $('#dhAImg').files;
-  for(let i=0;i<files.length;i++) fd.append('image', files[i]);
+  for (let i = 0; i < dhAddFiles.length; i++){
+    const it = dhAddFiles[i];
+    fd.append('image', it.baked || it.file);
+  }
   const btn = $('#dhABtn'); btn.disabled = true; btn.textContent = '提交中…';
   try{
     const r = await (await fetch(dhAPI('add'), { method:'POST', body: fd })).json();
@@ -2646,10 +2651,372 @@ async function dhSubmitAdd(){
       if (handle && dhHandleOpts.indexOf(handle) < 0) dhHandleOpts.push(handle);
       dhLocalAdd('lines', line); dhLocalAdd('stages', stage); dhLocalAdd('handles', handle);
       toast('录入成功（已按日期排序写入汇总表' + (r.images ? '，含 ' + r.images + ' 图' : '') + '）');
+      dhAddFiles = [];   // 清空已上传/已标注图片，避免重复提交
       dhPageAdd();
     } else toast('录入失败：' + (r.error || '未知错误'));
   }catch(e){ toast('录入失败：' + (e.message || e)); }
   finally{ btn.disabled = false; btn.textContent = '💾 提交录入'; }
+}
+
+// 单条录入图片预览（含标注入口）
+function dhRenderAddPreviews(){
+  const box = $('#dhAPreview'); if (!box) return;
+  box.innerHTML = '';
+  dhAddFiles.forEach((it, idx) => {
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'position:relative;display:inline-flex;flex-direction:column;align-items:center;gap:2px;margin:2px;';
+    const im = document.createElement('img');
+    im.src = it.bakedUrl || it.url; im.style.cssText = 'width:72px;height:54px;object-fit:cover;border-radius:8px;border:1px solid var(--line);';
+    im.title = it.file.name;
+    const row = document.createElement('div'); row.style.cssText = 'display:flex;gap:4px;align-items:center;';
+    const ed = document.createElement('button');
+    ed.type = 'button'; ed.textContent = '✏️ 标注'; ed.style.cssText = 'font-size:10px;padding:2px 6px;border-radius:6px;border:1px solid var(--line);background:#fff;color:var(--txt);';
+    ed.onclick = () => dhOpenAnno(idx);
+    row.appendChild(ed);
+    if (it.baked){ const b = document.createElement('span'); b.textContent = '已标注'; b.style.cssText = 'font-size:9px;color:#16a34a;font-weight:600;'; row.appendChild(b); }
+    wrap.appendChild(im); wrap.appendChild(row);
+    box.appendChild(wrap);
+  });
+}
+
+// ============ 图片预处理标注工具 ============
+const DH_ANNO_COLORS = ['#e11d48','#f59e0b','#eab308','#16a34a','#2563eb','#7c3aed','#111827','#ffffff'];
+let dhAnnoState = null;
+function drawArrow(ctx, x1, y1, x2, y2, color, lw){
+  ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = lw; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+  const ang = Math.atan2(y2 - y1, x2 - x1), hl = Math.max(8, lw * 3);
+  ctx.beginPath(); ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - hl * Math.cos(ang - Math.PI / 6), y2 - hl * Math.sin(ang - Math.PI / 6));
+  ctx.lineTo(x2 - hl * Math.cos(ang + Math.PI / 6), y2 - hl * Math.sin(ang + Math.PI / 6));
+  ctx.closePath(); ctx.fill();
+}
+function dhAnnoBuildModal(){
+  if (document.getElementById('dhAnnoModal')) return;
+  const ov = document.createElement('div');
+  ov.id = 'dhAnnoModal';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(10,15,25,.92);z-index:300;display:none;align-items:center;justify-content:center;padding:10px;';
+  ov.innerHTML = `
+    <div style="width:min(440px,96vw);max-height:94vh;overflow:auto;background:#fff;border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <b style="font-size:14px;">图片标注</b>
+        <span id="dhAnnoClose" style="cursor:pointer;font-size:18px;color:#64748b;">×</span>
+      </div>
+      <div id="dhAnnoTools" style="display:flex;flex-wrap:wrap;gap:6px;">
+        <button type="button" class="dh-at" data-tool="rect">▭ 矩形</button>
+        <button type="button" class="dh-at" data-tool="ellipse">◯ 椭圆</button>
+        <button type="button" class="dh-at" data-tool="arrow">➤ 箭头</button>
+        <button type="button" class="dh-at" data-tool="free">✎ 画笔</button>
+        <button type="button" class="dh-at" data-tool="text">T 文字</button>
+        <button type="button" class="dh-aa" id="dhAnnoUndo">↶ 撤销</button>
+        <button type="button" class="dh-aa" id="dhAnnoRedo">↷ 重做</button>
+        <button type="button" class="dh-aa" id="dhAnnoClear">🗑 清除</button>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
+        <span id="dhAnnoSwatches" style="display:flex;gap:4px;"></span>
+        <input type="color" id="dhAnnoColor" value="#e11d48" style="width:30px;height:28px;border:none;background:none;padding:0;" />
+        <label style="font-size:12px;color:#475569;">粗细
+          <select id="dhAnnoSize" style="padding:2px 4px;border-radius:6px;border:1px solid #cbd5e1;">
+            <option value="2">细</option><option value="4" selected>中</option><option value="6">粗</option><option value="10">特粗</option><option value="16">超大</option>
+          </select>
+        </label>
+        <input type="text" id="dhAnnoText" placeholder="文字内容（选文字工具后点图）" style="flex:1;min-width:120px;padding:4px 6px;border-radius:6px;border:1px solid #cbd5e1;font-size:12px;" />
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;font-size:12px;color:#475569;">
+        <span style="color:#64748b;">手势：双指捏合/拖动缩放平移</span>
+        <span style="flex:1;"></span>
+        <button type="button" class="dh-aa" id="dhAnnoZoomOut">－</button>
+        <span id="dhAnnoZoomLabel" style="min-width:42px;text-align:center;font-variant-numeric:tabular-nums;">100%</span>
+        <button type="button" class="dh-aa" id="dhAnnoZoomIn">＋</button>
+        <button type="button" class="dh-aa" id="dhAnnoReset">复位</button>
+      </div>
+      <div style="background:#0f172a;border-radius:10px;overflow:hidden;display:flex;justify-content:center;padding:6px;max-height:62vh;position:relative;">
+        <canvas id="dhAnnoCanvas" style="touch-action:none;max-width:100%;border-radius:6px;background:#fff;"></canvas>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button type="button" id="dhAnnoCancel" style="padding:8px 14px;border-radius:8px;border:1px solid #cbd5e1;background:#f1f5f9;color:#334155;">取消</button>
+        <button type="button" id="dhAnnoSave" style="padding:8px 14px;border-radius:8px;border:none;background:#16a34a;color:#fff;font-weight:600;">保存标注</button>
+      </div>
+    </div>`;
+  document.body.appendChild(ov);
+  // 工具按钮
+  ov.querySelectorAll('.dh-at').forEach(b => b.onclick = () => {
+    dhAnnoState.tool = b.dataset.tool;
+    ov.querySelectorAll('.dh-at').forEach(x => x.style.background = (x === b) ? '#2563eb' : '#e2e8f0');
+    ov.querySelectorAll('.dh-at').forEach(x => x.style.color = (x === b) ? '#fff' : '#334155');
+  });
+  // 颜色
+  const sw = ov.querySelector('#dhAnnoSwatches');
+  DH_ANNO_COLORS.forEach(col => {
+    const s = document.createElement('span');
+    s.style.cssText = `width:22px;height:22px;border-radius:50%;background:${col};border:2px solid #fff;box-shadow:0 0 0 1px #cbd5e1;cursor:pointer;`;
+    s.onclick = () => { dhAnnoState.color = col; ov.querySelector('#dhAnnoColor').value = (col === '#ffffff') ? '#ffffff' : col; dhAnnoHiSwatch(ov); };
+    sw.appendChild(s);
+  });
+  ov.querySelector('#dhAnnoColor').oninput = e => { dhAnnoState.color = e.target.value; dhAnnoHiSwatch(ov); };
+  ov.querySelector('#dhAnnoSize').onchange = e => { dhAnnoState.size = parseInt(e.target.value, 10) || 4; };
+  ov.querySelector('#dhAnnoUndo').onclick = dhAnnoUndo;
+  ov.querySelector('#dhAnnoRedo').onclick = dhAnnoRedo;
+  ov.querySelector('#dhAnnoClear').onclick = dhAnnoClear;
+  ov.querySelector('#dhAnnoClose').onclick = dhCloseAnno;
+  ov.querySelector('#dhAnnoCancel').onclick = dhCloseAnno;
+  ov.querySelector('#dhAnnoSave').onclick = dhAnnoSave;
+  ov.onclick = e => { if (e.target === ov) dhCloseAnno(); };
+  // 默认工具高亮
+  const def = ov.querySelector('.dh-at[data-tool="rect"]'); def.style.background = '#2563eb'; def.style.color = '#fff';
+  // canvas 指针事件（单指绘制；双指捏合/拖动缩放平移；滚轮缩放）
+  const cv = ov.querySelector('#dhAnnoCanvas');
+  cv.addEventListener('pointerdown', dhAnnoDown);
+  cv.addEventListener('pointermove', dhAnnoMove);
+  cv.addEventListener('pointerup', dhAnnoPointerEnd);
+  cv.addEventListener('pointercancel', dhAnnoPointerEnd);
+  cv.addEventListener('wheel', dhAnnoWheel, { passive: false });
+  ov.querySelector('#dhAnnoZoomIn').onclick = () => { const r = cv.getBoundingClientRect(); dhAnnoZoomAt(r.left + r.width / 2, r.top + r.height / 2, 1.25); };
+  ov.querySelector('#dhAnnoZoomOut').onclick = () => { const r = cv.getBoundingClientRect(); dhAnnoZoomAt(r.left + r.width / 2, r.top + r.height / 2, 1 / 1.25); };
+  ov.querySelector('#dhAnnoReset').onclick = dhAnnoResetView;
+}
+function dhAnnoHiSwatch(ov){
+  ov.querySelectorAll('#dhAnnoSwatches span').forEach((s, i) => {
+    s.style.boxShadow = (DH_ANNO_COLORS[i].toLowerCase() === dhAnnoState.color.toLowerCase()) ? '0 0 0 2px #2563eb' : '0 0 0 1px #cbd5e1';
+  });
+}
+function dhOpenAnno(idx){
+  dhAnnoBuildModal();
+  const it = dhAddFiles[idx];
+  const ov = document.getElementById('dhAnnoModal');
+  dhAnnoState = { idx, img: new Image(), natW: 0, natH: 0, scale: 1, zoom: 1, panX: 0, panY: 0, pointers: {}, gesture: false, tool: 'rect', color: '#e11d48', size: 4, anno: (it.anno || []).slice(), undo: [], redo: [], drawing: false, start: null, cur: null };
+  ov.querySelector('#dhAnnoText').value = '';
+  ov.querySelector('#dhAnnoSize').value = '4';
+  ov.querySelector('#dhAnnoColor').value = '#e11d48';
+  dhAnnoHiSwatch(ov);
+  const cv = ov.querySelector('#dhAnnoCanvas');
+  // 先显示弹窗，确保加载图片时容器已有实际 clientWidth/Height，避免读到 0
+  ov.style.display = 'flex';
+  dhAnnoState.img.onload = () => {
+    dhAnnoState.natW = dhAnnoState.img.naturalWidth;
+    dhAnnoState.natH = dhAnnoState.img.naturalHeight;
+    const pad = 12;
+    // 宽度仍按容器自适应，同时限制高度，保证尺寸较大的竖图在手机浏览器也能完整显示
+    const maxW = Math.min(400, cv.parentElement.clientWidth - pad, dhAnnoState.natW);
+    const maxH = Math.min(Math.round(window.innerHeight * 0.62), dhAnnoState.natH);
+    const scale = Math.min(maxW / dhAnnoState.natW, maxH / dhAnnoState.natH, 1);
+    const dispW = Math.round(dhAnnoState.natW * scale);
+    const dispH = Math.round(dhAnnoState.natH * scale);
+    dhAnnoState.scale = scale;
+    cv.style.width = dispW + 'px';
+    cv.style.height = dispH + 'px';
+    // 后备分辨率用原图尺寸（而非 fit 尺寸）：放大时是原生像素，清晰不糊；CSS 仅负责显示缩放
+    cv.width = dhAnnoState.natW; cv.height = dhAnnoState.natH;
+    dhAnnoState.zoom = 1; dhAnnoState.panX = 0; dhAnnoState.panY = 0;
+    dhAnnoApplyTransform();
+    dhAnnoDraw();
+  };
+  dhAnnoState.img.onerror = () => toast('图片加载失败');
+  dhAnnoState.img.src = it.bakedUrl || it.url;
+}
+function dhCloseAnno(){ const ov = document.getElementById('dhAnnoModal'); if (ov) ov.style.display = 'none'; dhAnnoState = null; }
+function dhAnnoPt(e){
+  const cv = document.getElementById('dhAnnoCanvas');
+  const r = cv.getBoundingClientRect();
+  // r 已包含缩放/平移；除以 (基础适配比例 * 手势缩放) 得到原图坐标
+  const S = dhAnnoState.scale * (dhAnnoState.zoom || 1);
+  return { x: (e.clientX - r.left) / S, y: (e.clientY - r.top) / S };
+}
+function dhAnnoDown(e){
+  if (!dhAnnoState) return;
+  const cv = document.getElementById('dhAnnoCanvas');
+  dhAnnoState.pointers[e.pointerId] = { x: e.clientX, y: e.clientY };
+  const ids = Object.keys(dhAnnoState.pointers);
+  // 双指 → 进入手势（捏合缩放 / 拖动平移），同时取消正在进行的绘制
+  if (ids.length >= 2){
+    const a = dhAnnoState.pointers[ids[0]], b = dhAnnoState.pointers[ids[1]];
+    dhAnnoState.drawing = false;
+    dhAnnoState.cur = null;
+    dhAnnoState.gesture = true;
+    const rect = cv.getBoundingClientRect();
+    dhAnnoState.gRect0 = rect;
+    dhAnnoState.gMid0x = (a.x + b.x) / 2;
+    dhAnnoState.gMid0y = (a.y + b.y) / 2;
+    dhAnnoState.gDist0 = Math.hypot(a.x - b.x, a.y - b.y) || 1;
+    dhAnnoState.gZoom0 = dhAnnoState.zoom;
+    dhAnnoState.gPan0x = dhAnnoState.panX;
+    dhAnnoState.gPan0y = dhAnnoState.panY;
+    try { cv.setPointerCapture(e.pointerId); } catch (_){}
+    e.preventDefault();
+    return;
+  }
+  if (ids.length > 2) return;
+  const p = dhAnnoPt(e);
+  if (dhAnnoState.tool === 'text'){
+    const t = (document.getElementById('dhAnnoText').value || '').trim();
+    if (!t){ toast('请先在「文字内容」输入文字'); return; }
+    // 文字字号按图片原始宽度比例计算，保证在手机大图上清晰可见且能烘焙进图片
+    const tf = Math.round(Math.min(Math.max(24, dhAnnoState.natW * 0.04 * (dhAnnoState.size / 4)), dhAnnoState.natW * 0.1));
+    dhAnnoPush({ type: 'text', x: p.x, y: p.y, text: t, color: dhAnnoState.color, size: dhAnnoState.size, font:  tf });
+    dhAnnoDraw();   // 立即重绘，显示点击位置的文字标示
+    return;
+  }
+  dhAnnoState.drawing = true;
+  dhAnnoState.start = p;
+  if (dhAnnoState.tool === 'free') dhAnnoState.cur = { type: 'free', points: [[p.x, p.y]], color: dhAnnoState.color, size: dhAnnoState.size };
+  else if (dhAnnoState.tool === 'arrow') dhAnnoState.cur = { type: 'arrow', x1: p.x, y1: p.y, x2: p.x, y2: p.y, color: dhAnnoState.color, size: dhAnnoState.size };
+  else dhAnnoState.cur = { type: dhAnnoState.tool, x: p.x, y: p.y, w: 0, h: 0, color: dhAnnoState.color, size: dhAnnoState.size };
+  dhAnnoDraw();
+}
+function dhAnnoMove(e){
+  if (!dhAnnoState) return;
+  // 双指手势：捏合缩放 + 平移（以起始中点为锚点，缩放时保持手指下的内容不动）
+  if (dhAnnoState.gesture && dhAnnoState.pointers[e.pointerId]){
+    dhAnnoState.pointers[e.pointerId] = { x: e.clientX, y: e.clientY };
+    const ids = Object.keys(dhAnnoState.pointers);
+    if (ids.length >= 2){
+      const a = dhAnnoState.pointers[ids[0]], b = dhAnnoState.pointers[ids[1]];
+      const dist = Math.hypot(a.x - b.x, a.y - b.y);
+      const midx = (a.x + b.x) / 2, midy = (a.y + b.y) / 2;
+      const z0 = dhAnnoState.gZoom0;
+      const maxZoom = Math.max(1, Math.min(12, 1 / (dhAnnoState.scale || 1)));
+      const z = Math.max(1, Math.min(maxZoom, z0 * dist / (dhAnnoState.gDist0 || 1)));
+      const rect0 = dhAnnoState.gRect0;
+      const ux = (dhAnnoState.gMid0x - rect0.left) / z0;
+      const uy = (dhAnnoState.gMid0y - rect0.top) / z0;
+      dhAnnoState.zoom = z;
+      dhAnnoState.panX = (midx - rect0.left) - ux * z + dhAnnoState.gPan0x;
+      dhAnnoState.panY = (midy - rect0.top) - uy * z + dhAnnoState.gPan0y;
+      dhAnnoApplyTransform();
+      e.preventDefault();
+      return;
+    }
+  }
+  if (!dhAnnoState.drawing) return;
+  const p = dhAnnoPt(e);
+  const c = dhAnnoState.cur;
+  if (c.type === 'free') c.points.push([p.x, p.y]);
+  else if (c.type === 'arrow'){ c.x2 = p.x; c.y2 = p.y; }
+  else { c.w = p.x - dhAnnoState.start.x; c.h = p.y - dhAnnoState.start.y; }
+  dhAnnoDraw();
+}
+function dhAnnoPointerEnd(e){
+  if (!dhAnnoState) return;
+  delete dhAnnoState.pointers[e.pointerId];
+  const ids = Object.keys(dhAnnoState.pointers);
+  if (ids.length < 2) dhAnnoState.gesture = false;
+  if (!ids.length){
+    // 单指松手：把正在绘制的图形入库（否则松手后消失）
+    if (dhAnnoState.drawing){
+      const c = dhAnnoState.cur;
+      if (c){
+        let ok = true;
+        if (c.type === 'free') ok = c.points.length > 1;
+        else if (c.type === 'arrow') ok = (Math.abs(c.x2 - c.x1) > 2 || Math.abs(c.y2 - c.y1) > 2);
+        else ok = (Math.abs(c.w) > 2 || Math.abs(c.h) > 2);
+        if (ok) dhAnnoPush(c);
+      }
+    }
+    dhAnnoState.drawing = false;
+    dhAnnoState.cur = null;
+    dhAnnoDraw();
+  }
+}
+function dhAnnoApplyTransform(){
+  const cv = document.getElementById('dhAnnoCanvas');
+  cv.style.transformOrigin = '0 0';
+  cv.style.transform = 'translate(' + dhAnnoState.panX + 'px,' + dhAnnoState.panY + 'px) scale(' + dhAnnoState.zoom + ')';
+  const lbl = document.getElementById('dhAnnoZoomLabel');
+  if (lbl) lbl.textContent = Math.round(dhAnnoState.zoom * 100) + '%';
+}
+function dhAnnoZoomAt(cx, cy, factor){
+  if (!dhAnnoState) return;
+  const cv = document.getElementById('dhAnnoCanvas');
+  const rect = cv.getBoundingClientRect();
+  const z0 = dhAnnoState.zoom;
+  // 上限设为原图 100%（1/scale），超过即超出原生分辨率会糊，故封顶
+  const maxZoom = Math.max(1, Math.min(12, 1 / (dhAnnoState.scale || 1)));
+  const z = Math.max(1, Math.min(maxZoom, z0 * factor));
+  // 让光标/指定点位于缩放后仍停在原来屏幕位置
+  const ux = (cx - rect.left) / z0;
+  const uy = (cy - rect.top) / z0;
+  dhAnnoState.zoom = z;
+  dhAnnoState.panX = (cx - rect.left) - ux * z + dhAnnoState.panX;
+  dhAnnoState.panY = (cy - rect.top) - uy * z + dhAnnoState.panY;
+  dhAnnoApplyTransform();
+}
+function dhAnnoWheel(e){
+  if (!dhAnnoState) return;
+  e.preventDefault();
+  dhAnnoZoomAt(e.clientX, e.clientY, e.deltaY < 0 ? 1.15 : 1 / 1.15);
+}
+function dhAnnoResetView(){
+  if (!dhAnnoState) return;
+  dhAnnoState.zoom = 1; dhAnnoState.panX = 0; dhAnnoState.panY = 0;
+  dhAnnoApplyTransform();
+}
+function dhAnnoPush(shape){
+  dhAnnoState.undo.push(dhAnnoState.anno.slice());
+  dhAnnoState.redo = [];
+  dhAnnoState.anno.push(shape);
+}
+function dhAnnoUndo(){
+  if (!dhAnnoState || !dhAnnoState.undo.length) return;
+  dhAnnoState.redo.push(dhAnnoState.anno.slice());
+  dhAnnoState.anno = dhAnnoState.undo.pop();
+  dhAnnoDraw();
+}
+function dhAnnoRedo(){
+  if (!dhAnnoState || !dhAnnoState.redo.length) return;
+  dhAnnoState.undo.push(dhAnnoState.anno.slice());
+  dhAnnoState.anno = dhAnnoState.redo.pop();
+  dhAnnoDraw();
+}
+function dhAnnoClear(){
+  if (!dhAnnoState) return;
+  if (!dhAnnoState.anno.length) return;
+  dhAnnoState.undo.push(dhAnnoState.anno.slice());
+  dhAnnoState.redo = [];
+  dhAnnoState.anno = [];
+  dhAnnoDraw();
+}
+function dhAnnoDraw(){
+  if (!dhAnnoState) return;
+  const st = dhAnnoState, c = document.getElementById('dhAnnoCanvas'), ctx = c.getContext('2d');
+  ctx.clearRect(0, 0, c.width, c.height);
+  if (st.img && st.img.complete) ctx.drawImage(st.img, 0, 0, c.width, c.height);
+  // 后备已是原图分辨率，直接用原图坐标绘制（不再乘 S），保证放大后清晰且与烘焙一致
+  const drawShape = (s) => {
+    ctx.strokeStyle = s.color; ctx.fillStyle = s.color; ctx.lineWidth = Math.max(1, s.size); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    if (s.type === 'rect') ctx.strokeRect(s.x, s.y, s.w, s.h);
+    else if (s.type === 'ellipse'){ ctx.beginPath(); ctx.ellipse(s.x + s.w / 2, s.y + s.h / 2, Math.abs(s.w) / 2, Math.abs(s.h) / 2, 0, 0, Math.PI * 2); ctx.stroke(); }
+    else if (s.type === 'arrow') drawArrow(ctx, s.x1, s.y1, s.x2, s.y2, s.color, Math.max(1, s.size));
+    else if (s.type === 'free'){ ctx.beginPath(); s.points.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke(); }
+    else if (s.type === 'text'){ const fs = (s.font || Math.min(Math.max(24, st.natW * 0.04 * (s.size / 4)), st.natW * 0.1)); ctx.font = fs + 'px sans-serif'; ctx.textBaseline = 'top'; ctx.fillText(s.text, s.x, s.y); }
+  };
+  st.anno.forEach(drawShape);
+  if (st.cur) drawShape(st.cur);
+}
+function dhAnnoSave(){
+  const st = dhAnnoState; if (!st) return;
+  const it = dhAddFiles[st.idx];
+  const cv = document.createElement('canvas'); cv.width = st.natW; cv.height = st.natH;
+  const x = cv.getContext('2d');
+  if (st.img && st.img.complete) x.drawImage(st.img, 0, 0, st.natW, st.natH);
+  const drawN = (s) => {
+    x.strokeStyle = s.color; x.fillStyle = s.color; x.lineWidth = Math.max(1, s.size); x.lineCap = 'round'; x.lineJoin = 'round';
+    if (s.type === 'rect') x.strokeRect(s.x, s.y, s.w, s.h);
+    else if (s.type === 'ellipse'){ x.beginPath(); x.ellipse(s.x + s.w / 2, s.y + s.h / 2, Math.abs(s.w) / 2, Math.abs(s.h) / 2, 0, 0, Math.PI * 2); x.stroke(); }
+    else if (s.type === 'arrow') drawArrow(x, s.x1, s.y1, s.x2, s.y2, s.color, Math.max(1, s.size));
+    else if (s.type === 'free'){ x.beginPath(); s.points.forEach((p, i) => i ? x.lineTo(p[0], p[1]) : x.moveTo(p[0], p[1])); x.stroke(); }
+    else if (s.type === 'text'){ x.font = (s.font || Math.min(Math.max(24, st.natW * 0.04 * (s.size / 4)), st.natW * 0.1)) + 'px sans-serif'; x.textBaseline = 'top'; x.fillText(s.text, s.x, s.y); }
+  };
+  st.anno.forEach(drawN);
+  cv.toBlob(b => {
+    if (!b){ toast('标注烘焙失败'); return; }
+    it.anno = st.anno.slice();
+    it.baked = new File([b], it.file.name.replace(/\.(png|jpe?g|bmp)$/i, '') + '_anno.png', { type: 'image/png' });
+    if (it.bakedUrl) URL.revokeObjectURL(it.bakedUrl);
+    it.bakedUrl = URL.createObjectURL(it.baked);
+    dhRenderAddPreviews();
+    dhCloseAnno();
+    toast('标注已应用，提交时将上传标注后的图片');
+  }, 'image/png');
 }
 
 // ---------- 批量上传页 ----------
@@ -2755,7 +3122,9 @@ function dhPageExport(){
     </div>`;
   navPush(dhRenderMenu); $('#dhBack').onclick = navBack;
   const sel = $('#dhEMonth');
-  sel.innerHTML = '<option value="">全部月份</option>' + dhMonths.map(x=>`<option value="${esc(x.month)}">${esc(x.month)}</option>`).join('');
+  const fillEMonth = () => { sel.innerHTML = '<option value="">全部月份</option>' + dhMonths.map(x=>`<option value="${esc(x.month)}">${esc(x.month)}</option>`).join(''); };
+  if (dhMonths.length) fillEMonth();
+  else dhLoadDropOpts().then(fillEMonth).catch(fillEMonth);
   $('#dhEFull').onclick = () => { window.open(dhAPI('export?full=true'), '_blank'); toast('导出开始'); };
   $('#dhEBtn').onclick = () => {
     const model = ($('#dhEModel').value || '').trim();
@@ -2805,15 +3174,13 @@ function dhPageAnalysis(preMonth){
   const sel = $('#dhAnMonth');
   const fillSel = (ms) => {
     sel.innerHTML = '<option value="">全部月份</option>' +
+      '<option value="all">全部月份（跨月分析）</option>' +
       ms.map(x=>`<option value="${esc(x.month)}">${esc(x.month)}（${x.count||0} 条）</option>`).join('');
     sel.value = (ms.some(x=>x.month===defMonth)) ? defMonth : (ms[0] ? ms[0].month : '');
   };
   if (dhMonths.length) { fillSel(dhMonths); }
   else {
-    fetch(dhAPI('meta')).then(r=>r.json()).then(m => {
-      dhMonths = (m.months || []);
-      fillSel(dhMonths);
-    }).catch(()=>{ sel.innerHTML = '<option value="">加载失败</option>'; });
+    dhLoadDropOpts().then(() => fillSel(dhMonths)).catch(() => { sel.innerHTML = '<option value="">加载失败</option>'; });
   }
   $('#dhAnBtn').onclick = dhRunAnalysis;
   $('#dhAnExport').onclick = dhExportAnalysis;
@@ -2823,7 +3190,7 @@ function dhPageAnalysis(preMonth){
 
 async function dhRunAnalysis(){
   const month = ($('#dhAnMonth').value || '').trim();
-  if (!/^\d{4}-\d{2}$/.test(month)){ toast('月份格式应为 YYYY-MM'); return; }
+  if (month !== 'all' && !/^\d{4}-\d{2}$/.test(month)){ toast('请选择有效月份或「全部月份（跨月分析）」'); return; }
   const model = ($('#dhAnModel').value || '').trim();
   const card = $('#dhAnChartCard'); card.style.display = 'block';
   $('#dhAnEmpty').style.display = 'none';
@@ -2836,7 +3203,7 @@ async function dhRunAnalysis(){
   $('#dhAnTitle').textContent = r.title;
   const data = r.data || [];
   if (data.length === 0){ $('#dhAnEmpty').style.display = 'block'; $('#dhAnLegend').innerHTML = ''; return; }
-  dhDrawAnalysisChart(r);
+  if (r.all) dhDrawAnalysisChartAll(r); else dhDrawAnalysisChart(r);
 }
 
 // 型号配色板（与后端导出图表一致）
@@ -2946,12 +3313,80 @@ function dhDrawAnalysisChart(r){
   $('#dhAnLegend').innerHTML = '';
 }
 
+// 跨月分析图：X=月份（倒序），堆叠按型号（全型号）或按拉线（已选型号）；顶部标题 + 底部图例
+function dhDrawAnalysisChartAll(r){
+  const months = r.months || [];
+  const lines = r.lines || [], models = r.models || [];
+  const data = r.data || [];
+  const hasModel = !!r.model;
+  const segKeys = hasModel ? lines : models;
+  const colorOf = {};
+  segKeys.forEach((s, i) => { colorOf[s] = DH_MODEL_COLORS[i % DH_MODEL_COLORS.length]; });
+  const valOf = (m, seg) => {
+    let v = 0;
+    for (const d of data){
+      if (d.month === m && ((!hasModel && d.model === seg) || (hasModel && d.line === seg))) v += (d.total || 0);
+    }
+    return v;
+  };
+  const monthTotal = (m) => { let s = 0; segKeys.forEach(seg => s += valOf(m, seg)); return s; };
+  const canvas = $('#dhAnCanvas');
+  const dpr = window.devicePixelRatio || 1;
+  const cssW = canvas.clientWidth || 320;
+  const cssH = 300;
+  canvas.width = cssW * dpr; canvas.height = cssH * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, cssW, cssH);
+  const M = { l: 34, r: 14, t: 16, b: 46 };
+  const plotW = cssW - M.l - M.r, plotH = cssH - M.t - M.b;
+  let maxTotal = 0;
+  months.forEach(m => { const s = monthTotal(m); if (s > maxTotal) maxTotal = s; });
+  const yMax = Math.max(5, Math.ceil((maxTotal || 1) / 5) * 5);
+  ctx.font = '11px sans-serif'; ctx.fillStyle = '#64748b'; ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1;
+  for (let i = 0; i <= 5; i++){
+    const y = M.t + plotH - (i / 5) * plotH;
+    ctx.beginPath(); ctx.moveTo(M.l, y); ctx.lineTo(M.l + plotW, y); ctx.stroke();
+    ctx.fillText(String(Math.round(yMax * i / 5)), 4, y + 4);
+  }
+  const groupSlot = plotW / Math.max(1, months.length);
+  months.forEach((m, gi) => {
+    const gx = M.l + groupSlot * gi;
+    const gw = groupSlot - 8;
+    const barW = Math.min(46, gw * 0.6);
+    const cx = gx + gw / 2;
+    const x = cx - barW / 2;
+    const baseY = M.t + plotH;
+    let acc = 0;
+    segKeys.forEach(seg => {
+      const v = valOf(m, seg);
+      if (v <= 0) return;
+      const h = (v / yMax) * plotH;
+      ctx.fillStyle = colorOf[seg] || '#999';
+      ctx.fillRect(x, baseY - acc - h, barW, h);
+      acc += h;
+    });
+    const tot = monthTotal(m);
+    if (tot > 0){
+      ctx.fillStyle = '#1e293b'; ctx.font = 'bold 11px sans-serif';
+      ctx.fillText(String(tot), cx, baseY - acc - 4);
+      ctx.font = '11px sans-serif';
+    }
+    ctx.textAlign = 'center'; ctx.font = '11px sans-serif'; ctx.fillStyle = '#334155';
+    ctx.fillText(m, cx, cssH - M.b + 14);
+  });
+  const lg = $('#dhAnLegend');
+  if (lg){
+    lg.innerHTML = segKeys.map(s => `<span style="display:inline-flex;align-items:center;gap:4px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${colorOf[s]};"></span>${esc(s)}</span>`).join('');
+  }
+}
+
 function dhExportAnalysis(){
   const month = ($('#dhAnMonth').value || '').trim();
-  if (!/^\d{4}-\d{2}$/.test(month)){ toast('请先选择有效月份'); return; }
+  if (month !== 'all' && !/^\d{4}-\d{2}$/.test(month)){ toast('请先选择有效月份或「全部月份（跨月分析）」'); return; }
   const model = ($('#dhAnModel').value || '').trim();
   window.open(dhAPI('analysis/export?month=' + dhEnc(month) + (model ? '&model=' + dhEnc(model) : '')), '_blank');
-  toast('分析图表导出中…');
+  toast(month === 'all' ? '跨月分析导出中（Excel）…' : '分析图表导出中…');
 }
 
 // ---- 启动 ----

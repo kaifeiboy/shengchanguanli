@@ -594,22 +594,39 @@ public class DefectHistoryService
         if (Prop(root, "data") is { } da && da.ValueKind == JsonValueKind.Array)
         {
             foreach (var d in da.EnumerateArray())
-                data.Add(new { line = GetStr(d, "line"), model = GetStr(d, "model"),
+                data.Add(new { month = GetStr(d, "month"), line = GetStr(d, "line"), model = GetStr(d, "model"),
                                ipqc = GetInt(d, "ipqc"), qa = GetInt(d, "qa"), total = GetInt(d, "total") });
         }
         var models = new List<string?>();
         if (Prop(root, "models") is { } ma && ma.ValueKind == JsonValueKind.Array)
             foreach (var m in ma.EnumerateArray()) models.Add(m.GetString());
-        return new { ok = true, month = GetStr(root, "month"), model = GetStr(root, "model"),
-                     title = GetStr(root, "title"), lines, models, data };
+        var all = GetBool(root, "all");
+        var monthsList = new List<string?>();
+        if (Prop(root, "months") is { } mo && mo.ValueKind == JsonValueKind.Array)
+            foreach (var mm in mo.EnumerateArray()) if (mm.ValueKind == JsonValueKind.String) monthsList.Add(mm.GetString());
+        return new { ok = true, all, month = GetStr(root, "month"), model = GetStr(root, "model"),
+                     title = GetStr(root, "title"), months = monthsList, lines, models, data };
     }
 
-    /// <summary>GET /analysis/export：生成分析报告 docx（A4 竖向：标题 + 柱状图 + 可编辑数据表 + 图例；可直接打印）。</summary>
+    /// <summary>GET /analysis/export：生成分析报告。单月→docx（A4 可编辑）；跨月(all)→xlsx（X=月份 堆叠图）。</summary>
     public IResult AnalysisExport(string? month, string? model)
     {
         if (string.IsNullOrWhiteSpace(month))
-            return Results.BadRequest(new { error = "缺少 month（YYYY-MM）" });
-        var outPath = Path.Combine(_exportDir, $"品质分析_{month!.Trim()}_{Guid.NewGuid().ToString("N")[..6]}.docx");
+            return Results.BadRequest(new { error = "缺少 month（YYYY-MM 或 all）" });
+        var isAll = month!.Trim().Equals("all", StringComparison.OrdinalIgnoreCase);
+        string outPath, contentType, fileName;
+        if (isAll)
+        {
+            outPath = Path.Combine(_exportDir, $"品质分析_跨月_{Guid.NewGuid().ToString("N")[..6]}.xlsx");
+            contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+            fileName = "品质分析_跨月.xlsx";
+        }
+        else
+        {
+            outPath = Path.Combine(_exportDir, $"品质分析_{month.Trim()}_{Guid.NewGuid().ToString("N")[..6]}.docx");
+            contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+            fileName = $"品质分析_{month.Trim()}.docx";
+        }
         var args = new List<string> { "analysis", "--root", _root, "--month", month.Trim(), "--out", outPath };
         if (!string.IsNullOrWhiteSpace(model)) args.AddRange(new[] { "--model", model!.Trim() });
         var json = RunPython(args.ToArray(), isWrite: false);
@@ -617,9 +634,7 @@ public class DefectHistoryService
         var root = doc.RootElement;
         if (!File.Exists(outPath))
             return Results.BadRequest(new { error = "分析导出失败：" + GetStr(root, "error") });
-        return Results.File(outPath,
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            $"品质分析_{month!.Trim()}.docx");
+        return Results.File(outPath, contentType, fileName);
     }
 
     /// <summary>GET /analysis/status：最新自动分析状态（每月 2 号生成上月全型号报告）。</summary>

@@ -51,7 +51,7 @@ def block_model(block):
     return None
 
 
-def assign_photo_lines_to_blocks(photo_lines, blocks_db):
+def assign_photo_lines_to_blocks(photo_lines, blocks_db, block_image_text_map=None):
     """把每张照片的 OCR 文本行归属到匹配其文本的块。
 
     ⭐ v19.41 型号感知过滤（块级）：
@@ -59,6 +59,16 @@ def assign_photo_lines_to_blocks(photo_lines, blocks_db):
         "照片主导型号"一致时参与归属/比对；型号不同则整块 skip（避免跨型号
         公共行"服务热线/NFC"重复归属造成假绿/假红）。
       · 块/照片任一方无型号 → 退化为原全块归属（不丢能力）。
+
+    ⭐ v19.55 方案 Z（用户拍板 2026-08-26，根治病灶）：
+      当 DB RawText 行（如 did=116 blk_4 早期 OCR 错读 "QHRWS"）与 photo OCR 行
+      （"QHRW5"）匹配失败时，兜底用「块图实际 OCR 文本」（由调用方
+      PR.ocr_photo_tiled(blk_path) 提取并以 block_image_text_map[bidx]=List[str] 传入）
+      做归属。块图渲染为真值（CAD 直出），与 photo 实物 OCR 比对 strict 匹配 →
+      该 photo 行正确归属对应块 → step4 比对获得完整 b_photo_lines →
+      "QHRWS" 经 _texts_char_diff 4/5 同 1 错位 80% 阈值进 green_block + 字符级红，
+      不再误报整行红框 + red_block_info 映射 fallback 塌缩同坐标。
+      block_image_text_map=None 时严格保持 v19.54 及更早行为（向下兼容）。
 
     返回:
       assignment: {bidx: [photo_line, ...]}  —— 每块的归属行
@@ -78,6 +88,7 @@ def assign_photo_lines_to_blocks(photo_lines, blocks_db):
     for i, pl in enumerate(photo_lines):
         owners = []
         pl_model = extract_model(pl["text"])
+        # ── Pass 1：DB RawText 严格匹配（v19.41 型号感知过滤不变）──
         for bidx, exps in block_exp.items():
             if any(_texts_match_strict(pl["text"], e) for e in exps):
                 # ⭐ v19.41 块级型号过滤：型号不同的块整块 skip
@@ -87,20 +98,37 @@ def assign_photo_lines_to_blocks(photo_lines, blocks_db):
                 if pl_model and block_md.get(bidx) and pl_model != block_md[bidx]:
                     continue
                 owners.append(bidx)
+        # ⭐ v19.55 方案 Z Pass 2：DB RawText 无归属时，兜底用块图实际 OCR 文本
+        #    （_texts_match_strict 严格匹配 + 同样的型号感知过滤；不动 pass1 已归属结果）
+        if not owners and block_image_text_map:
+            for bidx, blk_ocr_texts in block_image_text_map.items():
+                if bidx not in block_exp:
+                    continue
+                if photo_dom_model and block_md.get(bidx) and block_md[bidx] != photo_dom_model:
+                    continue
+                if pl_model and block_md.get(bidx) and pl_model != block_md[bidx]:
+                    continue
+                if any(_texts_match_strict(pl["text"], bt) for bt in (blk_ocr_texts or []) if bt):
+                    owners.append(bidx)
         line_owners[i] = owners
         for bidx in owners:
             assignment[bidx].append(pl)
     return assignment, line_owners
 
 
-def localize_blocks(photo_lines, blocks_db, margin=0.06):
+def localize_blocks(photo_lines, blocks_db, margin=0.06, block_image_text_map=None):
     """由归属行推导每块在照片上的 ROI。
+
+    block_image_text_map (Dict[bidx, List[str]]): v19.55 方案 Z —— DB RawText 不匹配
+      时用块图实际 OCR 文本做兜底归属。None 表示不启用（保持旧行为，向下兼容）。
 
     返回:
       loc: {bidx: {"roi": (x,y,w,h)|None, "lines": [...], "conf": "high"|"low"}}
       assignment, line_owners
     """
-    assignment, line_owners = assign_photo_lines_to_blocks(photo_lines, blocks_db)
+    assignment, line_owners = assign_photo_lines_to_blocks(
+        photo_lines, blocks_db, block_image_text_map=block_image_text_map
+    )
     out = {}
     for b in blocks_db:
         bidx = b["BIdx"]
