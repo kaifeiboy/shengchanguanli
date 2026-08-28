@@ -520,6 +520,10 @@ def _auto_roi(image_path):
     x1 = min(W_img, int(x1 + pad_x)); y1 = min(H_img, int(y1 + pad_y))
 
     try:
+        # 保存首次检测结果，用于质量对比和回退
+        first_texts = [pts[i][6] for i in best]
+        first_combined = "\n".join(first_texts)
+
         crop = Image.open(image_path).convert("RGB").crop((x0, y0, x1, y1))
         scale = 2.0
         crop = crop.resize((int(crop.width * scale), int(crop.height * scale)), Image.LANCZOS)
@@ -531,12 +535,72 @@ def _auto_roi(image_path):
         except OSError:
             pass
         texts2 = [t for _, t, _ in det2]
+
         if not texts2:
             # ⭐ 修复：二次OCR对超扁/极端长宽比裁剪图可能检测失败(0框)。
             #   此时回退用第一次检测的原始文本(已含型号/热线/NFC)，避免整体回退 None
             #   → 触发全图OCR产生跨块溢出假差异。
-            texts2 = [pts[i][6] for i in best]
-        return "\n".join(texts2)
+            return first_combined
+
+        # ⭐ 方案A：结果验证和回退机制 - 检测二次OCR是否导致质量退化
+        second_combined = "\n".join(texts2)
+
+        # 定义质量退化检测函数
+        def has_quality_degradation(first, second):
+            """检测二次OCR结果是否相比首次结果有质量退化"""
+            if not first or not second:
+                return False
+
+            # 检测1：文本长度显著缩短（可能丢失内容）
+            first_len = len(first.replace(" ", "").replace("\n", ""))
+            second_len = len(second.replace(" ", "").replace("\n", ""))
+            if second_len < first_len * 0.7:  # 长度减少超过30%
+                return True
+
+            # 检测2：数字序列完整性（避免 1111→111）
+            first_digits = re.findall(r"\d{4,}", first)
+            second_digits = re.findall(r"\d{4,}", second)
+            if first_digits and not second_digits:
+                return True
+            if first_digits and second_digits:
+                # 检查是否有数字序列变短
+                for fd in first_digits:
+                    found_similar = any(len(sd) >= len(fd) * 0.75 for sd in second_digits)
+                    if not found_similar:
+                        return True
+
+            # 检测3：电话号码模式保护（400-xxxxxxx）
+            first_phone = re.search(r"400[-]?\d{7}", first)
+            second_phone = re.search(r"400[-]?\d{7}", second)
+            if first_phone and not second_phone:
+                return True
+
+            # 检测4：型号标识保护（PC-xxx、QHRx等）
+            first_model = re.search(r"PC[- ]?[A-Za-z0-9]{2,}|QHR\d{1,}", first, re.I)
+            second_model = re.search(r"PC[- ]?[A-Za-z0-9]{2,}|QHR\d{1,}", second, re.I)
+            if first_model and not second_model:
+                return True
+
+            # 检测5：NFC标识保护
+            if "NFC" in first and "NFC" not in second:
+                return True
+
+            return False
+
+        # 执行质量检测，退化则回退到首次结果
+        if has_quality_degradation(first_combined, second_combined):
+            # 记录回退日志（可在实际部署时移除或改为调试日志）
+            import datetime
+            try:
+                with open(_CRASH_LOG, "a", encoding="utf-8") as f:
+                    f.write(f"[{datetime.datetime.now():%H:%M:%S}] AUTO_ROI_FALLBACK: "
+                            f"first='{first_combined[:50]}...' -> "
+                            f"second='{second_combined[:50]}...' (quality degradation detected)\n")
+            except Exception:
+                pass
+            return first_combined
+
+        return second_combined
     except Exception as ex:
         _log_crash("AUTOROI", ex)
         # ⭐ 修复：异常时也回退第一次检测文本，而非返回 None
