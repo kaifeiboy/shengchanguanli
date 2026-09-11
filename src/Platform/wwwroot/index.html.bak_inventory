@@ -16,9 +16,8 @@
     --ele1:0 2px 8px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
     --ele2:0 4px 16px rgba(44,111,235,.15), 0 2px 4px rgba(44,111,235,.08);
   }
-  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
-  canvas{touch-action:none;}
-  html,body{margin:0;padding:0;background:var(--bg);color:var(--txt);overscroll-behavior-x:none;
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--txt);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;}
   body{min-height:100vh;background-image:radial-gradient(ellipse at 50% 0%, rgba(44,111,235,.04) 0%, transparent 60%);}
   .wrap{max-width:540px;margin:0 auto;padding:0 6px 20px;display:flex;flex-direction:column;min-height:100vh;}
@@ -295,214 +294,59 @@
   .dh-img-err-txt{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--bad);
     padding:8px 10px;border:1px dashed rgba(220,38,38,.4);border-radius:8px;cursor:pointer;background:#fff7f5;}
 
-  /* ===== 库存尾数模块（v2 独立重建 · Key=invtail）===== */
-  .it-card{display:flex;flex-direction:column;gap:12px;margin-bottom:12px;}
-  .it-field{display:flex;flex-direction:column;gap:5px;}
-  .it-field>label{font-size:12.5px;color:var(--sub);display:flex;align-items:center;gap:4px;}
-  .it-field>label .req{color:var(--bad);font-weight:700;}
-  .it-field input,.it-field select,.it-field textarea{width:100%;padding:11px 12px;border-radius:12px;border:1px solid var(--line);background:#fff;color:var(--txt);font-size:15px;outline:none;box-sizing:border-box;}
-  .it-field textarea{resize:vertical;min-height:60px;font-size:14px;}
-  .it-field input:focus,.it-field select:focus,.it-field textarea:focus{border-color:var(--pri);box-shadow:0 0 0 3px rgba(44,111,235,.1);}
-  .it-hint{font-size:12px;color:var(--sub);padding:2px 0 6px;line-height:1.5;}
-  .it-hint.warn{color:var(--warn);}
-  .it-row{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;}
-  .it-row .it-field{flex:1;min-width:120px;}
-  .it-list{max-height:54vh;overflow:auto;}
-  .it-item{display:flex;align-items:flex-start;gap:10px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:8px;cursor:pointer;transition:.15s;}
-  .it-item:active{transform:scale(.99);border-color:var(--pri);background:#f5f8ff;}
-  .it-item-text{flex:1;min-width:0;}
-  .it-item-bin{font-size:18px;color:var(--pri);font-weight:800;letter-spacing:.5px;line-height:1.1;}
-  .it-item-name{font-size:14px;font-weight:700;color:var(--txt);word-break:break-all;margin-top:1px;}
-  .it-item-meta{font-size:12.5px;color:var(--sub);margin-top:4px;line-height:1.5;}
-  .it-stock{display:inline-flex;flex-direction:column;align-items:flex-end;gap:2px;min-width:64px;}
-  .it-stock-val{font-size:18px;font-weight:800;color:var(--ok);}
-  .it-stock-val.zero{color:var(--warn);}
-  .it-stock-lbl{font-size:11px;color:var(--sub);}
+  /* ===== 库存尾数模块 ===== */
+  .inv-card{display:flex;flex-direction:column;gap:10px;}
+  .inv-field{display:flex;flex-direction:column;gap:4px;}
+  .inv-field label{display:block;font-size:12.5px;color:var(--sub);}
+  .inv-field input,.inv-field select{width:100%;padding:11px 12px;border-radius:12px;border:1px solid var(--line);background:#fff;color:var(--txt);font-size:15px;outline:none;}
+  .inv-field input:focus,.inv-field select:focus{border-color:var(--pri);}
+  .inv-hint{font-size:12px;color:var(--sub);padding:6px 0;}
+  .inv-list{max-height:52vh;overflow:auto;}
+  .inv-item{display:flex;align-items:flex-start;gap:10px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:8px;cursor:pointer;transition:.15s;}
+  .inv-item:active{transform:scale(.99);border-color:var(--pri);background:#f5f8ff;}
+  .inv-item-text{flex:1;min-width:0;}
+  .inv-item-name{font-size:14px;font-weight:700;color:var(--txt);word-break:break-all;}
+  .inv-item-meta{font-size:12.5px;color:var(--sub);margin-top:4px;line-height:1.5;}
+  .inv-qty-badge{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:700;margin-top:4px;}
+  .inv-qty-badge.positive{background:rgba(22,163,74,.12);color:var(--ok);}
+  .inv-qty-badge.zero{background:rgba(245,158,11,.12);color:var(--warn);}
+  /* 出入库操作条 */
+  .inv-op-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px;background:#f8fafc;border:1px solid var(--line);border-radius:10px;margin-bottom:10px;}
+  .inv-op-bar select,.inv-op-bar input{flex:1;min-width:80px;padding:8px 10px;border-radius:10px;border:1px solid var(--line);font-size:14px;background:#fff;color:var(--txt);}
+  /* 拍照识别：画布框选 */
+  .inv-canvas-wrap{position:relative;display:inline-block;max-width:100%;border-radius:10px;overflow:hidden;border:1px solid var(--line);}
+  .inv-canvas-wrap canvas{display:block;max-width:100%;}
+  .inv-sel-rect{position:absolute;border:2px dashed #2c6feb;background:rgba(44,111,235,.08);pointer-events:none;}
+  .inv-corner{position:absolute;width:12px;height:12px;background:#2c6feb;border-radius:50%;border:2px solid #fff;pointer-events:all;cursor:move;transform:translate(-50%,-50%);}
+  /* 拍照识别多记录预览 */
+  .inv-ocr-list{display:flex;flex-direction:column;gap:8px;margin-top:10px;}
+  .inv-ocr-item{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:6px;}
+  .inv-ocr-item.ok{border-color:rgba(22,163,74,.4);}
+  .inv-ocr-item .ocr-code{font-size:13px;color:var(--pri);font-weight:700;word-break:break-all;}
+  .inv-ocr-item .ocr-info{font-size:13px;color:var(--txt);}
+  .inv-ocr-item .ocr-qty{display:flex;align-items:center;gap:8px;margin-top:4px;}
+  .inv-ocr-item .ocr-qty input{width:80px;padding:7px 10px;border-radius:10px;border:1px solid var(--line);font-size:14px;}
 
-  .it-movebar{display:flex;gap:8px;align-items:flex-end;padding:12px;background:#f8fafc;border:1px solid var(--line);border-radius:12px;flex-wrap:wrap;}
-  .it-movebar select,.it-movebar input{padding:10px 12px;border-radius:10px;border:1px solid var(--line);font-size:14px;background:#fff;color:var(--txt);min-width:0;}
-  .it-movebar .it-dir{width:80px;}
-  .it-movebar .it-qty{width:90px;}
-  .it-movebar .it-handler{flex:1;min-width:120px;}
-  .it-movebar .it-note{flex:1;min-width:120px;}
-  .it-movebar .it-act{flex:0;}
 
-  /* 经手人输入框 + 下拉 + 管理入口（.it-handler-field）*/
-  .it-handler-field{position:relative;display:flex;align-items:center;gap:6px;}
-  .it-handler-field input{flex:1;min-width:0;}
-  .it-handler-field .it-handler-manage{flex:0 0 auto;width:34px;height:34px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--sub);font-size:16px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s;}
-  .it-handler-field .it-handler-manage:active{background:#f5f8ff;color:var(--pri);border-color:var(--pri);}
-
-  .it-record{border-top:1px dashed var(--line);padding:10px 0;display:flex;gap:10px;align-items:flex-start;}
-  .it-record:first-of-type{border-top:none;padding-top:4px;}
-  .it-record-tag{flex:0;min-width:48px;text-align:center;padding:4px 0;border-radius:6px;font-size:12px;font-weight:700;}
-  .it-record-tag.in{background:rgba(22,163,74,.12);color:var(--ok);}
-  .it-record-tag.out{background:rgba(220,38,38,.12);color:var(--bad);}
-  .it-record-body{flex:1;min-width:0;}
-  .it-record-line1{font-size:14px;color:var(--txt);font-weight:600;}
-  .it-record-line1 .qty{color:var(--pri);font-weight:800;}
-  .it-record-meta{font-size:12px;color:var(--sub);margin-top:2px;}
-  .it-record-note{font-size:12px;color:var(--sub);margin-top:2px;font-style:italic;}
-  .it-record-del{flex:0;align-self:center;color:var(--sub);cursor:pointer;padding:4px 8px;border-radius:6px;font-size:12px;}
-  .it-record-del:active{background:rgba(220,38,38,.08);color:var(--bad);}
-
-  /* ===== 库存尾数·详情/新增 紧凑布局（第二轮）===== */
-  .it-hero{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px;}
-  .it-hero-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
-  .it-hero-cell{display:flex;flex-direction:column;gap:4px;min-width:0;}
-  .it-hero-label{font-size:12px;color:var(--sub);}
-  .it-hero-value{font-size:15px;font-weight:700;color:var(--txt);word-break:break-all;}
-  .it-hero-value.big{font-size:18px;font-weight:800;color:var(--pri);line-height:1.15;}
-  .it-hero-cell.stock{background:rgba(44,111,235,.08);border-radius:10px;padding:8px 10px;}
-  .it-hero-cell.stock .it-hero-label{color:var(--pri);font-weight:600;}
-  .it-hero-stock-val{font-size:22px;font-weight:800;color:var(--pri);line-height:1.1;}
-  .it-hero-stock-val.zero{color:var(--warn);}
-  .it-hero-detail{margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);}
-  .it-hero-detail .it-hero-value{font-size:15px;font-weight:600;}
-
-  /* 操作行（入库/出库 双列并列，输入框与按键连成一体，无独立方向标签） */
-  .it-movebar.it-movebar-compact{padding:0;background:transparent;border:none;border-radius:0;gap:8px;flex-direction:column;align-items:stretch;}
-  .it-move-grid{display:flex;flex-direction:row;gap:10px;}
-  .it-move-col{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px;}
-  /* 输入框 + 按键 连成一体的一体单元（绿=入库 / 红=出库） */
-  .it-move-unit{display:flex;align-items:stretch;border-radius:14px;overflow:hidden;border:2px solid;box-shadow:0 2px 6px rgba(0,0,0,.06);}
-  .it-move-unit.in{border-color:var(--ok);background:#fff;}
-  .it-move-unit.out{border-color:var(--bad);background:#fff;}
-  .it-move-unit input{padding:12px 10px;border:none;border-radius:0;background:#fff;color:var(--txt);font-size:16px;text-align:center;outline:none;box-sizing:border-box;width:100%;min-width:0;}
-  .it-move-unit.in input:focus{background:rgba(22,163,74,.05);}
-  .it-move-unit.out input:focus{background:rgba(220,38,38,.05);}
-  /* 按键突出：填满颜色、加粗、明显大于输入框，与输入框无缝隙连成一体 */
-  .it-move-go{padding:12px 16px;border:none;border-radius:0;font-size:16px;font-weight:800;color:#fff;cursor:pointer;flex:0 0 auto;transition:.15s;white-space:nowrap;letter-spacing:1px;}
-  .it-move-go.in{background:var(--ok);box-shadow:inset -1px 0 0 rgba(0,0,0,.08);}
-  .it-move-go.out{background:var(--bad);box-shadow:inset -1px 0 0 rgba(0,0,0,.08);}
-  .it-move-go:active{filter:brightness(.92);}
-  .it-movebar.it-movebar-compact .it-hint{margin:-2px 0 0;}
-
-  /* 备注 + 流水笔数 并列一行 */
-  .it-act-row{display:flex;gap:8px;align-items:stretch;margin-bottom:8px;}
-  .it-act-row .it-note{flex:1;min-width:0;padding:11px 12px;border-radius:12px;border:1px solid var(--line);background:#fff;color:var(--txt);font-size:15px;outline:none;box-sizing:border-box;}
-  .it-act-row .it-note:focus{border-color:var(--pri);box-shadow:0 0 0 3px rgba(44,111,235,.1);}
-  .it-rec-toggle{flex:0 0 auto;display:inline-flex;align-items:center;gap:2px;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:#f8fafc;color:var(--txt);font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;}
-  .it-rec-toggle::after{content:' ▾';font-size:12px;color:var(--sub);}
-  .it-rec-toggle.open::after{content:' ▴';}
-  .it-rec-collapsed{display:none;}
-
-  /* 主按钮（查询/确认/确认新增/保存/生成Excel） */
-  .it-btn-pri{padding:11px 18px;border-radius:12px;border:0;background:var(--pri);color:#fff;font-size:15px;font-weight:700;cursor:pointer;transition:.15s;white-space:nowrap;}
-  .it-btn-pri:active{transform:scale(.98);opacity:.92;}
-
-  /* 历史操作明细 */
-  .it-rec-head{font-size:13px;color:var(--sub);font-weight:600;padding:6px 2px 8px;}
-  .it-empty{display:flex;flex-direction:column;align-items:center;gap:8px;padding:24px 0;color:var(--sub);font-size:13px;}
-  .it-empty .ic{font-size:32px;opacity:.6;}
-  .it-record-detail{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px;background:#fff;}
-  .it-record-top{display:flex;align-items:center;gap:8px;}
-  .it-record-qty{font-size:15px;font-weight:800;}
-  .it-record-qty.in{color:var(--ok);}
-  .it-record-qty.out{color:var(--bad);}
-  .it-record-bal{font-size:12.5px;color:var(--sub);}
-  .it-record-info{margin-top:6px;font-size:12.5px;color:var(--sub);line-height:1.6;}
-  .it-record-info .k{color:var(--txt);font-weight:600;}
-
-  /* ===== 库存尾数·首页 紧凑布局 ===== */
-  /* 参考线对齐：以空态提示「输入关键词搜索…」高度为基准，整体下移搜索框+两图标，
-     使图标底部对齐该参考线。如需微调，只需改 padding-top 数值。 */
-  .it-home-top{position:relative;margin-top:16px;padding-top:40px;}
-  .it-search{display:flex;gap:8px;align-items:center;margin-bottom:14px;}
-  .it-search-input{flex:1;min-width:0;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:#fff;color:var(--txt);font-size:15px;outline:none;box-sizing:border-box;}
-  .it-search-input:focus{border-color:var(--pri);box-shadow:0 0 0 3px rgba(44,111,235,.1);}
-  .it-search-btn{flex:0 0 auto;}
-  .it-feat-row{display:flex;gap:12px;margin-bottom:14px;}
-  .it-feat-row .feat-btn.feat-l{flex:1;flex-direction:row;align-items:center;justify-content:center;gap:12px;padding:16px 12px;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.05);transition:.15s;}
-  .it-feat-row .feat-btn.feat-l:active{transform:scale(.98);background:#f5f8ff;}
-  .it-feat-row .feat-btn.feat-l .feat-ic{width:56px;height:56px;border-radius:16px;font-size:28px;box-shadow:none;flex:0 0 auto;}
-  .it-feat-row .feat-btn.feat-l .feat-ic::after{display:none;}
-  .it-feat-row .feat-btn.feat-l .feat-lb{font-size:15px;font-weight:800;letter-spacing:0;line-height:1.1;white-space:nowrap;}
-  .it-item{padding:10px;margin-bottom:6px;}
-  .it-item-bin{font-size:18px;}
-  .it-item-name{font-size:13.5px;}
-  .it-stock-val{font-size:19px;}
-
-  /* ---- 拍照 OCR 弹层 ---- */
-  .it-ocr-overlay{position:fixed;inset:0;background:rgba(15,23,42,.85);z-index:9999;display:flex;flex-direction:column;}
-  .it-ocr-top{padding:10px 14px;display:flex;align-items:center;gap:8px;background:#0f172a;color:#fff;flex-wrap:wrap;}
-  .it-ocr-top .ttl{flex:1;font-weight:700;font-size:15px;}
-  .it-ocr-top .btn{padding:6px 12px;border-radius:8px;border:1px solid #475569;background:#1e293b;color:#fff;font-size:13px;cursor:pointer;}
-  .it-ocr-top .btn.pri{background:#2563eb;border-color:#3b82f6;}
-  .it-ocr-top .btn.ok{background:var(--ok);border-color:var(--ok);}
-  .it-ocr-top .btn:disabled{opacity:.5;cursor:not-allowed;}
-  .it-ocr-wb{display:inline-flex;gap:4px;background:#1e293b;border-radius:8px;padding:3px;}
-  .it-ocr-wb button{padding:4px 10px;border-radius:6px;border:0;background:transparent;color:#cbd5e1;font-size:12px;cursor:pointer;}
-  .it-ocr-wb button.active{background:#2563eb;color:#fff;}
-  .it-ocr-canvas-wrap{flex:1;overflow:auto;background:#1e293b;display:flex;align-items:flex-start;justify-content:center;padding:12px;}
-  .it-ocr-canvas-wrap canvas{display:block;background:#fff;max-width:none;box-shadow:0 4px 24px rgba(0,0,0,.4);}
-  .it-ocr-sel{position:absolute;border:2px dashed #2c6feb;background:rgba(44,111,235,.18);pointer-events:none;border-radius:4px;}
-  .it-ocr-hint{position:absolute;color:#fff;background:rgba(0,0,0,.5);padding:2px 8px;border-radius:4px;font-size:11px;pointer-events:none;}
-  .it-ocr-bot{padding:10px 14px;background:#0f172a;color:#fff;display:flex;flex-direction:column;gap:8px;border-top:1px solid #334155;max-height:45vh;overflow:auto;}
-  .it-ocr-results{display:flex;flex-direction:column;gap:6px;}
-  .it-ocr-result{border:1px solid #475569;background:#1e293b;border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:6px;}
-  .it-ocr-result.existing{border-color:#f59e0b;background:rgba(245,158,11,.1);}
-  .it-ocr-result-head{display:flex;gap:6px;align-items:center;}
-  .it-ocr-result-head .idx{flex:0;color:#fbbf24;font-weight:700;font-size:12px;min-width:32px;}
-  .it-ocr-result-head input{flex:1;padding:7px 9px;border-radius:8px;border:1px solid #475569;background:#0f172a;color:#fff;font-size:14px;outline:none;}
-  .it-ocr-result-head input.bad{border-color:#ef4444;}
-  .it-ocr-result-head .del{flex:0;color:#94a3b8;font-size:18px;padding:0 6px;cursor:pointer;}
-  .it-ocr-result-head .del:hover{color:#ef4444;}
-  .it-ocr-result-body{display:flex;flex-direction:column;gap:5px;}
-  .it-ocr-result-body textarea{width:100%;padding:7px 9px;border-radius:8px;border:1px solid #475569;background:#0f172a;color:#fff;font-size:13px;outline:none;resize:vertical;min-height:38px;}
-  .it-ocr-result-foot{display:flex;gap:6px;align-items:center;font-size:11.5px;color:#94a3b8;}
-  .it-ocr-result-foot .badge{background:#475569;color:#cbd5e1;padding:2px 6px;border-radius:4px;font-size:10.5px;}
-  .it-ocr-result-foot .badge.warn{background:#7c2d12;color:#fdba74;}
-  .it-ocr-result-foot .badge.dup{background:#92400e;color:#fcd34d;}
-  .it-ocr-result-foot .goto{margin-left:auto;color:#60a5fa;cursor:pointer;text-decoration:underline;font-size:12px;}
-  .it-ocr-bot .actbar{display:flex;gap:8px;justify-content:flex-end;}
-  .it-ocr-bot .btn{padding:7px 14px;border-radius:8px;border:0;background:#334155;color:#fff;font-size:13px;cursor:pointer;}
-  .it-ocr-bot .btn.pri{background:#2563eb;}
-  .it-ocr-bot .btn.ok{background:var(--ok);}
-
-  /* 自适应手机：>=480px 单行操作栏，<480px 自动堆叠 */
-  @media (max-width: 480px){
-    .it-movebar{flex-direction:column;align-items:stretch;}
-    .it-movebar .it-dir,.it-movebar .it-qty,.it-movebar .it-handler,.it-movebar .it-note,.it-movebar .it-act{width:100%;flex:1;}
-    .it-row{flex-direction:column;align-items:stretch;}
-    .it-row .it-field{min-width:0;}
-  }
-  /* 图片标注按钮 */
-  .dh-at{padding:6px 10px;border-radius:8px;border:1px solid #cbd5e1;background:#e2e8f0;color:#334155;font-size:12px;cursor:pointer;transition:.15s;}
-  .dh-aa{padding:6px 10px;border-radius:8px;border:1px solid #cbd5e1;background:#f1f5f9;color:#475569;font-size:12px;cursor:pointer;transition:.15s;}
-  .dh-aa:hover{background:#e2e8f0;}
-  /* 首页模块卡片 */
-  .home-card{display:flex;flex-direction:column;align-items:center;gap:10px;cursor:pointer;
-    background:linear-gradient(145deg,#fff 0%,#f8fafc 100%);border:1px solid var(--line);border-radius:20px;
-    padding:20px 16px;transition:.2s;box-shadow:0 2px 8px rgba(0,0,0,.04);}
-  .home-card:active{transform:scale(.96);box-shadow:0 1px 4px rgba(0,0,0,.06);}
-  .home-card .ic{width:72px;height:72px;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:36px;color:#fff;position:relative;overflow:hidden;}
-  .home-card .ic::after{content:'';position:absolute;top:0;left:0;right:0;height:40%;background:linear-gradient(180deg,rgba(255,255,255,.35) 0%,rgba(255,255,255,0) 100%);border-radius:20px 20px 0 0;}
-  .home-card .lb{font-size:15px;font-weight:700;color:var(--txt);text-align:center;}
-  .home-card .sub{font-size:11.5px;color:var(--sub);text-align:center;margin-top:2px;}
-  /* 模块菜单页 */
-  .menu-card{display:flex;align-items:center;gap:14px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:12px;cursor:pointer;transition:.18s;}
-  .menu-card:active{transform:scale(.98);border-color:var(--pri);background:#f5f8ff;}
-  .menu-card .mc-icon{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;color:#fff;flex:none;}
-  .menu-card .mc-text{flex:1;min-width:0;}
-  .menu-card .mc-title{font-size:15px;font-weight:700;color:var(--txt);}
-  .menu-card .mc-desc{font-size:12px;color:var(--sub);margin-top:2px;}
-  .menu-card .mc-arrow{font-size:20px;color:#cbd5e1;}
-</style>
 </head>
 <body>
-<div class="wrap" id="appWrap">
-  <!-- 顶部标题栏（首页显示模块列表，模块内显示返回+标题） -->
-  <div class="top-bar" id="topBar">
-    <span class="back" id="pageBack" style="display:none;">←</span>
-    <h1 id="pageTitle" style="margin:0;font-size:17px;font-weight:700;">生产管理</h1>
+<div class="wrap">
+  <!-- 顶部行：模块功能标签栏（左，可切换）+ 更多按钮（右，同行平行、贴屏幕右侧） -->
+  <div class="top-bar">
+    <div class="mod-tabs" id="modTabs" style="display:none;"></div>
     <div class="more-btn" id="btnMore">⋯</div>
   </div>
 
-  <!-- 模块内容区 -->
-  <section id="moduleRoot" style="flex:1;overflow-y:auto;"></section>
+  <!-- 模块大标题 + 副标题（置于标签栏下方，居中） -->
+  <header class="top">
+    <h1 id="appTitle">打标首件对比</h1>
+    <div class="top-sub" id="appSubTitle">拍照识别 · 智能比对 · 差异标记</div>
+  </header>
 
-  <footer style="text-align:center;color:var(--sub);font-size:10px;opacity:.4;flex:none;padding:12px 0 8px;">生产管理系统 v1.0</footer>
+  <!-- 模块内容区：弹性撑满，内容垂直居中 -->
+  <section id="moduleRoot" style="flex:1;"></section>
+
+  <footer style="text-align:center;color:var(--sub);font-size:10px;margin-top:0;opacity:.4;flex:none;padding:10px 0 8px;">打标首件比对系统 v1.0</footer>
 </div>
 
 <!-- 选图纸 底部弹层 -->
@@ -546,190 +390,75 @@
 <div class="toast" id="toast"></div>
 
 <script>
-// ---- 全局状态 ----
+console.log('[DEBUG] Script starting');
+try {
+// 模型：navStack 每帧 = "当前页按返回键时该执行什么"。进入子页/弹层时 navPush，popstate 时弹栈执行。
+let _navBacks = [];
+function navPush(backFn){ try{ _navBacks.push(backFn); history.pushState({_nv:_navBacks.length}, ''); }catch(e){} }
+function navBack(){ try{ history.back(); }catch(e){ if(_navBacks.length){ var f=_navBacks.pop(); if(typeof f==='function') try{f();}catch(_){} } } }
+window.addEventListener('popstate', function(){ if(_navBacks.length){ var fn=_navBacks.pop(); if(typeof fn==='function'){ try{fn();}catch(e){} } } });
 const $ = (s) => document.querySelector(s);
 let curDrawing = null;          // 当前选中的图纸
 let lastPhotoFile = null;        // 最近一次比对用的照片（供差异标记复用）
 let pendingAction = null;       // 'compare' | 'detail'（选图纸弹层用途分支）
-let modulesCache = [];          // 加载的模块列表
-
-// ---- 页面导航历史栈 ----
-// 设计原则：_navBack 与手势返回走同一条路径（浏览器历史回退 + popstate统一同步）
-// _navPush 与 pushState 一一对应；popstate 根据 location.hash 在栈中定位并 slice
-let _navStack = [];  // [{key, title, render, back}]
-
-function _navPush(key, title, render, back){
-  _navStack.push({key, title, render, back});
-  history.pushState({key}, '', '#' + key);
-  _updateNavTitle(title);
-}
-
-function _isOverlayOpen(){
-  return ['#overlay','#sheet','#toolOverlay','#toolSheet','#menuOverlay','#drawer']
-    .some(function(sel){ var el=$(sel); return el && el.classList.contains('show'); });
-}
-function _closeAnyOverlay(){
-  var closed=false;
-  ['#overlay','#sheet','#toolOverlay','#toolSheet','#menuOverlay','#drawer'].forEach(function(sel){
-    var el=$(sel); if(el && el.classList.contains('show')){ el.classList.remove('show'); closed=true; }
-  });
-  return closed;
-}
-// 左缘右滑返回手势（与顶部 #pageBack 走同一条 _navBack 路径，逐级返回）
-function initSwipeBack(){
-  var sx=0, sy=0, tracking=false, startEl=null, W=window.innerWidth, back=false;
-  var app = $('#appWrap') || document.body;
-  app.addEventListener('touchstart', function(e){
-    if(e.touches.length!==1){ tracking=false; return; }
-    var t=e.touches[0]; sx=t.clientX; sy=t.clientY; tracking=true; back=false;
-    startEl = document.elementFromPoint(sx, sy);
-  }, {passive:true});
-  app.addEventListener('touchmove', function(e){
-    if(!tracking) return;
-    var dx=e.touches[0].clientX-sx, dy=e.touches[0].clientY-sy;
-    if(!back){
-      // 仅在「左缘起手 + 明显横向右滑」时接管，其余（纵向滚动/普通横向）不干预
-      if(sx <= W*0.35 && dx > 14 && dx > Math.abs(dy)*1.6){ back=true; }
-      else if(Math.abs(dx) > 14){ tracking=false; return; }
-    }
-    // 关键：吃掉系统原生边缘返回手势，避免「一次滑动回退两级」(自定手势+系统返回 双触发)
-    if(back && e.cancelable) e.preventDefault();
-  }, {passive:false});
-  app.addEventListener('touchend', function(e){
-    if(!tracking) return; tracking=false;
-    if(!back) return;
-    var t=e.changedTouches[0];
-    var dx=t.clientX-sx, dy=t.clientY-sy;
-    if(dx < 90 || dx < Math.abs(dy)*1.6) return;
-    var el = startEl;                            // 画布/输入控件上不触发返回
-    if(el && el.closest && (el.closest('canvas') || el.closest('input') || el.closest('textarea') || el.closest('select'))) return;
-    _navBack();
-  }, {passive:true});
-}
-function _navBack(){
-  // 优先关闭当前打开的弹层/抽屉（选择图纸、管理、更多等），再走历史回退
-  if (_closeAnyOverlay()) return;
-  if (_navStack.length <= 1) return;  // 已在首页，不再回退
-  // 只触发浏览器历史回退，栈同步与渲染由 popstate 统一处理
-  history.back();
-}
-
-// popstate 统一处理器：根据当前 hash 同步导航栈并渲染
-function _navSyncFromHash(){
-  var currentHash = window.location.hash || '#home';
-  var idx = -1;
-  for (var i = _navStack.length - 1; i >= 0; i--){
-    if ('#' + _navStack[i].key === currentHash){ idx = i; break; }
-  }
-  if (idx > 0){
-    // 在栈中找到（含中间位置），裁剪到该层
-    _navStack = _navStack.slice(0, idx + 1);
-    var prev = _navStack[_navStack.length - 1];
-    if (prev){
-      $('#pageBack').style.display = 'inline';
-      prev.render();
-      _updateNavTitle(prev.title);
-    }
-  } else {
-    // idx<=0（首页）或找不到（超出应用）：回到平台首页
-    if (_navStack.length === 0) _navStack = [{key:'home', title:'生产管理', render:renderPlatformHome, back:null}];
-    _navStack = [_navStack[0]];
-    $('#pageBack').style.display = 'none';
-    renderPlatformHome();
-    _updateNavTitle('生产管理');
-  }
-}
-
-function _updateNavTitle(title){
-  $('#pageTitle').textContent = title;
-}
+let modulesCache = [];          // loadModules 缓存，供 关于 面板使用
 
 function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2200); }
 function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 // Encode each path segment separately so '/' stays as path separator (security/route requirement)
 function encodeVP(p){ return p.split('/').map(s=>encodeURIComponent(s)).join('/'); }
 
-// ---- 页面加载入口 ----
+// ---- 模块注册表：未来模块在此接入即可即插即用 ----
+const MODULE_RENDERERS = { drawings: renderDrawingsModule, unbind: renderUnbindModule, defecthistory: renderDefectHistoryModule, inventory: renderInventoryModule };
+
+// ---- 模块标签栏 / 激活 ----
 async function loadModules(){
   try{
     const mods = await (await fetch('api/modules')).json();
     modulesCache = mods || [];
-  }catch(e){ modulesCache = []; }
-  // 监听系统返回手势/浏览器返回：统一由 _navSyncFromHash 处理
-  window.addEventListener('popstate', function(e){
-    _navSyncFromHash();
-  });
-  // 左缘右滑返回手势
-  initSwipeBack();
-  // 初始化首页
-  _navStack = [];
-  $('#pageBack').style.display = 'none';
-  _navPush('home', '生产管理', renderPlatformHome, null);
-  renderPlatformHome();
+  }catch(e){ console.warn('modules load failed',e); modulesCache = []; }
+  renderModTabs();
+  const first = modulesCache.slice().sort((a,b)=>(a.order||0)-(b.order||0))[0];
+  if(first) activateModule(first.key);
+  else $('#moduleRoot').innerHTML='<div class="empty">暂无可用模块</div>';
+}
+function renderModTabs(){
+  const tabs = $('#modTabs');
+  const sorted = modulesCache.slice().sort((a,b)=>(a.order||0)-(b.order||0));
+  // 去掉图标，只保留名称文字（去掉"对比""比对"后缀）
+  tabs.innerHTML = sorted.map(m=>`<button class="mod-tab" data-key="${esc(m.key)}">${(m.name||'').replace('比对','').replace('对比','')}</button>`).join('');
+  // 只有一个模块时隐藏标签栏，避免占空间
+  if (sorted.length <= 1) tabs.style.display = 'none';
+  else tabs.style.display = 'flex';
+  tabs.querySelectorAll('.mod-tab').forEach(t=> t.onclick=()=> activateModule(t.dataset.key));
+}
+function setHeader(name, sub){
+  $('#appTitle').textContent = name || '生产管理平台';
+  $('#appSubTitle').textContent = sub || '';
 }
 
-// ---- 首页：模块卡片列表 ----
-function renderPlatformHome(){
+function activateModule(key){
+  _navBacks.length = 0;   // 切模块 = 重置导航起点，清空旧模块的返回栈
   const root = $('#moduleRoot');
-  const sorted = modulesCache.slice().sort((a,b)=>(a.order||0)-(b.order||0));
-  $('#pageBack').style.display = 'none';
-  $('#pageTitle').textContent = '生产管理';
-  if (sorted.length === 0){
-    root.innerHTML = '<div style="padding:40px 20px;text-align:center;color:var(--sub);"><div style="font-size:48px;margin-bottom:16px;">📭</div><div style="font-size:15px;font-weight:600;color:var(--txt);margin-bottom:8px;">无法加载模块</div><div style="font-size:13px;">请检查平台服务是否启动<br>或刷新页面重试</div></div>';
+  root.innerHTML='';
+  // 更新标签选中态
+  document.querySelectorAll('.mod-tab').forEach(t=> t.classList.toggle('active', t.dataset.key===key));
+  const mod = modulesCache.find(m=>m.key===key);
+  const subs = { drawings: '拍照识别 · 智能比对 · 差异标记', unbind: '解绑查询 · 外箱解绑 · 维修解绑', defecthistory: '型号查询 · 单条录入 · 批量上传', inventory: '新增 · 查询 · 出入库 · 拍照识别' };
+  setHeader(mod ? mod.name : (key==='unbind'?'维修解绑':'生产管理平台'), subs[key] || '');
+  if(MODULE_RENDERERS[key]){
+    MODULE_RENDERERS[key]();
     return;
   }
-  const colors = {
-    drawings: { bg: 'linear-gradient(145deg,#6366f1,#4f46e5)', shadow: 'rgba(99,102,241,.35)' },
-    unbind: { bg: 'linear-gradient(145deg,#f59e0b,#d97706)', shadow: 'rgba(245,158,11,.35)' },
-    defecthistory: { bg: 'linear-gradient(145deg,#10b981,#059669)', shadow: 'rgba(16,185,129,.35)' },
-    inventory: { bg: 'linear-gradient(145deg,#3b82f6,#2563eb)', shadow: 'rgba(59,130,246,.35)' },
-    invtail: { bg: 'linear-gradient(145deg,#0ea5e9,#0284c7)', shadow: 'rgba(14,165,233,.35)' }
-  };
-  let html = `<div style="padding:16px;display:flex;flex-direction:column;gap:14px;">`;
-  html += `<div style="text-align:center;padding:10px 0 6px;">
-    <div style="font-size:13px;color:var(--sub);">选择一个模块开始工作</div>
+  // 未知模块：诚实的占位（体现可扩展架构）
+  const name = mod?mod.name:key;
+  const icon = mod?mod.icon:'📦';
+  root.innerHTML = `<div class="card" style="text-align:center;">
+    <div style="font-size:30px;">${esc(icon)}</div>
+    <h3 style="justify-content:center;">${esc(name)}</h3>
+    <div class="meta-line">📦 模块「${esc(name)}」已加载，界面待接入（请在 H5 注册该模块界面）</div>
   </div>`;
-  html += `<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px;">`;
-  sorted.forEach(m => {
-    const c = colors[m.key] || { bg: 'linear-gradient(145deg,#64748b,#475569)', shadow: 'rgba(100,116,139,.35)' };
-    const name = (m.name||'').replace('比对','').replace('对比','');
-    const subs = {
-      drawings: '拍照识别 · 智能比对',
-      unbind: '外箱解绑 · 维修解绑',
-      defecthistory: '型号查询 · 批量上传',
-      inventory: '新增 · 查询 · 出入库',
-      invtail: '新增 · 拍照 · 出入库'
-    };
-    html += `<div class="home-card" onclick="openModule('${esc(m.key)}')">
-      <div class="ic" style="background:${c.bg};box-shadow:0 6px 20px ${c.shadow};">${esc(m.icon||'📦')}</div>
-      <div class="lb">${esc(name)}</div>
-      <div class="sub">${esc(subs[m.key]||'')}</div>
-    </div>`;
-  });
-  html += `</div></div>`;
-  root.innerHTML = html;
 }
-
-// ---- 进入模块 ----
-function openModule(key){
-  const mod = modulesCache.find(m=>m.key===key);
-  const name = mod ? mod.name.replace('比对','').replace('对比','') : key;
-  // 添加到导航栈，显示返回按钮
-  _navPush(key, name, function(){
-    $('#pageBack').style.display = 'inline';
-    $('#pageBack').onclick = _navBack;
-    if (MODULE_RENDERERS[key]) MODULE_RENDERERS[key]();
-  }, null);
-  // 显示返回按钮
-  $('#pageBack').style.display = 'inline';
-  $('#pageBack').onclick = _navBack;
-  if (MODULE_RENDERERS[key]){
-    MODULE_RENDERERS[key]();
-  }
-}
-
-// ---- 模块渲染器注册 ----
-const MODULE_RENDERERS = { drawings: renderDrawingsModule, unbind: renderUnbindModule, defecthistory: renderDefectHistoryModule, invtail: renderInvTailModule };
 
 // ---- 图纸模块渲染器 ----
 function renderDrawingsModule(){
@@ -811,7 +540,7 @@ function renderUnbindModule(){
   $('#ubBtnRepair').onclick = unbindRepair;
   $('#ubBtnUsage').onclick = ()=>{ openDrawer(); showMenuContent('usage'); };
   document.querySelectorAll('.ub-scan').forEach(b => { b.onclick = () => openScan(b.dataset.target); });
-  const sc = document.getElementById('scanClose'); if (sc) sc.onclick = closeScan;
+  const sc = document.getElementById('scanClose'); if (sc) sc.onclick = navBack;
 }
 
 function unbindGetValues(){
@@ -1153,6 +882,7 @@ function openSheet(action){
   $('#pickerSearch').value='';
   $('#overlay').classList.add('show');
   $('#sheet').classList.add('show');
+  navPush(closeSheet);
   loadDrawings($('#pickerList'), onPick);
 }
 function closeSheet(){
@@ -1161,12 +891,8 @@ function closeSheet(){
 }
 function onPick(id){
   closeSheet();
-  var isCmp = (pendingAction==='compare');
-  // 接入导航栈：使「返回」可逐级回到模块首页，而非直接跳回平台首页
-  _navPush(isCmp?('cmp'+id):('det'+id), isCmp?'拍照比对':'图纸详情', function(){
-    if(isCmp) openCompare(id); else openDetail(id);
-  }, null);
-  if(isCmp) openCompare(id); else openDetail(id);
+  if(pendingAction==='compare') openCompare(id);
+  else openDetail(id);
 }
 
 // ---- 上传识别部位 UI（拍照 / 相册，两个入口共用）----
@@ -1208,8 +934,8 @@ function bindUpload(card){
 async function openCompare(id){
   resetRootFlex();
   const root = $('#moduleRoot');
-  // 返回统一走顶部 #pageBack（←），不再在视图内重复放置返回键，避免模块下一级出现两个返回键
-  root.innerHTML = '<div class="card" id="compareCard" style="margin-top:14px;"></div>';
+  root.innerHTML = '<div class="bar"><span class="back" id="btnCompareBack">‹ 返回</span></div><div class="card" id="compareCard"></div>';
+  navPush(renderDrawingsModule); $('#btnCompareBack').onclick = navBack;
   const box = $('#compareCard');
   box.innerHTML='<div class="meta-line"><span class="spinner"></span> 加载中…</div>';
   try{
@@ -1229,7 +955,8 @@ async function openCompare(id){
 async function openDetail(id){
   resetRootFlex();
   const root = $('#moduleRoot');
-  root.innerHTML = '<div class="card" id="detailCard" style="margin-top:14px;"></div>';
+  root.innerHTML = '<div class="bar"><span class="back" id="btnDetailBack">‹ 返回</span></div><div class="card" id="detailCard"></div>';
+  navPush(renderDrawingsModule); $('#btnDetailBack').onclick = navBack;
   const box = $('#detailCard');
   box.innerHTML='<div class="meta-line"><span class="spinner"></span> 加载中…</div>';
   try{
@@ -1253,6 +980,32 @@ async function onPartFile(e){
   await submitPart(f0);
   e.target.value='';
 }
+// ⭐ v19.51（2026-08-21 手机 H5 80% 超时根因）：外网走 Cloudflare/natapp 免费隧道，上传
+//    带宽极低（实测 8.8MB 传 60s+ <150KB/s），手机原图 5-15MB → 前端 45s abort。
+//    通用修复：浏览器端 canvas 压缩到最长边 ≤maxSide + JPEG q（15MB → ~300KB，上传 2-3s；
+//    服务器端 OCR 用 960px 工作图、图标检测原图 ≤2000px，压缩后仍可检出，识别不受影响）。
+function compressImage(file, maxSide, quality){
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const s = Math.max(img.width, img.height);
+        let w = img.width, h = img.height;
+        if (s > maxSide) { const k = maxSide / s; w = Math.round(img.width * k); h = Math.round(img.height * k); }
+        const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+        cv.getContext('2d').drawImage(img, 0, 0, w, h);
+        cv.toBlob((blob) => {
+          URL.revokeObjectURL(url);
+          if (blob) { blob.name = file.name || 'photo.jpg'; blob.lastModified = file.lastModified || Date.now(); resolve(blob); }
+          else resolve(file);
+        }, 'image/jpeg', quality);
+      } catch (e) { URL.revokeObjectURL(url); reject(e); }
+    };
+    img.onerror = (e) => { URL.revokeObjectURL(url); reject(e); };
+    img.src = url;
+  });
+}
 // ---- 送比对（实时拍 / 相册 共用）----
 // attempt：内部自动重试次数（仅当服务端瞬时抖动「识别服务暂时不可用」时重试 1 次，对用户透明）
 async function submitPart(file, attempt){
@@ -1260,13 +1013,28 @@ async function submitPart(file, attempt){
   attempt = attempt || 0;
   const box = document.querySelector('.partResult');
   if(!box) return;
-  box.innerHTML='<div class="meta-line"><span class="spinner"></span> 照片内容识别中…（约 5~15 秒，取决于光线与图片大小）</div>';
-  const fd = new FormData(); fd.append('drawingId', curDrawing.id); fd.append('file', file);
+  // ⭐ E（渐进式显示）：等待期间立即回显用户上传照片 + 比对中遮罩，避免空白等待。
+  //    零后端改动、端点与 /match-block·/diff-photo·renderPhotoDiff 回滚通道全部不变。
+  const _preview = URL.createObjectURL(file);
+  if (window._waitPreviewUrl) { try { URL.revokeObjectURL(window._waitPreviewUrl); } catch (e) {} }
+  window._waitPreviewUrl = _preview;
+  box.innerHTML =
+    '<div style="display:flex;flex-direction:column;align-items:center;gap:10px;">'
+    + '<div style="position:relative;max-width:340px;width:100%;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:#000;">'
+    +   '<img src="' + _preview + '" style="width:100%;display:block;max-height:380px;object-fit:contain;" alt="上传照片预览"/>'
+    +   '<div style="position:absolute;left:0;right:0;bottom:0;padding:8px 10px;background:linear-gradient(transparent,rgba(0,0,0,.62));color:#fff;font-size:12px;display:flex;align-items:center;gap:8px;">'
+    +     '<span class="spinner"></span> 正在识别并生成对比结果…（约 5~15 秒）</div>'
+    + '</div></div>';
+  // ⭐ v19.51：上传前浏览器端压缩（最长边 ≤1600px + q0.85），规避免费隧道低带宽导致 45s 超时。
+  let upFile = file;
+  try { upFile = await compressImage(file, 1600, 0.85); } catch (_) { /* 压缩失败回退原图 */ }
+  const fd = new FormData(); fd.append('drawingId', curDrawing.id); fd.append('file', upFile, upFile.name || 'photo.jpg');
   lastPhotoFile = file;          // 保留以供「查看差异」复用
   const ctrl = new AbortController();
   const to = setTimeout(() => ctrl.abort(), 45000);
   try{
-    const r = await (await fetch('api/drawings/match-block',{method:'POST',body:fd,signal:ctrl.signal})).json();
+    // ⭐ 合并端点：一次请求内完成 OCR + 照片整体标示 + 块匹配 + 历史入库（去除了旧流程的二次 /diff-photo 请求，最终结果显示更快）
+    const r = await (await fetch('api/drawings/match-and-photo',{method:'POST',body:fd,signal:ctrl.signal})).json();
     clearTimeout(to);
     // 服务端瞬时抖动（OCR 引擎偶发不可用）：自动重试 1 次，避免用户误以为照片拍烂了
     if (r && r.qualityError && r.qualityError.indexOf('暂时不可用') >= 0 && attempt === 0) {
@@ -1285,6 +1053,7 @@ async function submitPart(file, attempt){
 }
 // ---- 三态结果渲染（完全匹配 / 部分匹配 / 未匹配）----
 function renderMatchResult(box, r){
+  if (window._waitPreviewUrl) { try { URL.revokeObjectURL(window._waitPreviewUrl); } catch (e) {} window._waitPreviewUrl = null; }
   let html = '';
     
     // Rule 3: 三态结果渲染（完全匹配 / 部分匹配 / 未匹配）
@@ -1366,9 +1135,9 @@ function renderMatchResult(box, r){
       html += `</div></details>`;
     }
     box.innerHTML = html;
-  // ⭐ 双展示：异步生成照片整体标示（整图直接标示）
+  // ⭐ 合并端点：照片整体标示已在一次请求内生成（r.photoDiffUrl），直接填充，无需二次请求（保留 renderPhotoDiff 作回滚备用）
   if ((st === 'full' || st === 'partial') && curDrawing) {
-    renderPhotoDiff(curDrawing.id, lastPhotoFile);
+    renderPhotoDiffDirect(curDrawing.id, r.photoDiffUrl);
   }
 }
 
@@ -1511,6 +1280,15 @@ async function renderPhotoDiff(did, file){
   }
 }
 
+// ---- 照片整体差异标示（直接填充合并端点已生成的标示图，无二次请求）----
+// ⭐ 与旧 renderPhotoDiff（调 /diff-photo 二次生成）并存；合并端点下用本函数，旧函数保留为回滚通道。
+function renderPhotoDiffDirect(did, url){
+  const el = document.getElementById('photoDiffBody_' + did);
+  if (!el) return;
+  if (!url) { el.innerHTML = '<div class="meta-line" style="color:var(--sub);">本次未生成照片整体标示</div>'; return; }
+  el.innerHTML = `<div style="text-align:center;"><img src="${esc(url)}" style="width:100%;height:auto;max-height:340px;object-fit:contain;border-radius:10px;border:1px solid var(--line);" alt="照片整体标示"/></div>`;
+}
+
 // ---- 差异标记内联渲染（已嵌入匹配结果，照片在外部主区展示，本区仅显示明细+判定）----
 function renderDiffMarkers(d){
   let html = '';
@@ -1547,7 +1325,8 @@ function renderDiffMarkers(d){
 function openHistoryView(){
   resetRootFlex();
   const root = $('#moduleRoot');
-  root.innerHTML = '<div id="historyBox" style="padding-top:14px;"></div>';
+  root.innerHTML = '<div class="bar"><span class="back" id="btnHistoryBack">‹ 返回</span></div><div id="historyBox"></div>';
+  navPush(renderDrawingsModule); $('#btnHistoryBack').onclick = navBack;
   renderHistory($('#historyBox'));
 }
 async function renderHistory(box){
@@ -1562,12 +1341,14 @@ async function renderHistory(box){
       if(h.detectedPart) line += `<span class="tag part">${esc(h.detectedPart)}</span>`;
       line += ` ${h.matched?'<span class="tag ok">已匹配</span>':'<span class="tag" style="background:rgba(220,38,38,.10);color:var(--bad)">未匹配</span>'}`;
       line += `</div>`;
-      if(h.fileName) line += `<div class="meta-line" style="opacity:.8">📄 ${esc(h.fileName)}</div>`;
-      return `<div class="item" ${h.virtualPath?`data-vp="${esc(h.virtualPath)}"`:''}>${line}<span style="color:var(--sub)">›</span></div>`;
+      // ⭐ 任务3：历史快照缩略图（来自历史表 SnapshotPath，与图纸库解耦）；旧 fileName / api/files 下载关联已移除
+      if(h.snapshotPath){
+        line += `<div style="margin-top:6px;text-align:center;">
+          <img src="api/drawings/history-snapshot/${h.id}" style="max-width:100%;max-height:200px;border-radius:10px;border:1px solid var(--line);background:#fff;" alt="比对快照" onerror="this.style.display='none'"/>
+        </div>`;
+      }
+      return `<div class="item" style="cursor:default;">${line}<span style="color:var(--sub)">›</span></div>`;
     }).join('');
-    box.querySelectorAll('.item[data-vp]').forEach(el=>{
-      el.onclick=()=> window.open('api/files/'+encodeVP(el.dataset.vp), '_blank');
-    });
   }catch(err){ box.innerHTML='<div class="empty">加载失败：'+(err.message||err)+'</div>'; }
 }
 
@@ -1726,6 +1507,7 @@ async function doSync(){
 function openDrawer(){
   $('#menuOverlay').classList.add('show');
   $('#drawer').classList.add('show');
+  navPush(closeDrawer);
 }
 function closeDrawer(){
   $('#menuOverlay').classList.remove('show');
@@ -1762,9 +1544,10 @@ function openToolSheet(){
     $('#toolTitle').textContent='添加图纸';
     renderAddPanel(body);
   };
-  list.querySelector('[data-act=history]').onclick = ()=>{ closeToolSheet(); _navPush('drawings-history','历史记录', openHistoryView, null); openHistoryView(); };
+  list.querySelector('[data-act=history]').onclick = ()=>{ closeToolSheet(); openHistoryView(); };
   $('#toolOverlay').classList.add('show');
   $('#toolSheet').classList.add('show');
+  navPush(closeToolSheet);
 }
 function closeToolSheet(){
   $('#toolSheet').classList.remove('show');
@@ -2347,6 +2130,7 @@ async function openScan(targetId){
   _setScanMsg('将二维码/条码放入框内…');
   if(capBtn){ capBtn.disabled=false; capBtn.onclick=scanCapture; }
   modal.classList.add('show');
+  navPush(closeScan);
   try{
     // 安卓：尽量要后置摄像头、高分辨率、连续对焦
     _scanStream=await navigator.mediaDevices.getUserMedia({
@@ -2393,15 +2177,15 @@ function closeScan(){
 
 // ---- 事件绑定 ----
 $('#btnMore').onclick = openDrawer;
-$('#menuClose').onclick = closeDrawer;
-$('#menuOverlay').onclick = closeDrawer;
-$('#toolClose').onclick = closeToolSheet;
-$('#toolOverlay').onclick = closeToolSheet;
+$('#menuClose').onclick = navBack;
+$('#menuOverlay').onclick = navBack;
+$('#toolClose').onclick = navBack;
+$('#toolOverlay').onclick = navBack;
 $('#menuList').querySelectorAll('.menu-item').forEach(el=>{
   el.onclick = ()=> showMenuContent(el.dataset.act);
 });
-$('#sheetClose').onclick = closeSheet;
-$('#overlay').onclick = closeSheet;
+$('#sheetClose').onclick = navBack;
+$('#overlay').onclick = navBack;
 bindSearch($('#pickerSearch'), $('#pickerList'), onPick);
 
 // ---- 不良履历查询模块渲染器 ----
@@ -2411,6 +2195,7 @@ let dhBatchPreview = null;      // 批量导入预览结果（确认后真实导
 let dhBatchFile = null;
 let dhSelected = new Set();      // 当前查询结果中勾选的条目：数据行索引（单 Sheet 汇总表）
 let dhPageNonce = Date.now();    // 图片 URL 缓存破坏符（每页加载一次，绕过陈旧缓存条目）
+let dhAddFiles = [];             // 单条录入待上传图片：{file, url, anno:[], baked, bakedUrl}（含标注烘焙结果）
 
 function dhAPI(path){ return 'api/defecthistory/' + path; }
 function dhEnc(s){ return encodeURIComponent(s); }
@@ -2454,27 +2239,24 @@ function dhRenderMenu(){
       </div>
       <div class="meta-line" style="margin-top:14px;color:var(--sub);font-size:12px;">数据源：不良履历汇总（单工作簿，按日期排序；每月 2 号自动生成上月分析）</div>
     </div>`;
-  // 子页面统一进导航栈：顶部 #pageBack 单键逐级返回（子页 → 菜单 → 平台首页）
-  $('#dhBtnQuery').onclick = () => { _navPush('dh-query', '型号查询', dhPageQuery, null); dhPageQuery(); };
-  $('#dhBtnAdd').onclick = () => { _navPush('dh-add', '单条录入', dhPageAdd, null); dhPageAdd(); };
-  $('#dhBtnBatch').onclick = () => { _navPush('dh-batch', '批量上传', dhPageBatch, null); dhPageBatch(); };
-  $('#dhBtnExport').onclick = () => { _navPush('dh-export', '数据导出', dhPageExport, null); dhPageExport(); };
-  $('#dhBtnAnalysis').onclick = () => { _navPush('dh-analysis', '数据分析', () => dhPageAnalysis(), null); dhPageAnalysis(); };
+  $('#dhBtnQuery').onclick = dhPageQuery;
+  $('#dhBtnAdd').onclick = dhPageAdd;
+  $('#dhBtnBatch').onclick = dhPageBatch;
+  $('#dhBtnExport').onclick = dhPageExport;
+  $('#dhBtnAnalysis').onclick = () => dhPageAnalysis();   // 必须包裹：直接传函数会被点击事件传入 PointerEvent 触发 [object PointerEvent]
   dhCheckAnalysisReminder();
 }
 
-// 自动分析提醒条：每月 2 号生成的上月报告 → 仅 2 号当天提示查看/下载
+// 自动分析提醒条：每月 2 号生成的上月报告 → 提示查看/下载
 async function dhCheckAnalysisReminder(){
-  const box = $('#dhReminder');
-  if (!box) return;
-  // 提醒条只限每月 2 号当天显示；其它日期直接隐藏，不走后端请求
-  if (new Date().getDate() !== 2){ box.style.display = 'none'; return; }
   try{
     const r = await (await fetch(dhAPI('analysis/status'), { cache:'no-store' })).json();
+    const box = $('#dhReminder');
+    if (!box) return;
     if (r && r.available && r.month){
       box.style.display = 'flex';
       box.innerHTML = `<span>📊 <b>上月品质数据已生成</b>（${esc(r.month)}）</span><span class="dh-rem-go" id="dhRemGo">查看/下载</span>`;
-      $('#dhRemGo').onclick = () => { _navPush('dh-analysis', '数据分析', () => dhPageAnalysis(r.month), null); dhPageAnalysis(r.month); };
+      $('#dhRemGo').onclick = () => dhPageAnalysis(r.month);
     } else {
       box.style.display = 'none';
     }
@@ -2482,7 +2264,7 @@ async function dhCheckAnalysisReminder(){
 }
 
 function dhBackBar(title){
-  return `<div style="font-weight:700;font-size:15px;margin:2px 0 12px;">${esc(title)}</div>`;
+  return `<div class="bar"><span class="back" id="dhBack">← 返回</span><span style="font-weight:700;">${esc(title)}</span></div>`;
 }
 
 // ---------- 查询页 ----------
@@ -2501,13 +2283,12 @@ async function dhPageQuery(){
       <button class="btn ghost" style="margin-top:8px;" id="dhQExport">📥 导出当前查询结果</button>
     </div>
     <div id="dhQResult"></div>`;
-  // 月份下拉
+  navPush(dhRenderMenu); $('#dhBack').onclick = navBack;
+  // 月份下拉（统一走缓存加载，倒序已在加载时完成）
   const sel = $('#dhQMonth');
-  try{
-    const m = await (await fetch(dhAPI('meta'))).json();
-    dhMonths = (m.months || []);
+  dhLoadDropOpts().then(() => {
     sel.innerHTML = '<option value="">全部月份</option>' + dhMonths.map(x=>`<option value="${esc(x.month)}">${esc(x.month)}（${x.count||0} 条）</option>`).join('');
-  }catch(e){ toast('月份列表加载失败'); }
+  }).catch(() => { toast('月份列表加载失败'); });
   $('#dhQBtn').onclick = dhDoQuery;
   $('#dhQExport').onclick = dhExportCurrent;
   $('#dhQModel').addEventListener('keydown', e => { if(e.key==='Enter') dhDoQuery(); });
@@ -2642,26 +2423,37 @@ function dhUpdateBatchBar(box, allKeys){
   else if (allCb) allCb.checked = false;
 }
 
+// 批量删除防重入锁：删除进行中再次点击（连点/双击）直接忽略，杜绝重复删除误删
+let dhBatchDeleting = false;
 async function dhBatchDelete(){
-  // 单 Sheet 汇总表：key = 数据行索引
-  const items = Array.from(dhSelected).map(k => ({ row: parseInt(k, 10) }));
+  if (dhBatchDeleting){ toast('删除进行中，请稍候…'); return; }
+  // 单 Sheet 汇总表：key = 数据行索引（去重排序，交给后端 batch_delete 一次性降序处理 + 图位移修正）
+  const items = Array.from(dhSelected).map(k => parseInt(k, 10)).sort((a, b) => a - b);
   if (items.length === 0) return;
-  const preview = items.slice(0, 3).map(i => '第' + (i.row + 1) + '行').join('\n');
+  const preview = items.slice(0, 3).map(i => '第' + (i + 1) + '行').join('\n');
   const more = items.length > 3 ? '\n... 等共 ' + items.length + ' 条' : '';
-  if (!confirm('确定批量删除这 ' + items.length + ' 条不良记录？\n\n' + preview + more + '\n\n每条删除前会自动备份 (.bak)。')) return;
-  let ok = 0, bad = 0, firstErr = '';
-  toast('开始批量删除 ' + items.length + ' 条…');
-  for (const it of items){
-    try{
-      const r = await (await fetch(dhAPI('delete'), {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify(it)
-      })).json();
-      if (r.ok) ok++; else { bad++; if (!firstErr) firstErr = r.error || '未知'; }
-    }catch(e){ bad++; if (!firstErr) firstErr = e.message || String(e); }
-  }
+  if (!confirm('确定批量删除这 ' + items.length + ' 条不良记录？\n\n' + preview + more + '\n\n删除前会自动备份 (.bak)。')) return;
+  // 删除中禁用按钮，防连点
+  const btn = $('#dhBatchDel');
+  if (btn) btn.disabled = true;
+  dhBatchDeleting = true;
+  let ok = 0, firstErr = '';
+  toast('正在批量删除 ' + items.length + ' 条…');
+  try{
+    // 一次性批量接口：1 次请求 + 1 次文件写入（原逐个删 N 次请求/写入，慢且易错位）
+    const r = await (await fetch(dhAPI('batch-delete'), {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ rows: items })
+    })).json();
+    if (r.ok && r.deleted === items.length){ ok = items.length; }
+    else { firstErr = r.error || ('仅删除 ' + (r.deleted ?? 0) + ' 条'); }
+  }catch(e){ firstErr = e.message || String(e); }
+  dhBatchDeleting = false;
+  if (btn) btn.disabled = false;
   dhSelected.clear();
-  toast('批量删除完成：成功 ' + ok + (bad ? ' / 失败 ' + bad + (firstErr ? '（' + firstErr + '）' : '') : ''));
+  toast(ok === items.length
+    ? '批量删除完成：成功 ' + ok + ' 条'
+    : '批量删除未完成：' + (firstErr || '未知错误'));
   if (dhLastQuery) dhDoQuery();
 }
 
@@ -2716,7 +2508,6 @@ function dhExportCurrent(){
 // ---------- 单条录入页 ----------
 // 单条录入下拉选项（线别/发生工程/处理方式）：服务端 meta（数据去重 + 默认项）∪ localStorage（手动新增持久化）
 let dhLineOpts = [], dhStageOpts = [], dhHandleOpts = [];
-let dhAddFiles = [];   // 单条录入待上传图片：{file, url, anno:[], baked, bakedUrl}（含标注烘焙结果）
 function dhLocalGet(k){ try{ return JSON.parse(localStorage.getItem('dh_' + k) || '[]'); }catch(e){ return []; } }
 function dhLocalAdd(k, v){
   if(!v) return;
@@ -2727,12 +2518,38 @@ function dhMergeOpts(base, local){
   const seen = {}; (base||[]).concat(local||[]).forEach(o => { if(o) seen[o] = 1; });
   return Object.keys(seen);
 }
+function dhReadMetaCache(){
+  try{ return JSON.parse(localStorage.getItem('dh_meta_cache') || 'null'); }catch(e){ return null; }
+}
+function dhWriteMetaCache(m){
+  if (!m || (!(m.lines||[]).length && !(m.stages||[]).length && !(m.handles||[]).length)) return;
+  try{ localStorage.setItem('dh_meta_cache', JSON.stringify({ ts: Date.now(), months: m.months||[], lines: m.lines||[], stages: m.stages||[], handles: m.handles||[] })); }catch(e){}
+}
+// 月份倒序（最新在前）：与后端 cmd_meta 倒序一致，前端再防御性排序一次
+function dhSortMonthsDesc(arr){
+  return (arr||[]).slice().sort((a, b) => String(b.month||'').localeCompare(String(a.month||'')));
+}
+function dhApplyMeta(m){
+  dhLineOpts = dhMergeOpts(m.lines||[], dhLocalGet('lines'));
+  dhStageOpts = dhMergeOpts(m.stages||[], dhLocalGet('stages'));
+  dhHandleOpts = dhMergeOpts(m.handles||[], dhLocalGet('handles'));
+}
 function dhLoadDropOpts(){
-  if (dhLineOpts.length && dhStageOpts.length && dhHandleOpts.length) return Promise.resolve();
+  // 统一加载：月份下拉 + 线别/工程/处理方式下拉，全部走本地缓存（5 分钟内秒开），后台静默刷新
+  const c = dhReadMetaCache();
+  if (c && Date.now() - c.ts < 5 * 60 * 1000 && (c.months||[]).length){
+    dhApplyMeta(c);
+    dhMonths = dhSortMonthsDesc(c.months);
+    // 后台静默刷新，保持下拉选项最新
+    fetch(dhAPI('meta')).then(r=>r.json()).then(m => { dhWriteMetaCache(m); dhApplyMeta(m); dhMonths = dhSortMonthsDesc(m.months); }).catch(()=>{});
+    return Promise.resolve();
+  }
+  // 无缓存/过期 → 单次 fetch（结果写缓存，含月份）
+  if (dhLineOpts.length && dhStageOpts.length && dhHandleOpts.length && dhMonths.length) return Promise.resolve();
   return fetch(dhAPI('meta')).then(r=>r.json()).then(m => {
-    dhLineOpts = dhMergeOpts(m.lines||[], dhLocalGet('lines'));
-    dhStageOpts = dhMergeOpts(m.stages||[], dhLocalGet('stages'));
-    dhHandleOpts = dhMergeOpts(m.handles||[], dhLocalGet('handles'));
+    dhWriteMetaCache(m);
+    dhApplyMeta(m);
+    dhMonths = dhSortMonthsDesc(m.months);
   }).catch(()=>{});
 }
 // 通用自定义下拉：点击/输入展开、过滤、支持"使用新值"、点外部关闭（手机端兼容，替代 datalist）
@@ -2824,6 +2641,7 @@ function dhPageAdd(){
       <div id="dhAPreview" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;"></div>
       <button class="btn" style="margin-top:14px;" id="dhABtn">💾 提交录入</button>
     </div>`;
+  navPush(dhRenderMenu); $('#dhBack').onclick = navBack;
   $('#dhAImg').addEventListener('change', e => {
     const files = Array.from(e.target.files || []);
     if (files.length) dhAddFiles = files.map(f => ({ file: f, url: URL.createObjectURL(f), anno: [], baked: null, bakedUrl: null }));
@@ -2852,8 +2670,11 @@ async function dhSubmitAdd(){
   fd.append('date', date); fd.append('line', line);
   fd.append('model', model); fd.append('reason', reason); fd.append('qty', qty);
   fd.append('stage', stage); fd.append('handle', handle);
-  // 上传已标注图片（优先 baked，否则原始）；提交后清空已上传文件（含标注图）
-  dhAddFiles.forEach(it => fd.append('image', it.baked || it.file));
+  const files = $('#dhAImg').files;
+  for (let i = 0; i < dhAddFiles.length; i++){
+    const it = dhAddFiles[i];
+    fd.append('image', it.baked || it.file);
+  }
   const btn = $('#dhABtn'); btn.disabled = true; btn.textContent = '提交中…';
   try{
     const r = await (await fetch(dhAPI('add'), { method:'POST', body: fd })).json();
@@ -2863,12 +2684,8 @@ async function dhSubmitAdd(){
       if (stage && dhStageOpts.indexOf(stage) < 0) dhStageOpts.push(stage);
       if (handle && dhHandleOpts.indexOf(handle) < 0) dhHandleOpts.push(handle);
       dhLocalAdd('lines', line); dhLocalAdd('stages', stage); dhLocalAdd('handles', handle);
-      // 清空已上传文件（含已标注图，避免重复提交）
-      dhAddFiles.forEach(it => { if (it.bakedUrl) URL.revokeObjectURL(it.bakedUrl); if (it.url) URL.revokeObjectURL(it.url); });
-      dhAddFiles = [];
-      // 清空文件输入框
-      const fi = $('#dhAImg'); if (fi) fi.value = '';
       toast('录入成功（已按日期排序写入汇总表' + (r.images ? '，含 ' + r.images + ' 图' : '') + '）');
+      dhAddFiles = [];   // 清空已上传/已标注图片，避免重复提交
       dhPageAdd();
     } else toast('录入失败：' + (r.error || '未知错误'));
   }catch(e){ toast('录入失败：' + (e.message || e)); }
@@ -2896,60 +2713,17 @@ function dhRenderAddPreviews(){
   });
 }
 
-// ============ 图片标注工具 ============
+// ============ 图片预处理标注工具 ============
 const DH_ANNO_COLORS = ['#e11d48','#f59e0b','#eab308','#16a34a','#2563eb','#7c3aed','#111827','#ffffff'];
 let dhAnnoState = null;
-// 箭头轮廓路径（V3.2：V3 三角外观 + V3.1 后缘内凹，整体放大）
-// 直肩（保持 V3 三角形识别度）+ 后缘内凹（V3.1 特征）+ 尖端略圆润
-function drawArrowHead(ctx, T, d, p, hl, hw, notch){
-  const P = (a, o) => ({ x: T.x - d.x * a + p.x * o, y: T.y - d.y * a + p.y * o });
-  const tip = P(0, 0);
-  const bL  = P(hl,  hw / 2);          // 左后角（全宽，保持 V3 三角外观）
-  const bR  = P(hl, -hw / 2);          // 右后角
-  const f = 0.04;                     // 尖端圆润偏移（沿肩比例）
-  const Lt  = P(hl * f,  hw / 2 * f); // 尖左邻点
-  const Rt  = P(hl * f, -hw / 2 * f); // 尖右邻点
-  const ctrl = P(hl * notch, 0);       // 后缘内凹控制点（向尖端方向凹）
-  ctx.beginPath();
-  ctx.moveTo(Lt.x, Lt.y);
-  ctx.quadraticCurveTo(tip.x, tip.y, Rt.x, Rt.y); // 尖端圆润
-  ctx.lineTo(bR.x, bR.y);                          // 右直肩
-  ctx.quadraticCurveTo(ctrl.x, ctrl.y, bL.x, bL.y);// 后缘内凹
-  ctx.lineTo(Lt.x, Lt.y);                          // 左直肩（闭合）
-  ctx.closePath();
-}
-// ── 箭头绘制（V3.2：V3 三角 + 后缘内凹 + 继续放大） ──
-// 保留核心原则：① 头部尺寸=f(lw)仅，与箭长解耦（拉伸仅延长柄）；② 不同粗细等比缩放。
-// 参数比例（全部 ∈ lw，在 V3.1 基础上继续放大）：
-//   HL_R  = 5.0   头部长度 / 线宽（V3.1 为 4.0，继续放大）
-//   HW_R  = 3.4   头部全宽 / 线宽（V3.1 为 2.8，继续放大）
-//   NOTCH = 0.78  后缘内凹控制点位置（沿 hl 比例，<1 即向尖端方向凹）
 function drawArrow(ctx, x1, y1, x2, y2, color, lw){
-  ctx.strokeStyle = color; ctx.fillStyle = color;
-  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-  const dx = x2 - x1, dy = y2 - y1;
-  const len = Math.hypot(dx, dy);
-  if (len < 1) return;
-  const ang = Math.atan2(dy, dx);
-  const d = { x: Math.cos(ang), y: Math.sin(ang) };
-  const p = { x: -Math.sin(ang), y: Math.cos(ang) };
-  const HL_R = 5.0, HW_R = 3.4, NOTCH = 0.78;
-  let hl = lw * HL_R;
-  let hw = lw * HW_R;
-  // 极短箭头安全钳制：整体等比缩小头部
-  if (hl > len * 0.80){
-    const k = (len * 0.80) / hl;
-    hl *= k; hw *= k;
-  }
-  const T = { x: x2, y: y2 };
-  const P = (a, o) => ({ x: T.x - d.x * a + p.x * o, y: T.y - d.y * a + p.y * o });
-  const shaftEnd = P(hl * NOTCH, 0);   // 箭柆终点接入内凹后缘
-  // 箭柆
-  ctx.lineWidth = lw;
-  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(shaftEnd.x, shaftEnd.y); ctx.stroke();
-  // 头部（直肩三角 + 后缘内凹）
-  drawArrowHead(ctx, T, d, p, hl, hw, NOTCH);
-  ctx.fill();
+  ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = lw; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+  const ang = Math.atan2(y2 - y1, x2 - x1), hl = Math.max(8, lw * 3);
+  ctx.beginPath(); ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - hl * Math.cos(ang - Math.PI / 6), y2 - hl * Math.sin(ang - Math.PI / 6));
+  ctx.lineTo(x2 - hl * Math.cos(ang + Math.PI / 6), y2 - hl * Math.sin(ang + Math.PI / 6));
+  ctx.closePath(); ctx.fill();
 }
 function dhAnnoBuildModal(){
   if (document.getElementById('dhAnnoModal')) return;
@@ -2963,13 +2737,13 @@ function dhAnnoBuildModal(){
         <span id="dhAnnoClose" style="cursor:pointer;font-size:18px;color:#64748b;">×</span>
       </div>
       <div id="dhAnnoTools" style="display:flex;flex-wrap:wrap;gap:6px;">
-        <button type="button" class="dh-at" data-tool="rect">▢ 矩形</button>
+        <button type="button" class="dh-at" data-tool="rect">▭ 矩形</button>
         <button type="button" class="dh-at" data-tool="ellipse">◯ 椭圆</button>
         <button type="button" class="dh-at" data-tool="arrow">➤ 箭头</button>
         <button type="button" class="dh-at" data-tool="free">✎ 画笔</button>
         <button type="button" class="dh-at" data-tool="text">T 文字</button>
-        <button type="button" class="dh-aa" id="dhAnnoUndo">↩ 撤销</button>
-        <button type="button" class="dh-aa" id="dhAnnoRedo">↪ 重做</button>
+        <button type="button" class="dh-aa" id="dhAnnoUndo">↶ 撤销</button>
+        <button type="button" class="dh-aa" id="dhAnnoRedo">↷ 重做</button>
         <button type="button" class="dh-aa" id="dhAnnoClear">🗑 清除</button>
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
@@ -2977,17 +2751,17 @@ function dhAnnoBuildModal(){
         <input type="color" id="dhAnnoColor" value="#e11d48" style="width:30px;height:28px;border:none;background:none;padding:0;" />
         <label style="font-size:12px;color:#475569;">粗细
           <select id="dhAnnoSize" style="padding:2px 4px;border-radius:6px;border:1px solid #cbd5e1;">
-            <option value="8">细</option><option value="16">中</option><option value="24" selected>粗</option><option value="40">特粗</option><option value="64">超大</option>
+            <option value="2">细</option><option value="4" selected>中</option><option value="6">粗</option><option value="10">特粗</option><option value="16">超大</option>
           </select>
         </label>
-        <input type="text" id="dhAnnoText" placeholder="文字内容（选文字工具后点击图上标）" style="flex:1;min-width:120px;padding:4px 6px;border-radius:6px;border:1px solid #cbd5e1;font-size:12px;" />
+        <input type="text" id="dhAnnoText" placeholder="文字内容（选文字工具后点图）" style="flex:1;min-width:120px;padding:4px 6px;border-radius:6px;border:1px solid #cbd5e1;font-size:12px;" />
       </div>
       <div style="display:flex;gap:8px;align-items:center;font-size:12px;color:#475569;">
-        <span style="color:#64748b;">手势：双指缩放平移</span>
+        <span style="color:#64748b;">手势：双指捏合/拖动缩放平移</span>
         <span style="flex:1;"></span>
-        <button type="button" class="dh-aa" id="dhAnnoZoomOut">−</button>
+        <button type="button" class="dh-aa" id="dhAnnoZoomOut">－</button>
         <span id="dhAnnoZoomLabel" style="min-width:42px;text-align:center;font-variant-numeric:tabular-nums;">100%</span>
-        <button type="button" class="dh-aa" id="dhAnnoZoomIn">+</button>
+        <button type="button" class="dh-aa" id="dhAnnoZoomIn">＋</button>
         <button type="button" class="dh-aa" id="dhAnnoReset">复位</button>
       </div>
       <div style="background:#0f172a;border-radius:10px;overflow:hidden;display:flex;justify-content:center;padding:6px;max-height:62vh;position:relative;">
@@ -3002,8 +2776,6 @@ function dhAnnoBuildModal(){
   // 工具按钮
   ov.querySelectorAll('.dh-at').forEach(b => b.onclick = () => {
     dhAnnoState.tool = b.dataset.tool;
-    dhAnnoDeselect();          // 切换工具时取消选中，避免旧锚点干扰新绘制
-    dhAnnoDraw();
     ov.querySelectorAll('.dh-at').forEach(x => x.style.background = (x === b) ? '#2563eb' : '#e2e8f0');
     ov.querySelectorAll('.dh-at').forEach(x => x.style.color = (x === b) ? '#fff' : '#334155');
   });
@@ -3026,7 +2798,7 @@ function dhAnnoBuildModal(){
   ov.onclick = e => { if (e.target === ov) dhCloseAnno(); };
   // 默认工具高亮
   const def = ov.querySelector('.dh-at[data-tool="rect"]'); def.style.background = '#2563eb'; def.style.color = '#fff';
-  // canvas 指针事件
+  // canvas 指针事件（单指绘制；双指捏合/拖动缩放平移；滚轮缩放）
   const cv = ov.querySelector('#dhAnnoCanvas');
   cv.addEventListener('pointerdown', dhAnnoDown);
   cv.addEventListener('pointermove', dhAnnoMove);
@@ -3046,17 +2818,19 @@ function dhOpenAnno(idx){
   dhAnnoBuildModal();
   const it = dhAddFiles[idx];
   const ov = document.getElementById('dhAnnoModal');
-  dhAnnoState = { idx, img: new Image(), natW: 0, natH: 0, scale: 1, zoom: 1, panX: 0, panY: 0, pointers: {}, gesture: false, tool: 'rect', color: '#e11d48', size: 24, anno: (it.anno || []).slice(), undo: [], redo: [], drawing: false, start: null, cur: null, selectedIdx: -1, moved: false, origAnno: null, dragHandle: null };
+  dhAnnoState = { idx, img: new Image(), natW: 0, natH: 0, scale: 1, zoom: 1, panX: 0, panY: 0, pointers: {}, gesture: false, tool: 'rect', color: '#e11d48', size: 4, anno: (it.anno || []).slice(), undo: [], redo: [], drawing: false, start: null, cur: null };
   ov.querySelector('#dhAnnoText').value = '';
-  ov.querySelector('#dhAnnoSize').value = '24';
+  ov.querySelector('#dhAnnoSize').value = '4';
   ov.querySelector('#dhAnnoColor').value = '#e11d48';
   dhAnnoHiSwatch(ov);
   const cv = ov.querySelector('#dhAnnoCanvas');
+  // 先显示弹窗，确保加载图片时容器已有实际 clientWidth/Height，避免读到 0
   ov.style.display = 'flex';
   dhAnnoState.img.onload = () => {
     dhAnnoState.natW = dhAnnoState.img.naturalWidth;
     dhAnnoState.natH = dhAnnoState.img.naturalHeight;
     const pad = 12;
+    // 宽度仍按容器自适应，同时限制高度，保证尺寸较大的竖图在手机浏览器也能完整显示
     const maxW = Math.min(400, cv.parentElement.clientWidth - pad, dhAnnoState.natW);
     const maxH = Math.min(Math.round(window.innerHeight * 0.62), dhAnnoState.natH);
     const scale = Math.min(maxW / dhAnnoState.natW, maxH / dhAnnoState.natH, 1);
@@ -3065,6 +2839,7 @@ function dhOpenAnno(idx){
     dhAnnoState.scale = scale;
     cv.style.width = dispW + 'px';
     cv.style.height = dispH + 'px';
+    // 后备分辨率用原图尺寸（而非 fit 尺寸）：放大时是原生像素，清晰不糊；CSS 仅负责显示缩放
     cv.width = dhAnnoState.natW; cv.height = dhAnnoState.natH;
     dhAnnoState.zoom = 1; dhAnnoState.panX = 0; dhAnnoState.panY = 0;
     dhAnnoApplyTransform();
@@ -3077,49 +2852,16 @@ function dhCloseAnno(){ const ov = document.getElementById('dhAnnoModal'); if (o
 function dhAnnoPt(e){
   const cv = document.getElementById('dhAnnoCanvas');
   const r = cv.getBoundingClientRect();
+  // r 已包含缩放/平移；除以 (基础适配比例 * 手势缩放) 得到原图坐标
   const S = dhAnnoState.scale * (dhAnnoState.zoom || 1);
   return { x: (e.clientX - r.left) / S, y: (e.clientY - r.top) / S };
-}
-// ===== 二次编辑：坐标换算与几何辅助 =====
-// 画布后备分辨率=原图尺寸，绘制/命中均用原图坐标；
-// 因此手柄尺寸、命中容差必须以"屏幕像素"定义后再换算到原图坐标，
-// 否则大图（scale 很小）时锚点在屏幕上只有约 1px，既看不见也点不到。
-const DH_HANDLE_PX = 7;   // 锚点半径（屏幕像素）
-const DH_HIT_PX = 16;     // 锚点命中边长（屏幕像素）
-const DH_EDGE_PX = 8;     // 图形边框命中带半宽（屏幕像素）
-const DH_MIN_PX = 10;     // 缩放时最小边长（屏幕像素）
-function dhAnnoU(){ return (dhAnnoState.scale || 1) * (dhAnnoState.zoom || 1) || 1; } // 原图 1px 对应屏幕 U px
-function dhAnnoNat(px){ return px / dhAnnoU(); }  // 屏幕像素 → 原图像素
-function dhAnnoBox(s){
-  if (s.type === 'rect' || s.type === 'ellipse'){
-    const x = s.w >= 0 ? s.x : s.x + s.w, y = s.h >= 0 ? s.y : s.y + s.h;
-    return { x: x, y: y, w: Math.abs(s.w), h: Math.abs(s.h) };
-  }
-  return null;
-}
-// 返回该图形的可拖拽锚点（矩形/椭圆四角；箭头两端；画笔/文字无）
-function dhAnnoHandles(s){
-  if (s.type === 'rect' || s.type === 'ellipse'){
-    const b = dhAnnoBox(s);
-    return [
-      { x: b.x, y: b.y, type: 'tl' }, { x: b.x + b.w, y: b.y, type: 'tr' },
-      { x: b.x, y: b.y + b.h, type: 'bl' }, { x: b.x + b.w, y: b.y + b.h, type: 'br' }
-    ];
-  }
-  if (s.type === 'arrow') return [{ x: s.x1, y: s.y1, type: 'start' }, { x: s.x2, y: s.y2, type: 'end' }];
-  return [];
-}
-function dhDistToSeg(p, a, b){
-  const dx = b.x - a.x, dy = b.y - a.y, L = dx * dx + dy * dy;
-  let t = L ? ((p.x - a.x) * dx + (p.y - a.y) * dy) / L : 0;
-  t = Math.max(0, Math.min(1, t));
-  return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
 }
 function dhAnnoDown(e){
   if (!dhAnnoState) return;
   const cv = document.getElementById('dhAnnoCanvas');
   dhAnnoState.pointers[e.pointerId] = { x: e.clientX, y: e.clientY };
   const ids = Object.keys(dhAnnoState.pointers);
+  // 双指 → 进入手势（捏合缩放 / 拖动平移），同时取消正在进行的绘制
   if (ids.length >= 2){
     const a = dhAnnoState.pointers[ids[0]], b = dhAnnoState.pointers[ids[1]];
     dhAnnoState.drawing = false;
@@ -3139,43 +2881,13 @@ function dhAnnoDown(e){
   }
   if (ids.length > 2) return;
   const p = dhAnnoPt(e);
-  // 命中优先级：① 锚点（缩放） → ② 图形本身（移动） → ③ 空白（取消选中并新建）
-  const hh = dhAnnoHitHandle(p);
-  if (hh){
-    dhAnnoState.selectedIdx = hh.idx;
-    dhAnnoState.dragHandle = hh.type;      // 有值 = 缩放
-    dhAnnoState.drawing = true;
-    dhAnnoState.moved = false;
-    dhAnnoState.start = p;
-    dhAnnoState.origAnno = JSON.parse(JSON.stringify(dhAnnoState.anno[hh.idx]));
-    try { cv.setPointerCapture(e.pointerId); } catch(_){}
-    e.preventDefault();
-    dhAnnoDraw();
-    return;
-  }
-  const hit = dhAnnoHitShape(p);
-  if (hit >= 0){
-    dhAnnoState.selectedIdx = hit;
-    dhAnnoState.dragHandle = null;         // 无值 = 整体移动
-    dhAnnoState.drawing = true;
-    dhAnnoState.moved = false;
-    dhAnnoState.start = p;
-    dhAnnoState.origAnno = JSON.parse(JSON.stringify(dhAnnoState.anno[hit]));
-    try { cv.setPointerCapture(e.pointerId); } catch(_){}
-    e.preventDefault();
-    dhAnnoDraw();
-    return;
-  }
-  // 未命中任何图形：取消选中，绘制新标注
-  dhAnnoState.selectedIdx = -1;
-  dhAnnoState.dragHandle = null;
-  dhAnnoState.origAnno = null;
   if (dhAnnoState.tool === 'text'){
     const t = (document.getElementById('dhAnnoText').value || '').trim();
-    if (!t){ toast('请先在"文字内容"输入文字'); return; }
+    if (!t){ toast('请先在「文字内容」输入文字'); return; }
+    // 文字字号按图片原始宽度比例计算，保证在手机大图上清晰可见且能烘焙进图片
     const tf = Math.round(Math.min(Math.max(24, dhAnnoState.natW * 0.04 * (dhAnnoState.size / 4)), dhAnnoState.natW * 0.1));
-    dhAnnoPush({ type: 'text', x: p.x, y: p.y, text: t, color: dhAnnoState.color, size: dhAnnoState.size, font: tf });
-    dhAnnoDraw();
+    dhAnnoPush({ type: 'text', x: p.x, y: p.y, text: t, color: dhAnnoState.color, size: dhAnnoState.size, font:  tf });
+    dhAnnoDraw();   // 立即重绘，显示点击位置的文字标示
     return;
   }
   dhAnnoState.drawing = true;
@@ -3187,6 +2899,7 @@ function dhAnnoDown(e){
 }
 function dhAnnoMove(e){
   if (!dhAnnoState) return;
+  // 双指手势：捏合缩放 + 平移（以起始中点为锚点，缩放时保持手指下的内容不动）
   if (dhAnnoState.gesture && dhAnnoState.pointers[e.pointerId]){
     dhAnnoState.pointers[e.pointerId] = { x: e.clientX, y: e.clientY };
     const ids = Object.keys(dhAnnoState.pointers);
@@ -3210,45 +2923,6 @@ function dhAnnoMove(e){
   }
   if (!dhAnnoState.drawing) return;
   const p = dhAnnoPt(e);
-  // 编辑已存在的标注：selectedIdx 持久选中；dragHandle 有值=缩放，无值=整体移动
-  if (dhAnnoState.selectedIdx >= 0 && dhAnnoState.origAnno){
-    const s = dhAnnoState.anno[dhAnnoState.selectedIdx];
-    if (!s){ dhAnnoState.selectedIdx = -1; dhAnnoState.origAnno = null; }
-    else {
-      const orig = dhAnnoState.origAnno;
-      const dx = p.x - dhAnnoState.start.x, dy = p.y - dhAnnoState.start.y;
-      if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) dhAnnoState.moved = true;
-      if (dhAnnoState.dragHandle && (s.type === 'rect' || s.type === 'ellipse')){
-        // 缩放：拖动锚点，对侧角保持不动；钳制最小尺寸避免翻转导致锚点错乱
-        const minS = dhAnnoNat(DH_MIN_PX);
-        const h = dhAnnoState.dragHandle;
-        let w = orig.w, h2 = orig.h, nx = orig.x, ny = orig.y;
-        if (h === 'tl'){ w = orig.w - dx; h2 = orig.h - dy; nx = orig.x + dx; ny = orig.y + dy; }
-        else if (h === 'tr'){ w = orig.w + dx; h2 = orig.h - dy; ny = orig.y + dy; }
-        else if (h === 'bl'){ w = orig.w - dx; h2 = orig.h + dy; nx = orig.x + dx; }
-        else if (h === 'br'){ w = orig.w + dx; h2 = orig.h + dy; }
-        if (Math.abs(w) < minS){
-          w = (w < 0 ? -1 : 1) * minS;
-          if (h === 'tl' || h === 'bl') nx = orig.x + (orig.w - w);
-        }
-        if (Math.abs(h2) < minS){
-          h2 = (h2 < 0 ? -1 : 1) * minS;
-          if (h === 'tl' || h === 'tr') ny = orig.y + (orig.h - h2);
-        }
-        s.w = w; s.h = h2; s.x = nx; s.y = ny;
-      } else if (dhAnnoState.dragHandle && s.type === 'arrow'){
-        if (dhAnnoState.dragHandle === 'start'){ s.x1 = p.x; s.y1 = p.y; }
-        else { s.x2 = p.x; s.y2 = p.y; }
-      } else {
-        // 整体移动
-        if (s.type === 'rect' || s.type === 'ellipse' || s.type === 'text'){ s.x = orig.x + dx; s.y = orig.y + dy; }
-        else if (s.type === 'arrow'){ s.x1 = orig.x1 + dx; s.y1 = orig.y1 + dy; s.x2 = orig.x2 + dx; s.y2 = orig.y2 + dy; }
-        else if (s.type === 'free'){ s.points = orig.points.map(function(pt){ return [pt[0] + dx, pt[1] + dy]; }); }
-      }
-      dhAnnoDraw();
-      return;
-    }
-  }
   const c = dhAnnoState.cur;
   if (c.type === 'free') c.points.push([p.x, p.y]);
   else if (c.type === 'arrow'){ c.x2 = p.x; c.y2 = p.y; }
@@ -3261,17 +2935,8 @@ function dhAnnoPointerEnd(e){
   const ids = Object.keys(dhAnnoState.pointers);
   if (ids.length < 2) dhAnnoState.gesture = false;
   if (!ids.length){
-    if (dhAnnoState.selectedIdx >= 0 && dhAnnoState.origAnno){
-      // 编辑完成：仅在实际产生位移/尺寸变化时才记入撤销历史；
-      // 快照必须是"改动前"的完整数组（把该图形还原成 origAnno），否则撤销无效
-      if (dhAnnoState.moved){
-        const before = dhAnnoState.anno.slice();
-        before[dhAnnoState.selectedIdx] = dhAnnoState.origAnno;
-        dhAnnoState.undo.push(before);
-        dhAnnoState.redo = [];
-      }
-      // 注意：不清除 selectedIdx —— 选中态保留，锚点持续可见，可反复微调
-    } else if (dhAnnoState.drawing){
+    // 单指松手：把正在绘制的图形入库（否则松手后消失）
+    if (dhAnnoState.drawing){
       const c = dhAnnoState.cur;
       if (c){
         let ok = true;
@@ -3283,8 +2948,6 @@ function dhAnnoPointerEnd(e){
     }
     dhAnnoState.drawing = false;
     dhAnnoState.cur = null;
-    dhAnnoState.dragHandle = null;
-    dhAnnoState.origAnno = null;
     dhAnnoDraw();
   }
 }
@@ -3300,8 +2963,10 @@ function dhAnnoZoomAt(cx, cy, factor){
   const cv = document.getElementById('dhAnnoCanvas');
   const rect = cv.getBoundingClientRect();
   const z0 = dhAnnoState.zoom;
+  // 上限设为原图 100%（1/scale），超过即超出原生分辨率会糊，故封顶
   const maxZoom = Math.max(1, Math.min(12, 1 / (dhAnnoState.scale || 1)));
   const z = Math.max(1, Math.min(maxZoom, z0 * factor));
+  // 让光标/指定点位于缩放后仍停在原来屏幕位置
   const ux = (cx - rect.left) / z0;
   const uy = (cy - rect.top) / z0;
   dhAnnoState.zoom = z;
@@ -3319,77 +2984,21 @@ function dhAnnoResetView(){
   dhAnnoState.zoom = 1; dhAnnoState.panX = 0; dhAnnoState.panY = 0;
   dhAnnoApplyTransform();
 }
-// 检测点是否在某个标注的调整手柄上，返回手柄类型，未命中返回null
-// ① 命中锚点：已选中的图形优先（小图形也能稳定抓到锚点），其余按图层从上往下
-function dhAnnoHitHandle(p){
-  const half = dhAnnoNat(DH_HIT_PX) / 2;
-  const order = [];
-  if (dhAnnoState.selectedIdx >= 0 && dhAnnoState.anno[dhAnnoState.selectedIdx]) order.push(dhAnnoState.selectedIdx);
-  for (let i = dhAnnoState.anno.length - 1; i >= 0; i--) if (i !== dhAnnoState.selectedIdx) order.push(i);
-  for (const i of order){
-    const s = dhAnnoState.anno[i]; if (!s) continue;
-    for (const h of dhAnnoHandles(s)){
-      if (Math.abs(p.x - h.x) <= half && Math.abs(p.y - h.y) <= half) return { idx: i, type: h.type };
-    }
-  }
-  return null;
-}
-// ② 命中图形本体：描边图形只命中"边框带"，内部空白不命中，避免大图形挡住后续绘制
-function dhAnnoHitShape(p){
-  const pad = dhAnnoNat(DH_EDGE_PX);
-  for (let i = dhAnnoState.anno.length - 1; i >= 0; i--){
-    const s = dhAnnoState.anno[i]; if (!s) continue;
-    if (s.type === 'rect' || s.type === 'ellipse'){
-      const b = dhAnnoBox(s);
-      const halfW = Math.max(1, (s.size || 1) / 2) + pad;
-      if (s.type === 'rect'){
-        const inOuter = p.x >= b.x - halfW && p.x <= b.x + b.w + halfW && p.y >= b.y - halfW && p.y <= b.y + b.h + halfW;
-        const inInner = p.x >= b.x + halfW && p.x <= b.x + b.w - halfW && p.y >= b.y + halfW && p.y <= b.y + b.h - halfW;
-        if (inOuter && !inInner) return i;
-      } else {
-        const cx = b.x + b.w / 2, cy = b.y + b.h / 2;
-        const rx = Math.max(1, b.w / 2), ry = Math.max(1, b.h / 2);
-        const d = Math.hypot((p.x - cx) / rx, (p.y - cy) / ry);   // d≈1 表示正好落在椭圆周上
-        if (Math.abs(d - 1) <= Math.max(halfW / rx, halfW / ry)) return i;
-      }
-    } else if (s.type === 'arrow'){
-      if (dhDistToSeg(p, { x: s.x1, y: s.y1 }, { x: s.x2, y: s.y2 }) <= (s.size || 1) + pad) return i;
-    } else if (s.type === 'free'){
-      for (const pt of (s.points || [])){
-        if (Math.hypot(p.x - pt[0], p.y - pt[1]) <= (s.size || 1) + pad) return i;
-      }
-    } else if (s.type === 'text'){
-      const fs = s.font || 24;
-      const w = Math.max(fs, (s.text || '').length * fs * 0.6);
-      if (p.x >= s.x - pad && p.x <= s.x + w + pad && p.y >= s.y - pad && p.y <= s.y + fs + pad) return i;
-    }
-  }
-  return -1;
-}
 function dhAnnoPush(shape){
   dhAnnoState.undo.push(dhAnnoState.anno.slice());
   dhAnnoState.redo = [];
   dhAnnoState.anno.push(shape);
 }
-// 取消选中（数组被整体替换后索引会失效，必须重置）
-function dhAnnoDeselect(){
-  if (!dhAnnoState) return;
-  dhAnnoState.selectedIdx = -1;
-  dhAnnoState.dragHandle = null;
-  dhAnnoState.origAnno = null;
-}
 function dhAnnoUndo(){
   if (!dhAnnoState || !dhAnnoState.undo.length) return;
   dhAnnoState.redo.push(dhAnnoState.anno.slice());
   dhAnnoState.anno = dhAnnoState.undo.pop();
-  dhAnnoDeselect();
   dhAnnoDraw();
 }
 function dhAnnoRedo(){
   if (!dhAnnoState || !dhAnnoState.redo.length) return;
   dhAnnoState.undo.push(dhAnnoState.anno.slice());
   dhAnnoState.anno = dhAnnoState.redo.pop();
-  dhAnnoDeselect();
   dhAnnoDraw();
 }
 function dhAnnoClear(){
@@ -3398,7 +3007,6 @@ function dhAnnoClear(){
   dhAnnoState.undo.push(dhAnnoState.anno.slice());
   dhAnnoState.redo = [];
   dhAnnoState.anno = [];
-  dhAnnoDeselect();
   dhAnnoDraw();
 }
 function dhAnnoDraw(){
@@ -3406,6 +3014,7 @@ function dhAnnoDraw(){
   const st = dhAnnoState, c = document.getElementById('dhAnnoCanvas'), ctx = c.getContext('2d');
   ctx.clearRect(0, 0, c.width, c.height);
   if (st.img && st.img.complete) ctx.drawImage(st.img, 0, 0, c.width, c.height);
+  // 后备已是原图分辨率，直接用原图坐标绘制（不再乘 S），保证放大后清晰且与烘焙一致
   const drawShape = (s) => {
     ctx.strokeStyle = s.color; ctx.fillStyle = s.color; ctx.lineWidth = Math.max(1, s.size); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     if (s.type === 'rect') ctx.strokeRect(s.x, s.y, s.w, s.h);
@@ -3416,31 +3025,6 @@ function dhAnnoDraw(){
   };
   st.anno.forEach(drawShape);
   if (st.cur) drawShape(st.cur);
-  // 绘制选中标注：蓝色虚线包围框 + 可拖拽锚点
-  // 锚点半径/线宽由"屏幕像素"换算而来，保证放大或缩小后锚点始终是易于点按的固定大小
-  if (st.selectedIdx >= 0 && st.anno[st.selectedIdx]){
-    const s = st.anno[st.selectedIdx];
-    const r = dhAnnoNat(DH_HANDLE_PX);
-    ctx.save();
-    const b = dhAnnoBox(s);
-    if (b){
-      ctx.strokeStyle = '#2563eb';
-      ctx.lineWidth = dhAnnoNat(1.5);
-      ctx.setLineDash([dhAnnoNat(6), dhAnnoNat(4)]);
-      ctx.strokeRect(b.x, b.y, b.w, b.h);
-      ctx.setLineDash([]);
-    }
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = dhAnnoNat(2);
-    ctx.fillStyle = '#2563eb';
-    dhAnnoHandles(s).forEach(h => {
-      ctx.beginPath();
-      ctx.arc(h.x, h.y, r, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-    });
-    ctx.restore();
-  }
 }
 function dhAnnoSave(){
   const st = dhAnnoState; if (!st) return;
@@ -3494,6 +3078,7 @@ function dhPageBatch(){
       </label>
     </div>
     <div id="dhBResult"></div>`;
+  navPush(dhRenderMenu); $('#dhBack').onclick = navBack;
   $('#dhBTpl').onclick = () => { window.open(dhAPI('template'), '_blank'); toast('模板下载中…'); };
   $('#dhBHelp').onclick = () => { const b = $('#dhBHelpBox'); b.style.display = b.style.display === 'none' ? 'block' : 'none'; };
   $('#dhBFile').addEventListener('change', e => { dhBatchFile = e.target.files[0] || null; if(dhBatchFile) dhBatchPreviewFile(); });
@@ -3535,11 +3120,17 @@ async function dhBatchImport(){
     let html = `<div class="card" style="padding:14px;">
       <h3 style="font-size:15px;">✅ 导入完成</h3>
       <div class="meta-line">成功 <b>${r.imported || 0}</b> 行，跳过 <b>${r.skipped || 0}</b> 行</div>`;
+    if (r.imgTotal > 0){
+      const imgMiss = (r.imgTotal||0) - (r.imgImported||0);
+      html += imgMiss > 0
+        ? `<div class="meta-line" style="color:var(--bad);">⚠️ 上传文件含 ${r.imgTotal} 张图片，仅导入 ${r.imgImported} 张（${imgMiss} 张未识别，可能为不支持的图片格式或图片未嵌入单元格）</div>`
+        : `<div class="meta-line" style="color:var(--ok);">🖼️ 图片已全部导入（${r.imgTotal} 张）</div>`;
+    }
     if (r.droppedSmt > 0) html += `<div class="meta-line" style="color:var(--warn);">已自动舍弃 SMT 工作表数据 ${r.droppedSmt} 行</div>`;
     if((r.errors||[]).length) html += `<div class="meta-line" style="color:var(--warn);">${r.errors.map(e=>'行'+e.row+'：'+esc(e.error)).join('；')}</div>`;
     html += `</div>`;
     box.innerHTML = html;
-    toast('导入成功 ' + (r.imported||0) + ' 行');
+    toast('导入成功 ' + (r.imported||0) + ' 行' + (r.imgTotal > 0 ? '，图片 ' + (r.imgImported||0) + '/' + r.imgTotal + ' 张' : ''));
   }catch(e){ box.innerHTML = '<div class="empty" style="color:var(--bad);">导入失败：' + esc(e.message || e) + '</div>'; }
 }
 
@@ -3563,8 +3154,11 @@ function dhPageExport(){
       </select>
       <button class="btn" style="margin-top:12px;" id="dhEBtn">📥 导出查询结果</button>
     </div>`;
+  navPush(dhRenderMenu); $('#dhBack').onclick = navBack;
   const sel = $('#dhEMonth');
-  sel.innerHTML = '<option value="">全部月份</option>' + dhMonths.map(x=>`<option value="${esc(x.month)}">${esc(x.month)}</option>`).join('');
+  const fillEMonth = () => { sel.innerHTML = '<option value="">全部月份</option>' + dhMonths.map(x=>`<option value="${esc(x.month)}">${esc(x.month)}</option>`).join(''); };
+  if (dhMonths.length) fillEMonth();
+  else dhLoadDropOpts().then(fillEMonth).catch(fillEMonth);
   $('#dhEFull').onclick = () => { window.open(dhAPI('export?full=true'), '_blank'); toast('导出开始'); };
   $('#dhEBtn').onclick = () => {
     const model = ($('#dhEModel').value || '').trim();
@@ -3610,18 +3204,17 @@ function dhPageAnalysis(preMonth){
       <div id="dhAnLegend" style="margin-top:10px;font-size:12.5px;color:var(--sub);display:flex;flex-wrap:wrap;gap:14px;justify-content:center;"></div>
       <div class="meta-line" id="dhAnEmpty" style="display:none;color:var(--sub);text-align:center;">该月无不良数据</div>
     </div>`;
+  navPush(dhRenderMenu); $('#dhBack').onclick = navBack;
   const sel = $('#dhAnMonth');
   const fillSel = (ms) => {
     sel.innerHTML = '<option value="">全部月份</option>' +
+      '<option value="all">全部月份（跨月分析）</option>' +
       ms.map(x=>`<option value="${esc(x.month)}">${esc(x.month)}（${x.count||0} 条）</option>`).join('');
     sel.value = (ms.some(x=>x.month===defMonth)) ? defMonth : (ms[0] ? ms[0].month : '');
   };
   if (dhMonths.length) { fillSel(dhMonths); }
   else {
-    fetch(dhAPI('meta')).then(r=>r.json()).then(m => {
-      dhMonths = (m.months || []);
-      fillSel(dhMonths);
-    }).catch(()=>{ sel.innerHTML = '<option value="">加载失败</option>'; });
+    dhLoadDropOpts().then(() => fillSel(dhMonths)).catch(() => { sel.innerHTML = '<option value="">加载失败</option>'; });
   }
   $('#dhAnBtn').onclick = dhRunAnalysis;
   $('#dhAnExport').onclick = dhExportAnalysis;
@@ -3631,7 +3224,7 @@ function dhPageAnalysis(preMonth){
 
 async function dhRunAnalysis(){
   const month = ($('#dhAnMonth').value || '').trim();
-  if (!/^\d{4}-\d{2}$/.test(month)){ toast('月份格式应为 YYYY-MM'); return; }
+  if (month !== 'all' && !/^\d{4}-\d{2}$/.test(month)){ toast('请选择有效月份或「全部月份（跨月分析）」'); return; }
   const model = ($('#dhAnModel').value || '').trim();
   const card = $('#dhAnChartCard'); card.style.display = 'block';
   $('#dhAnEmpty').style.display = 'none';
@@ -3644,7 +3237,7 @@ async function dhRunAnalysis(){
   $('#dhAnTitle').textContent = r.title;
   const data = r.data || [];
   if (data.length === 0){ $('#dhAnEmpty').style.display = 'block'; $('#dhAnLegend').innerHTML = ''; return; }
-  dhDrawAnalysisChart(r);
+  if (r.all) dhDrawAnalysisChartAll(r); else dhDrawAnalysisChart(r);
 }
 
 // 型号配色板（与后端导出图表一致）
@@ -3754,1116 +3347,645 @@ function dhDrawAnalysisChart(r){
   $('#dhAnLegend').innerHTML = '';
 }
 
+// 跨月分析图：X=月份（倒序），堆叠按型号（全型号）或按拉线（已选型号）；顶部标题 + 底部图例
+function dhDrawAnalysisChartAll(r){
+  const months = r.months || [];
+  const lines = r.lines || [], models = r.models || [];
+  const data = r.data || [];
+  const hasModel = !!r.model;
+  const segKeys = hasModel ? lines : models;
+  const colorOf = {};
+  segKeys.forEach((s, i) => { colorOf[s] = DH_MODEL_COLORS[i % DH_MODEL_COLORS.length]; });
+  const valOf = (m, seg) => {
+    let v = 0;
+    for (const d of data){
+      if (d.month === m && ((!hasModel && d.model === seg) || (hasModel && d.line === seg))) v += (d.total || 0);
+    }
+    return v;
+  };
+  const monthTotal = (m) => { let s = 0; segKeys.forEach(seg => s += valOf(m, seg)); return s; };
+  const canvas = $('#dhAnCanvas');
+  const dpr = window.devicePixelRatio || 1;
+  const cssW = canvas.clientWidth || 320;
+  const cssH = 300;
+  canvas.width = cssW * dpr; canvas.height = cssH * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, cssW, cssH);
+  const M = { l: 34, r: 14, t: 16, b: 46 };
+  const plotW = cssW - M.l - M.r, plotH = cssH - M.t - M.b;
+  let maxTotal = 0;
+  months.forEach(m => { const s = monthTotal(m); if (s > maxTotal) maxTotal = s; });
+  const yMax = Math.max(5, Math.ceil((maxTotal || 1) / 5) * 5);
+  ctx.font = '11px sans-serif'; ctx.fillStyle = '#64748b'; ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1;
+  for (let i = 0; i <= 5; i++){
+    const y = M.t + plotH - (i / 5) * plotH;
+    ctx.beginPath(); ctx.moveTo(M.l, y); ctx.lineTo(M.l + plotW, y); ctx.stroke();
+    ctx.fillText(String(Math.round(yMax * i / 5)), 4, y + 4);
+  }
+  const groupSlot = plotW / Math.max(1, months.length);
+  months.forEach((m, gi) => {
+    const gx = M.l + groupSlot * gi;
+    const gw = groupSlot - 8;
+    const barW = Math.min(46, gw * 0.6);
+    const cx = gx + gw / 2;
+    const x = cx - barW / 2;
+    const baseY = M.t + plotH;
+    let acc = 0;
+    segKeys.forEach(seg => {
+      const v = valOf(m, seg);
+      if (v <= 0) return;
+      const h = (v / yMax) * plotH;
+      ctx.fillStyle = colorOf[seg] || '#999';
+      ctx.fillRect(x, baseY - acc - h, barW, h);
+      acc += h;
+    });
+    const tot = monthTotal(m);
+    if (tot > 0){
+      ctx.fillStyle = '#1e293b'; ctx.font = 'bold 11px sans-serif';
+      ctx.fillText(String(tot), cx, baseY - acc - 4);
+      ctx.font = '11px sans-serif';
+    }
+    ctx.textAlign = 'center'; ctx.font = '11px sans-serif'; ctx.fillStyle = '#334155';
+    ctx.fillText(m, cx, cssH - M.b + 14);
+  });
+  const lg = $('#dhAnLegend');
+  if (lg){
+    lg.innerHTML = segKeys.map(s => `<span style="display:inline-flex;align-items:center;gap:4px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${colorOf[s]};"></span>${esc(s)}</span>`).join('');
+  }
+}
+
 function dhExportAnalysis(){
   const month = ($('#dhAnMonth').value || '').trim();
-  if (!/^\d{4}-\d{2}$/.test(month)){ toast('请先选择有效月份'); return; }
+  if (month !== 'all' && !/^\d{4}-\d{2}$/.test(month)){ toast('请先选择有效月份或「全部月份（跨月分析）」'); return; }
   const model = ($('#dhAnModel').value || '').trim();
   window.open(dhAPI('analysis/export?month=' + dhEnc(month) + (model ? '&model=' + dhEnc(model) : '')), '_blank');
-  toast('分析图表导出中…');
+  toast(month === 'all' ? '跨月分析导出中（Excel）…' : '分析图表导出中…');
 }
 
-// ---- 库存尾数模块（v2 独立重建 · Key=invtail）----
-const inv = {
-  meta: null,
-  handlers: [],
-  searchKey: '',
-  currentMaterial: null,
-  viewStack: [],   // 视图栈（字符串或对象），用于返回上一视图
-  page: 1,
-  pageSize: 20,
-  listCache: []
-};
+// ---- 库存尾数模块（inventory）----
 
-function invAPI(p){ return '/api/invtail/' + p; }
+// 状态
+let invHandlers = [];         // 经手人下拉数据
+let invCurMaterial = null;    // 当前操作材料
+let invOcrResults = [];       // 拍照识别结果 [{code, materialInfo, qty}]
+let invBoxes = [];           // 当前框选 [{x,y,w,h}]
+let invDrawMode = false;
+let invSelStart = null;
+let invSelRect = null;
+let invManualPts = null;      // 手动四点
+
+function invAPI(path){ return 'api/inventory/' + path; }
 function invEnc(s){ return encodeURIComponent(s==null?'':String(s)); }
 function invE(s){ return (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
-function invFmtStock(v){ const n = Number(v)||0; return Math.abs(n-Math.round(n))<1e-6 ? String(Math.round(n)) : String(Math.round(n*10000)/10000); }
 
-// 将 invtail 内部视图接入平台全局导航栈，使 #pageBack 与左缘右滑手势能逐级返回（对标其它模块）
-function invPushView(key, title, renderFn){
-  _navPush('invtail-' + key, title, function(){
-    $('#pageBack').style.display = 'inline';
-    $('#pageBack').onclick = _navBack;
-    renderFn();
-  }, null);
-}
-
-function invHomeView(){
+// ---- 主渲染器 ----
+function renderInventoryModule(){
   const root = $('#moduleRoot');
-  root.innerHTML =
-    invEl('div', {class:'it-home-top'},
-      invEl('div', {class:'it-search'},
-        invEl('input', {id:'itKw', type:'text', class:'it-search-input', placeholder:'搜索 库号 / 编码 / 材料信息', value: inv.searchKey, oninput:'invSearchDebounced()'}) +
-        invEl('button', {class:'it-btn-pri it-search-btn', onclick:'invSearch()'},'查询')) +
-      invEl('div', {class:'it-feat-row'},
-        invEl('div', {class:'feat-btn feat-l', onclick:'invNav(\'create\')'},
-          invEl('div',{class:'feat-ic', style:'background:linear-gradient(145deg,#22c55e,#16a34a);'},'➕') +
-          invEl('div',{class:'feat-lb'},'新增材料')) +
-        invEl('div', {class:'feat-btn feat-l', onclick:'invNav(\'export\')'},
-          invEl('div',{class:'feat-ic', style:'background:linear-gradient(145deg,#f59e0b,#d97706);'},'📤') +
-          invEl('div',{class:'feat-lb'},'导出明细'))) ) +
-    invEl('div', {id:'itList', class:'it-list'},
-      invEl('div',{class:'it-empty'},invEl('div',{class:'ic'},'🔍'),'输入关键词搜索，或点「新增材料」开始'));
-  invLoadMeta();
-  if (inv.searchKey) invSearch();
-}async function invLoadMeta(){
-  try {
-    const r = await fetch(invAPI('meta'));
-    const j = await r.json();
-    if (j.ok){ inv.meta = j; inv.handlers = j.handlers || []; invRefreshHandlerList(); }
-  } catch (e) { console.warn(e); }
+  root.style.display = 'flex'; root.style.flexDirection = 'column';
+  root.style.justifyContent = 'center'; root.style.paddingTop = '0';
+  invRenderMenu();
 }
 
-// 经手人下拉：所有经手人输入框共用 id 为 itHandlerList 的 datalist，
-// 保证「写入过的名字」在任意经手人输入框都能下拉选择；数据刷新后就地更新选项。
-function invHandlerOptionsHtml(){
-  return (inv.handlers || []).map(h => invEl('option', {value: h.name})).join('');
-}
-function invRefreshHandlerList(){
-  try {
-    const dl = $('#itHandlerList');
-    if (dl) dl.innerHTML = invHandlerOptionsHtml();
-  } catch (e) { console.warn(e); }
-}
-
-// 经手人输入框 + 下拉候选 + 「管理」入口（打开经手人管理页）。
-// 所有经手人输入框统一走这里，保证：下拉候选一致 + 每处都能就地进入管理。
-function invHandlerField(id, placeholder){
-  return invEl('div',{class:'it-handler-field'},
-    invEl('input',{id:id, placeholder:placeholder, list:'itHandlerList', autocomplete:'off'}) +
-    invEl('datalist',{id:'itHandlerList'}, invHandlerOptionsHtml()) +
-    invEl('button',{class:'it-handler-manage', type:'button', onclick:'invNav(\'handlers\')', title:'管理经手人（删除 / 改名）'},'⚙️'));
-}
-
-let _searchT = null;
-function invSearchDebounced(){
-  clearTimeout(_searchT);
-  _searchT = setTimeout(invSearch, 350);
-}
-
-async function invSearch(){
-  const kw = ($('#itKw')?.value || '').trim();
-  inv.searchKey = kw;
-  if (!kw){ $('#itList').innerHTML = invEl('div',{class:'it-empty'},invEl('div',{class:'ic'},'🔍'),'输入关键词搜索，或点「新增材料」开始'); return; }
-  const url = invAPI('materials?q='+invEnc(kw)+'&page=1&size='+inv.pageSize);
-  const wrap = $('#itList');
-  wrap.innerHTML = invEl('div',{class:'it-empty'},invEl('div',{class:'ic'},'⏳'),'搜索中...');
-  try {
-    const r = await fetch(url);
-    const j = await r.json();
-    if (!j.ok){ wrap.innerHTML = invEl('div',{class:'it-empty'},invEl('div',{class:'ic'},'⚠️'),j.error||'搜索失败'); return; }
-    if (!j.items.length){ wrap.innerHTML = invEl('div',{class:'it-empty'},invEl('div',{class:'ic'},'📭'),'没有匹配的材料'); return; }
-    wrap.innerHTML = j.items.map(m => {
-      const stockCls = Number(m.stockValue) <= 0 ? 'zero' : '';
-      return invEl('div', {class:'it-item', onclick:'invOpenDetail('+m.id+')'},
-        invEl('div',{class:'it-item-text'},
-          invEl('div',{class:'it-item-bin'},'库号 '+invE(m.binNo)),
-          invEl('div',{class:'it-item-name'},invE(m.materialInfo||'(未填材料信息)')),
-          invEl('div',{class:'it-item-meta'},
-            '编码 ' + invE(m.code||'-') +
-            ' · ' + (m.recordCount||0) + ' 笔流水' +
-            (m.lastMovedAt ? ' · 最近 '+invE(m.lastMovedAt) : ''))) +
-        invEl('div',{class:'it-stock'},
-          invEl('div',{class:'it-stock-val '+stockCls},invFmtStock(m.stockValue||0)),
-          invEl('div',{class:'it-stock-lbl'},'当前库存')));
-    }).join('');
-  } catch (e) {
-    wrap.innerHTML = invEl('div',{class:'it-empty'},invEl('div',{class:'ic'},'⚠️'),'网络异常：'+e.message);
-  }
-}
-
-async function invOpenDetail(id){
+// ---- 菜单 ----
+function invRenderMenu(){
   const root = $('#moduleRoot');
-  root.innerHTML = invEl('div',{class:'it-empty'},invEl('div',{class:'ic'},'⏳'),'加载中...');
-  try {
-    const r = await fetch(invAPI('materials/'+id));
-    const j = await r.json();
-    if (!j.ok){ toast(j.error||'加载失败'); _navBack(); return; }
-    inv.currentMaterial = j.material;
-    invPushView('detail:'+id, '材料详情', invRenderDetail);
-    invRenderDetail();
-  } catch (e) { toast('加载失败：'+e.message); _navBack(); }
-}function invRenderDetail(){
-  const m = inv.currentMaterial;
-  if (!m){ _navBack(); return; }
-  const stockCls = Number(m.stockValue) <= 0 ? 'zero' : '';
+  root.innerHTML = `
+    <div style="text-align:center;">
+      <div style="display:flex;justify-content:center;align-items:center;gap:16px;margin-bottom:8px;flex-wrap:wrap;">
+        <div class="feat-btn feat-l" id="invBtnAdd">
+          <div class="feat-ic" style="background:linear-gradient(145deg,#22c55e,#16a34a);box-shadow:0 8px 24px rgba(22,163,74,.4);">➕</div>
+          <div class="feat-lb">新增材料</div>
+        </div>
+        <div class="feat-btn feat-l" id="invBtnSearch">
+          <div class="feat-ic" style="background:linear-gradient(145deg,#3b82f6,#2563eb);box-shadow:0 8px 24px rgba(37,99,235,.4);">🔍</div>
+          <div class="feat-lb">查询</div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:center;align-items:center;gap:16px;">
+        <div class="feat-btn feat-l" id="invBtnOcr">
+          <div class="feat-ic" style="background:linear-gradient(145deg,#8b5cf6,#7c3aed);box-shadow:0 8px 24px rgba(124,58,237,.4);">📷</div>
+          <div class="feat-lb">拍照识别</div>
+        </div>
+        <div class="feat-btn feat-l" id="invBtnExport">
+          <div class="feat-ic" style="background:linear-gradient(145deg,#f59e0b,#d97706);box-shadow:0 8px 24px rgba(217,119,6,.4);">📥</div>
+          <div class="feat-lb">导出</div>
+        </div>
+      </div>
+      <div class="meta-line" style="margin-top:14px;color:var(--sub);font-size:12px;">库号 · 编码（10位） · 材料信息 · 出入库 · 拍照识别</div>
+    </div>`;
+  $('#invBtnAdd').onclick = invPageAdd;
+  $('#invBtnSearch').onclick = invPageSearch;
+  $('#invBtnOcr').onclick = invPageOcr;
+  $('#invBtnExport').onclick = () => {
+    const q = prompt('输入查询条件（库号/编码/材料信息），留空导出全部：');
+    window.open(invAPI('export?q=' + invEnc(q === null ? '' : q)), '_blank');
+    toast('导出请求已发送…');
+  };
+}
+
+// ---- 返回导航条 ----
+function invBack(){
+  navBack();
+}
+
+// ---- 新增页 ----
+function invPageAdd(){
   const root = $('#moduleRoot');
-  root.innerHTML =
-    invEl('div',{class:'it-hero'},
-      invEl('div',{class:'it-hero-grid'},
-        invEl('div',{class:'it-hero-cell'},
-          invEl('div',{class:'it-hero-label'},'库号'),
-          invEl('div',{class:'it-hero-value big'},invE(m.binNo))) +
-        invEl('div',{class:'it-hero-cell'},
-          invEl('div',{class:'it-hero-label'},'材料编码'),
-          invEl('div',{class:'it-hero-value big'},invE(m.code||'-'))) +
-        invEl('div',{class:'it-hero-cell stock'},
-          invEl('div',{class:'it-hero-label'},'当前库存') +
-          invEl('div',{class:'it-hero-stock-val '+stockCls},invFmtStock(m.stockValue||0)))) +
-      invEl('div',{class:'it-hero-detail'},
-        invEl('div',{class:'it-hero-label'},'材料详情'),
-        invEl('div',{class:'it-hero-value'},invE(m.materialInfo||'(未填材料信息)')))) +
-    invEl('div',{class:'it-card'},
-      invEl('div',{class:'it-movebar it-movebar-compact'},
-        invEl('div',{class:'it-move-grid'},
-          invEl('div',{class:'it-move-col in'},
-            invEl('div',{class:'it-move-unit in'},
-              invEl('input',{class:'it-qty', id:'itQtyIn', type:'number', step:'any', min:'0', placeholder:'入库数量', onkeydown:'if(event.key==="Enter"||event.keyCode===13)invDoMove("in")'}) +
-              invEl('button',{class:'it-move-go in', type:'button', onclick:'invDoMove("in")'},'入库'))) +
-          invEl('div',{class:'it-move-col out'},
-            invEl('div',{class:'it-move-unit out'},
-              invEl('input',{class:'it-qty', id:'itQtyOut', type:'number', step:'any', min:'0', placeholder:'出库数量', onkeydown:'if(event.key==="Enter"||event.keyCode===13)invDoMove("out")'}) +
-              invEl('button',{class:'it-move-go out', type:'button', onclick:'invDoMove("out")'},'出库'))) ) +
-        invEl('div',{class:'it-hint'},'在对应框输入数量，点「入库 / 出库」或按回车即记账（自动累加或扣减库存）') +
-        invEl('div',{class:'it-handler', style:'position:relative;flex:1;min-width:120px;'},
-          invHandlerField('itHandler', '经手人（自动带出上次）')))) +
-    invEl('div',{class:'it-card'},
-      invEl('div',{class:'it-act-row'},
-        invEl('input',{class:'it-note', id:'itNote', type:'text', placeholder:'备注（可选）'}) +
-        invEl('button',{class:'it-rec-toggle', id:'itRecToggle', onclick:'invToggleRecords()'},'流水笔数 '+(m.recordCount||0)+' 笔')) +
-      invEl('div',{id:'itRecords', class:'it-rec-collapsed'},'加载流水...')) +
-    invEl('div',{style:'display:flex;gap:8px;flex-wrap:wrap;'},
-      invEl('button',{class:'feat-btn', onclick:'invOpenEdit('+m.id+')'},'✏️ 修改主档') +
-      invEl('button',{class:'feat-btn', onclick:'invDelMaterial('+m.id+')', style:'background:#fee2e2;color:#991b1b;border-color:#fca5a5;'},'🗑 删除材料'));
-    invLoadRecords(m.id);
-}
-async function invDoMove(dir){
-  const m = inv.currentMaterial;
-  const id = m && m.id;
-  if (!id){ toast('材料未加载，请重试'); return; }
-  const el = $(dir === 'in' ? '#itQtyIn' : '#itQtyOut');
-  if (!el) return;
-  const qty = parseFloat(el.value || '0');
-  if (!(qty > 0)){ toast('请输入大于 0 的数量'); el.focus(); return; }
-  const handlerEl = $('#itHandler');
-  let handler = ((handlerEl && handlerEl.value) || '').trim();
-  // 经手人为空时，自动带出上次使用过 / 最近使用过的经手人，避免空值卡死记账（后端必填）
-  if (!handler) handler = (inv.lastHandler || (inv.handlers && inv.handlers[0] && inv.handlers[0].name) || '').trim();
-  if (!handler){ toast('请填写经手人'); if (handlerEl) handlerEl.focus(); return; }
-  const note = (($('#itNote') && $('#itNote').value) || '').trim();
-  try {
-    const r = await fetch(invAPI('materials/'+id+'/move'), {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({direction:dir, qty:qty, handler:handler, note:note})
-    });
-    const j = await r.json();
-    if (!j.ok){ toast(j.error || '操作失败'); return; }
-    inv.lastHandler = handler;
-    toast(dir === 'in' ? ('已入库 +'+invFmtStock(qty)) : ('已出库 -'+invFmtStock(qty)));
-    const mr = await fetch(invAPI('materials/'+id));
-    const mj = await mr.json();
-    if (mj.ok) inv.currentMaterial = mj.material;
-    invRenderDetail();
-    const h2 = $('#itHandler'); if (h2 && inv.lastHandler) h2.value = inv.lastHandler;
-  } catch (e){ toast('操作失败：'+e.message); }
+  root.style.justifyContent = 'flex-start'; root.style.paddingTop = '6px';
+  root.innerHTML = `
+    <div class="bar"><span class="back" id="invAddBack">← 返回</span><span style="font-weight:700;">新增材料</span></div>
+    <div class="card inv-card" id="invAddForm">
+      <div class="inv-field">
+        <label>库号</label>
+        <input type="text" id="invAKu" placeholder="如 A-01" autocomplete="off" />
+      </div>
+      <div class="inv-field">
+        <label>编码（子件编码，10位数字）</label>
+        <input type="text" id="invACode" placeholder="10位数字，如 1234567890" autocomplete="off" />
+      </div>
+      <div class="inv-field">
+        <label>材料信息（子件名称）</label>
+        <textarea id="invAInfo" placeholder="材料描述信息" style="width:100%;padding:11px 12px;border-radius:12px;border:1px solid var(--line);font-size:15px;resize:vertical;min-height:60px;"></textarea>
+      </div>
+      <div class="inv-field">
+        <label>初始库存数量</label>
+        <input type="number" id="invAQty" value="0" min="0" placeholder="0" style="width:100%;padding:11px 12px;border-radius:12px;border:1px solid var(--line);font-size:15px;" />
+      </div>
+      <button class="btn" id="invASubmit">💾 保存</button>
+      <div id="invAddRes" style="font-size:13px;"></div>
+    </div>`;
+  navPush(renderInventoryModule);
+  $('#invAddBack').onclick = invBack;
+  $('#invASubmit').onclick = invDoAdd;
 }
 
-function invToggleRecords(){
-  const box = $('#itRecords');
-  const btn = $('#itRecToggle');
-  if (!box || !btn) return;
-  const collapsed = box.classList.toggle('it-rec-collapsed');
-  btn.classList.toggle('open', !collapsed);
-}
-
-async function invLoadRecords(id){
-  try {
-    const r = await fetch(invAPI('materials/'+id));
-    const j = await r.json();
-    if (!j.ok){ $('#itRecords').innerHTML = '<div class="it-empty">'+invE(j.error||'加载失败')+'</div>'; return; }
-    inv.currentMaterial = j.material;
-    const recs = j.records || [];
-    if (!recs.length){
-      $('#itRecords').innerHTML =
-        invEl('div',{class:'it-rec-head'},'历史操作明细（共 0 笔）') +
-        invEl('div',{class:'it-empty'},invEl('div',{class:'ic'},'📋'),'暂无出入库流水');
-      return;
-    }
-    $('#itRecords').innerHTML =
-      invEl('div',{class:'it-rec-head'},'历史操作明细（共 '+recs.length+' 笔 · 最新在前）') +
-      recs.map(r0 => {
-        const isIn = r0.direction === 'in';
-        return invEl('div',{class:'it-record-detail'},
-          invEl('div',{class:'it-record-top'},
-            invEl('div',{class:'it-record-tag '+(isIn?'in':'out')}, r0.directionLabel) +
-            invEl('div',{class:'it-record-qty '+(isIn?'in':'out')}, (isIn?'+':'-')+invFmtStock(r0.qty)) +
-            invEl('div',{class:'it-record-bal'},'结存 '+invFmtStock(r0.balance)) +
-            invEl('div',{class:'it-record-del', onclick:'invDelRecord('+r0.id+','+id+')', title:'删除这笔流水'},'✕')) +
-          invEl('div',{class:'it-record-info'},
-            invEl('div',{},'经手人：'+invEl('span',{class:'k', style:'cursor:pointer;border-bottom:1px dashed var(--line);padding:0 2px;', title:'点击修改经手人', onclick:'invEditRecHandler('+r0.id+',this)'},invE(r0.handler||'-'))) +
-            invEl('div',{},'时间：'+invEl('span',{class:'k'},invE(r0.occurredAt))) +
-            (r0.note ? invEl('div',{},'备注：'+invEl('span',{class:'k'},invE(r0.note))) : '')));
-      }).join('');
-  } catch (e) { $('#itRecords').innerHTML = '<div class="it-empty">网络异常</div>'; }
-}async function invDelMaterial(id){
-  const m = inv.currentMaterial;
-  const nm = m ? (m.binNo + ' / ' + m.code) : ('#'+id);
-  if (!confirm('确认删除材料 '+nm+'？\n该材料下的所有出入库流水将一并删除，且不可恢复。')) return;
-  try {
-    const r = await fetch(invAPI('materials/'+id+'/delete'), {method:'POST'});
-    const j = await r.json();
-    if (!j.ok){ toast(j.error||'删除失败'); return; }
-    toast('已删除 '+nm);
-    invLoadMeta();
-    _navBack();
-  } catch (e) { toast('删除失败：'+e.message); }
-}function invCreateView(){
-  invPushView('create', '新增材料', invRenderCreate);
-  invRenderCreate();
-}
-function invRenderCreate(){
-  const root = $('#moduleRoot');
-  root.innerHTML =
-    invEl('div',{style:'font-weight:700;font-size:16px;margin-bottom:8px;'},'新增材料') +
-    invEl('div', {class:'it-card'},
-      invEl('div',{class:'it-field'},
-        invEl('label',{for:'itCBin'},invEl('span',{class:'req'},'*'),'库号'),
-        invEl('input',{id:'itCBin', placeholder:'如 A-01-03', autocomplete:'off'})) +
-      invEl('div',{class:'it-field'},
-        invEl('label',{for:'itCCode'},invEl('span',{class:'req'},'*'),'编码'),
-        invEl('input',{id:'itCCode', placeholder:'常规为 10 位数字', inputmode:'numeric', autocomplete:'off'})) +
-      invEl('div',{class:'it-field'},
-        invEl('label',{for:'itCInfo'},invEl('span',{class:'req'},'*'),'材料信息'),
-        invEl('textarea',{id:'itCInfo', placeholder:'材料名称 / 规格 / 描述等', rows:'2'})) +
-      invEl('div',{class:'it-field'},
-        invEl('label',{for:'itCQty'},invEl('span',{class:'req'},'*'),'数量（首笔入库）'),
-        invEl('input',{id:'itCQty', type:'number', step:'any', placeholder:'如 100', onkeydown:'if(event.key==="Enter")invDoCreate()'})) +
-      invEl('div',{class:'it-field'},
-        invEl('label',{for:'itCHandler'},invEl('span',{class:'req'},'*'),'经手人（新增人）'),
-        invEl('div',{style:'position:relative;'},
-          invHandlerField('itCHandler', '点击右侧快速选择最近操作的人，或直接输入'))) +
-      invEl('div',{class:'it-field'},
-        invEl('label',{for:'itCNote'},'备注（可选）'),
-        invEl('input',{id:'itCNote', placeholder:'如 新建首批入库'})) +
-      invEl('div',{style:'display:flex;gap:8px;flex-wrap:wrap;'},
-        invEl('button',{class:'feat-btn', onclick:'invOpenOcrForCreate()'},'📷 拍照识别（自动填写）') +
-        invEl('button',{class:'it-btn-pri', onclick:'invDoCreate()'},'确认新增')) +
-      invEl('div',{id:'itCHint',class:'it-hint'},''));
-  setTimeout(()=>$('#itCBin')?.focus(), 50);
-}
-
-async function invDoCreate(){
+async function invDoAdd(){
   const body = {
-    binNo: ($('#itCBin').value||'').trim(),
-    code: ($('#itCCode').value||'').trim(),
-    materialInfo: ($('#itCInfo').value||'').trim(),
-    qty: parseFloat($('#itCQty').value||'0'),
-    handler: ($('#itCHandler').value||'').trim(),
-    note: ($('#itCNote').value||'').trim()
+    kuHao: ($('#invAKu').value||'').trim(),
+    code: ($('#invACode').value||'').trim(),
+    materialInfo: ($('#invAInfo').value||'').trim(),
+    qty: parseInt($('#invAQty').value||'0') || 0
   };
-  if (!body.binNo){ toast('请填写库号'); return; }
-  if (!body.code){ toast('请填写编码'); return; }
-  if (!body.materialInfo){ toast('请填写材料信息'); return; }
-  if (!(body.qty > 0)){ toast('请填写大于 0 的数量'); return; }
-  if (!body.handler){ toast('请填写经手人'); return; }
-  try {
-    const r = await fetch(invAPI('materials'), {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
-    const j = await r.json();
-    if (!j.ok){
-      if (j.code === 'duplicate' && j.existing){
-        const go = confirm(j.error + '\n\n是否跳转到该材料做出入库？');
-        if (go){ invOpenDetail(j.existing.id); }
-      } else { toast(j.error||'新增失败'); }
-      return;
-    }
-    toast('已新增');
-    if (j.hint){ $('#itCHint').className = 'it-hint warn'; $('#itCHint').textContent = '⚠ ' + j.hint; }
-    invLoadMeta();
-    invOpenDetail(j.material.id);
-  } catch (e) { toast('新增失败：'+e.message); }
+  if (!body.kuHao || !body.code || !body.materialInfo){ toast('库号/编码/材料信息均不能为空'); return; }
+  if (!/^\d{10}$/.test(body.code)){ toast('编码必须为10位数字'); return; }
+  const res = await (await fetch(invAPI('materials'), {
+    method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)
+  })).json();
+  const box = $('#invAddRes');
+  if (res.error){ box.innerHTML = '<div style="color:var(--bad);padding:8px 0;">'+invE(res.error)+'</div>'; }
+  else { box.innerHTML = '<div style="color:var(--ok);padding:8px 0;">✅ 保存成功：'+invE(res.kuHao)+' / '+invE(res.code)+'</div>'; invCurMaterial = res; }
 }
 
-function invOpenEdit(id){
-  const m = inv.currentMaterial;
-  if (!m) return;
-  invPushView('edit:'+id, '修改材料主档', invRenderEdit);
-  invRenderEdit();
-}
-function invRenderEdit(){
-  const m = inv.currentMaterial;
-  if (!m){ _navBack(); return; }
+// ---- 查询页 ----
+function invPageSearch(){
   const root = $('#moduleRoot');
-  root.innerHTML =
-    invEl('div',{style:'font-weight:700;font-size:16px;margin-bottom:8px;'},'修改材料主档') +
-    invEl('div', {class:'it-card'},
-      invEl('div',{class:'it-tip'},
-        invEl('span',{class:'i'},'ℹ️'),
-        invEl('div',{},'仅修改库号 / 编码 / 材料信息。出入库流水不受影响。')) +
-      invEl('div',{class:'it-field'},
-        invEl('label',{for:'itEBin'},invEl('span',{class:'req'},'*'),'库号'),
-        invEl('input',{id:'itEBin', value: invE(m.binNo), autocomplete:'off'})) +
-      invEl('div',{class:'it-field'},
-        invEl('label',{for:'itECode'},invEl('span',{class:'req'},'*'),'编码'),
-        invEl('input',{id:'itECode', value: invE(m.code), inputmode:'numeric', autocomplete:'off'})) +
-      invEl('div',{class:'it-field'},
-        invEl('label',{for:'itEInfo'},invEl('span',{class:'req'},'*'),'材料信息'),
-        invEl('textarea',{id:'itEInfo', rows:'2'}, invE(m.materialInfo))) +
-      invEl('div',{id:'itEHint',class:'it-hint'},'')) +
-    invEl('div',{style:'display:flex;gap:8px;'},
-      invEl('button',{class:'it-btn-pri', onclick:'invDoUpdate('+m.id+')'},'保存') +
-      invEl('button',{class:'feat-btn', onclick:'_navBack()'},'取消'));
-}async function invDoUpdate(id){
-  const body = {
-    binNo: ($('#itEBin').value||'').trim(),
-    code: ($('#itECode').value||'').trim(),
-    materialInfo: ($('#itEInfo').value||'').trim()
-  };
-  if (!body.binNo || !body.code || !body.materialInfo){ toast('请完整填写'); return; }
-  try {
-    const r = await fetch(invAPI('materials/'+id+'/update'), {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
-    const j = await r.json();
-    if (!j.ok){
-      if (j.code === 'duplicate' && j.existing){ toast('与已有材料冲突：'+j.existing.binNo+' / '+j.existing.code); }
-      else toast(j.error||'保存失败');
-      return;
-    }
-    toast('已保存');
-    invLoadMeta();
-    invOpenDetail(id);
-  } catch (e) { toast('保存失败：'+e.message); }
+  root.style.justifyContent = 'flex-start'; root.style.paddingTop = '6px';
+  root.innerHTML = `
+    <div class="bar"><span class="back" id="invSrchBack">← 返回</span><span style="font-weight:700;">库存查询</span></div>
+    <div class="card">
+      <div class="inv-field">
+        <label>搜索（库号 / 编码 / 材料信息，支持模糊）</label>
+        <input type="text" id="invSQ" placeholder="输入关键词…" autocomplete="off" />
+      </div>
+      <button class="btn" style="margin-top:10px;" id="invSrchBtn">🔍 查询</button>
+    </div>
+    <div id="invSrchResult" class="inv-list" style="padding:0 6px;"></div>`;
+  navPush(renderInventoryModule);
+  $('#invSrchBack').onclick = invBack;
+  $('#invSrchBtn').onclick = invDoSearch;
+  $('#invSQ').onkeydown = e => { if(e.key==='Enter') invDoSearch(); };
+  // 加载经手人下拉
+  invLoadHandlers();
 }
 
-function invExportView(){
-  invPushView('export', '导出明细', invRenderExport);
-  invRenderExport();
+async function invLoadHandlers(){
+  try{ invHandlers = await (await fetch(invAPI('handlers'))).json(); } catch(e){ invHandlers = []; }
 }
-function invRenderExport(){
+
+async function invDoSearch(){
+  const q = ($('#invSQ').value||'').trim();
+  const box = $('#invSrchResult');
+  box.innerHTML = '<div class="empty"><span class="spinner"></span> 查询中…</div>';
+  try {
+    const list = await (await fetch(invAPI('search?q=')+invEnc(q))).json();
+    if (!list || !list.length){ box.innerHTML='<div class="empty">未找到匹配记录</div>'; return; }
+    box.innerHTML = list.map(m => `
+      <div class="inv-item" data-id="${m.id}">
+        <div class="inv-item-text">
+          <div class="inv-item-name">📦 ${invE(m.kuHao)} <span style="font-size:12px;color:var(--pri);">${invE(m.code)}</span></div>
+          <div class="inv-item-meta">${invE(m.materialInfo)}</div>
+          <span class="inv-qty-badge ${m.qty>0?'positive':'zero'}">库存：${m.qty}</span>
+        </div>
+      </div>`).join('');
+    box.querySelectorAll('.inv-item').forEach(el => el.onclick = () => invPageDetail(parseInt(el.dataset.id)));
+  } catch(e){ box.innerHTML='<div class="empty">查询失败：'+invE(e.message||e)+'</div>'; }
+}
+
+// ---- 详情页 ----
+async function invPageDetail(id){
   const root = $('#moduleRoot');
-  const today = new Date().toISOString().slice(0,10);
-  root.innerHTML =
-    invEl('div',{style:'font-weight:700;font-size:16px;margin-bottom:8px;'},'导出出入库明细流水') +
-    invEl('div', {class:'it-card'},
-      invEl('div',{class:'it-export-card'},
-        invEl('div',{class:'ttl'},'📊 表格内容'),
-        invEl('div',{class:'desc'},
-          '导出「出入库明细流水」（一行一笔），可用于追溯核账。' +
-          '表格列：序号 / 库号 / 编码 / 材料信息 / 方向（入库/出库） / 数量 / 结存 / 时间 / 经手人 / 备注。' +
-          '底部自动汇总「入库合计」「出库合计」「净增」。')) +
-      invEl('div',{class:'it-field'},
-        invEl('label',{for:'itXQ'},'关键词（库号/编码/材料信息 模糊）'),
-        invEl('input',{id:'itXQ', placeholder:'留空 = 导出全部'})) +
-      invEl('div',{class:'it-row'},
-        invEl('div',{class:'it-field'},
-          invEl('label',{for:'itXHandler'},'经手人（精确匹配，留空=全部）'),
-          invHandlerField('itXHandler', '点击右侧选择最近的人')) +
-        invEl('div',{class:'it-field'},
-          invEl('label',{for:'itXDir'},'方向'),
-          invEl('select',{id:'itXDir'},
-            invEl('option',{value:''},'全部') +
-            invEl('option',{value:'in'},'入库') +
-            invEl('option',{value:'out'},'出库')))) +
-      invEl('div',{class:'it-row'},
-        invEl('div',{class:'it-field'},
-          invEl('label',{for:'itXFrom'},'起始日期（YYYY-MM-DD）'),
-          invEl('input',{id:'itXFrom', type:'date', value: today.slice(0,8)+'01'})) +
-        invEl('div',{class:'it-field'},
-          invEl('label',{for:'itXTo'},'截止日期（YYYY-MM-DD）'),
-          invEl('input',{id:'itXTo', type:'date', value: today}))) +
-      invEl('button',{class:'it-btn-pri', onclick:'invDoExport()'},'📥 生成 Excel 文件'));
-  invLoadMeta();
-}
-// 导出出入库明细流水 xlsx：读取筛选条件 → 请求 /api/invtail/export → 下载文件
-// 说明：此前「生成 Excel 文件」按钮无响应，根因是本函数从未定义（onclick 调用报 ReferenceError）。
-async function invDoExport(){
-  const val = id => { const el = $(id); return el ? ((el.value || '') + '').trim() : ''; };
-  const q = val('#itXQ'), handler = val('#itXHandler'), direction = val('#itXDir');
-  const dateFrom = val('#itXFrom'), dateTo = val('#itXTo');
-  if (dateFrom && dateTo && dateFrom > dateTo){ toast('起始日期不能晚于截止日期'); return; }
-
-  const p = new URLSearchParams();
-  if (q) p.set('q', q);
-  if (handler) p.set('handler', handler);
-  if (direction) p.set('direction', direction);
-  if (dateFrom) p.set('dateFrom', dateFrom);
-  if (dateTo) p.set('dateTo', dateTo);
-  const qs = p.toString();
-  const url = invAPI('export' + (qs ? ('?' + qs) : ''));
-
+  root.style.justifyContent = 'flex-start'; root.style.paddingTop = '6px';
+  root.innerHTML = `
+    <div class="bar"><span class="back" id="invDetBack">← 返回</span><span style="font-weight:700;">库存详情</span></div>
+    <div id="invDetBody"><div class="empty"><span class="spinner"></span> 加载中…</div></div>`;
+  navPush(() => invPageSearch());
+  $('#invDetBack').onclick = invBack;
   try {
-    toast('正在生成 Excel…');
-    const r = await fetch(url);
-    if (!r.ok){
-      let msg = 'HTTP ' + r.status;
-      try {
-        const j = await r.json();
-        if (j && j.error) msg = j.error;
-      } catch (e) {}
-      throw new Error(msg);
-    }
-    const blob = await r.blob();
-    if (!blob || !blob.size) throw new Error('服务端返回空文件');
-
-    // 文件名：优先取服务端 Content-Disposition（filename*=UTF-8''…），否则本地拼
-    let fn = '';
-    let cd = '';
-    try { cd = (r.headers && r.headers.get) ? (r.headers.get('Content-Disposition') || '') : ''; } catch (e) { cd = ''; }
-    const m = cd.match(/filename\*\s*=\s*UTF-8''([^;]+)/i);
-    if (m && m[1]) { try { fn = decodeURIComponent(m[1]); } catch (e) { fn = m[1]; } }
-    if (!fn) fn = '库存尾数出入库明细_' + new Date().toISOString().slice(0,10).replace(/-/g,'') + '.xlsx';
-
-    const objUrl = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = objUrl; a.download = fn; a.style.display = 'none';
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(function(){ try { URL.revokeObjectURL(objUrl); } catch (e) {} try { a.remove(); } catch (e) {} }, 3000);
-    toast('已导出：' + fn);
-  } catch (err) {
-    toast('导出失败：' + ((err && err.message) ? err.message : err));
-    // 兜底：部分内置浏览器 blob 下载受限时，直接打开由服务端 Content-Disposition 触发下载
-    try { window.open(url, '_blank'); } catch (e) {}
-  }
-}
-
-// ---------- 经手人管理（删除 / 改名）----------
-function invHandlersView(){
-  invPushView('handlers', '经手人管理', invRenderHandlers);
-  invRenderHandlers();
-}
-function invRenderHandlers(){
-  const root = $('#moduleRoot');
-  root.innerHTML =
-    invEl('div',{style:'font-weight:700;font-size:16px;margin-bottom:8px;'},'经手人管理') +
-    invEl('div', {class:'it-card'},
-      invEl('div',{class:'it-export-card'},
-        invEl('div',{class:'ttl'},'📋 名字列表（下拉候选）'),
-        invEl('div',{class:'desc'},
-          '下方是「经手人下拉」里出现的所有名字（按最近使用倒序）。' +
-          '「删除」仅从下拉移除，历史流水里的名字原样保留、不做任何改动；' +
-          '「改名」默认仅改下拉候选，勾选「同步历史流水」后才会一并更新所有历史记录。'))) +
-    invEl('div',{id:'itHList', class:'it-list'});
-  invLoadHandlersList();
-}
-async function invLoadHandlersList(){
-  const box = $('#itHList'); if (!box) return;
-  box.innerHTML = '<div class="it-empty">加载中…</div>';
-  try {
-    const r = await fetch(invAPI('handlers'));
-    const j = await r.json();
-    if (!j.ok){ box.innerHTML = '<div class="it-empty">加载失败</div>'; return; }
-    const items = j.items || [];
-    if (!items.length){ box.innerHTML = invEl('div',{class:'it-empty'},invEl('div',{class:'ic'},'👤'),'暂无经手人'); return; }
-    box.innerHTML =
-      invEl('div',{class:'it-rec-head'},'共 '+items.length+' 个') +
-      items.map(h =>
-        invEl('div',{class:'it-record-detail'},
-          invEl('div',{class:'it-record-top'},
-            invEl('div',{class:'it-record-qty in', style:'min-width:32px;text-align:center;'},'👤') +
-            invEl('div',{class:'it-record-info', style:'flex:1;'},
-              invEl('div',{class:'k'}, invE(h.name)) +
-              invEl('div',{}, '使用 '+h.useCount+' 次 · 最近 '+invE(h.lastUsedAt))) +
-            invEl('div',{class:'it-record-del', onclick:'invHndlRename('+JSON.stringify(h.name)+')', title:'改名'},'✎') +
-            invEl('div',{class:'it-record-del', onclick:'invHndlDelete('+JSON.stringify(h.name)+')', title:'删除'},'✕')))
-      ).join('');
-  } catch(e){ box.innerHTML = '<div class="it-empty">网络异常</div>'; }
-}
-async function invHndlDelete(name){
-  if (!confirm('确认从下拉中移除「'+name+'」？\n\n历史流水里此人的名字原样保留，不受影响。')) return;
-  try {
-    const r = await fetch(invAPI('handlers/delete'), {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({name:name})});
-    const j = await r.json();
-    if (!j.ok){ toast(j.error||'删除失败'); return; }
-    toast('已移除：'+name);
-    invLoadHandlersList();
-    invLoadMeta();
-  } catch(e){ toast('删除失败：'+e.message); }
-}
-async function invHndlRename(name){
-  const nw = prompt('将「'+name+'」改名为：', name);
-  if (nw == null) return;
-  const nnw = (nw||'').trim();
-  if (!nnw) return;
-  if (nnw === name){ toast('新名字与原名字相同'); return; }
-  const sync = confirm('是否同步更新历史流水中的「'+name+'」为「'+nnw+'」？\n\n点「确定」= 同步历史（改写所有已生效记录）\n点「取消」= 仅改下拉候选，历史流水保留原名');
-  try {
-    const r = await fetch(invAPI('handlers/rename'), {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({oldName:name, newName:nnw, syncRecords:sync})});
-    const j = await r.json();
-    if (!j.ok){ toast(j.error||'改名失败'); return; }
-    toast('已改名：'+name+' → '+nnw+(sync?'（同步历史）':'（仅候选）'));
-    invLoadHandlersList();
-    invLoadMeta();
-  } catch(e){ toast('改名失败：'+e.message); }
-}
-
-// ---------- 单笔流水经手人内联修改 ----------
-async function invEditRecHandler(rid, el){
-  if (!el || el.dataset.editing === '1') return;
-  el.dataset.editing = '1';
-  const cur = (el.textContent || '').trim();
-  // 用共享的 itHandlerList datalist；不再额外注入 datalist 避免重复 id
-  el.innerHTML = '<input class="it-rec-handler-edit" list="itHandlerList" autocomplete="off" style="font-size:12.5px;padding:1px 4px;border:1px solid var(--line);border-radius:4px;width:110px;background:#fff;color:var(--txt);" value="'+invE(cur)+'"/>';
-  const inp = el.querySelector('input');
-  try { inp.focus(); inp.select(); } catch(e) {}
-  const restore = (txt) => { el.textContent = txt; el.removeAttribute('data-editing'); };
-  const commit = async () => {
-    const v = (inp.value || '').trim();
-    if (!v || v === cur){ restore(cur); return; }
-    try {
-      const r = await fetch(invAPI('records/'+rid+'/handler'), {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({handler:v})});
-      const j = await r.json();
-      if (!j.ok){ toast(j.error || '修改失败'); restore(cur); return; }
-      toast('已更新经手人 → '+v);
-      el.removeAttribute('data-editing');
-      invLoadMeta();
-      const m = inv.currentMaterial;
-      if (m) invOpenDetail(m.id);
-    } catch (e) { toast('修改失败：'+e.message); restore(cur); }
-  };
-  inp.addEventListener('keydown', (ev) => {
-    if (ev.key === 'Enter'){ ev.preventDefault(); inp.blur(); }
-    else if (ev.key === 'Escape'){ ev.preventDefault(); restore(cur); }
-  });
-  inp.addEventListener('blur', commit);
-}
-
-function invNav(name){
-  if (name === 'home') invHomeView();
-  else if (name === 'create') invCreateView();
-  else if (name === 'export') invExportView();
-  else if (name === 'handlers') invHandlersView();
-}
-
-function invOpenOcrForCreate(){
-  invOcrOpen({mode:'create'}, items => invOcrFillCreate(items));
-}
-
-function invOcrFillCreate(items){
-  if (!items || !items.length){ toast('未识别到任何材料信息'); return; }
-  $('#itCBin').value = '';
-  $('#itCCode').value = items[0].code || '';
-  $('#itCInfo').value = items[0].materialInfo || '';
-  $('#itCHint').className = items[0].codeHint ? 'it-hint warn' : 'it-hint';
-  $('#itCHint').textContent = items[0].codeHint || ('✅ 已从照片填入（'+items.length+' 条识别结果中的第 1 条）');
-  if (items.length > 1){
-    toast('本次识别到 '+items.length+' 条记录，第 1 条已填入表单；剩余请到「查询」中核对');
-  } else {
-    toast('已从照片填入');
-  }
-}
-
-// ---------- OCR 弹层 ----------
-const itOcr = {
-  overlay: null, canvas: null, ctx: null,
-  img: null, sessionId: null,
-  warpW: 0, warpH: 0,
-  rect: null, drawing: false,
-  wb: 'auto',
-  results: [],
-  existing: [],
-  callback: null,
-  // 点击四角矫正
-  capturingCorners: false,
-  corners: [],
-  cornerLayer: null,
-  _cornerClick: null,
-  _cornerTouch: null,
-  _lastCornerT: 0
-};
-
-// 应用内选择面板：替代原生 confirm，减少相机打开过程中的系统提示
-function invOcrChooseSource(){
-  return new Promise((resolve) => {
-    const mask = document.createElement('div');
-    mask.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;z-index:99999;';
-    mask.innerHTML = `
-      <div style="background:#1e293b;border:1px solid #334155;border-radius:12px;padding:18px;width:260px;box-shadow:0 10px 30px rgba(0,0,0,.4);">
-        <div style="color:#e2e8f0;font-weight:600;font-size:15px;margin-bottom:14px;text-align:center;">选择图片来源</div>
-        <button type="button" id="itSrcCam" style="display:block;width:100%;margin-bottom:10px;padding:11px;border:none;border-radius:8px;background:#2563eb;color:#fff;font-size:14px;cursor:pointer;">📷 摄像头拍照</button>
-        <button type="button" id="itSrcAlbum" style="display:block;width:100%;margin-bottom:10px;padding:11px;border:none;border-radius:8px;background:#475569;color:#fff;font-size:14px;cursor:pointer;">🖼 从相册选择</button>
-        <button type="button" id="itSrcCancel" style="display:block;width:100%;padding:10px;border:none;border-radius:8px;background:transparent;color:#94a3b8;font-size:13px;cursor:pointer;">取消</button>
+    const d = await (await fetch(invAPI('materials/'+id))).json();
+    if (!d || !d.material){ $('#invDetBody').innerHTML='<div class="empty">材料不存在</div>'; return; }
+    const m = d.material;
+    const recs = d.records || [];
+    $('#invDetBody').innerHTML = `
+      <div class="card" style="margin:0 6px 10px;">
+        <div style="font-size:15px;font-weight:700;margin-bottom:8px;">📦 ${invE(m.kuHao)}</div>
+        <div style="font-size:13px;color:var(--sub);margin-bottom:6px;">编码：<b style="color:var(--pri)">${invE(m.code)}</b></div>
+        <div style="font-size:13px;color:var(--sub);margin-bottom:6px;">材料：${invE(m.materialInfo)}</div>
+        <div style="font-size:18px;font-weight:800;color:var(--ok);margin-top:8px;">当前库存：${m.qty}</div>
+        <div style="font-size:12px;color:var(--sub);margin-top:4px;">创建：${invE(m.createdAt||'')}</div>
+      </div>
+      <div class="card" style="margin:0 6px 10px;">
+        <div style="font-size:14px;font-weight:700;margin-bottom:10px;">📋 出入库记录</div>
+        ${recs.length ? recs.map(r => `
+          <div style="display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);font-size:13px;">
+            <span style="flex:none;font-weight:700;color:${r.opType==='in'?'var(--ok)':'var(--bad)'};">${r.opType==='in'?'入库':'出库'}</span>
+            <span style="color:var(--pri);font-weight:700;">${r.qty}</span>
+            <span style="flex:1;color:var(--sub);">${invE(r.handler)}</span>
+            <span style="flex:none;color:var(--sub);font-size:11px;">${invE(r.createdAt||'')}</span>
+          </div>`).join('') : '<div class="empty">暂无记录</div>'}
+      </div>
+      <div class="card inv-card" style="margin:0 6px 10px;" id="invOpPanel">
+        <div style="font-size:14px;font-weight:700;margin-bottom:8px;">🔄 出入库操作</div>
+        <div class="inv-op-bar">
+          <select id="invOpType"><option value="in">入库</option><option value="out">出库</option></select>
+          <input type="number" id="invOpQty" placeholder="数量" min="1" style="flex:none;width:80px;" />
+          <input type="text" id="invOpHandler" placeholder="经手人" style="flex:1;" />
+        </div>
+        <div id="invHandlerList" style="max-height:120px;overflow:auto;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;"></div>
+        <button class="btn" id="invOpSubmit">✅ 确认${m.qty>0?'':'（当前库存为0，请先入库）'}</button>
+        <div id="invOpRes" style="font-size:13px;margin-top:6px;"></div>
       </div>`;
-    document.body.appendChild(mask);
-    const done = (v) => { mask.remove(); resolve(v); };
-    mask.querySelector('#itSrcCam').onclick = () => done('camera');
-    mask.querySelector('#itSrcAlbum').onclick = () => done('album');
-    mask.querySelector('#itSrcCancel').onclick = () => done(null);
-    mask.onclick = (e) => { if (e.target === mask) done(null); };
-  });
+    invRenderHandlerList($('#invHandlerList'), $('#invOpHandler'));
+    $('#invOpSubmit').onclick = () => invDoOp(id);
+  } catch(e){ $('#invDetBody').innerHTML='<div class="empty">加载失败：'+invE(e.message||e)+'</div>'; }
 }
 
-async function invOcrOpen(opts, cb){
-  itOcr.callback = cb;
-  itOcr.results = [];
-  itOcr.existing = [];
-  itOcr.wb = 'auto';
-
-  // 应用内选择面板（替代原生 confirm，减少系统提示）
-  const src = await invOcrChooseSource();
-  if (!src) return;
-
-  let file;
-  try {
-    if (src === 'camera'){
-      file = await invOcrCapture();
-    } else {
-      file = await invOcrPick();
-    }
-  } catch (e) {
-    if (src === 'camera'){
-      toast('摄像头未选择或不可用，已为您打开相册选择');
-      try { file = await invOcrPick(); } catch (_) { return; }
-    } else {
-      toast('未选择图片'); return;
-    }
+function invRenderHandlerList(container, inputEl){
+  if (!invHandlers.length){
+    container.innerHTML = '<div style="font-size:12px;color:var(--sub);padding:8px;">暂无历史记录</div>'; return;
   }
-  if (!file) return;
-
-  // 上传 + 透视矫正 + 白平衡
-  const fd = new FormData();
-  fd.append('image', file, 'capture.jpg');
-  fd.append('wb', itOcr.wb);
-  fd.append('autoWarp', '1');
-  let prep;
-  try {
-    const resp = await fetch(invAPI('ocr/prepare'), {method:'POST', body: fd});
-    prep = await resp.json();
-    if (!prep.ok){ toast('拍照处理失败：'+prep.error); return; }
-  } catch (e) { toast('上传失败：'+e.message); return; }
-
-  itOcr.sessionId = prep.sessionId;
-  itOcr.warpW = prep.width; itOcr.warpH = prep.height;
-  itOcr.img = null;
-  await invOcrBuildOverlay(prep.imageUrl + (prep.imageUrl.includes('?')?'&':'?') + 't=' + Date.now());
-  invOcrRectReset();
-  invOcrUpdateHint('照片已处理。' + (prep.warped ? '已自动校正透视。' : '未识别到文档边界，可点「点击四角」矫正，或直接拖动画框框选区域') + '在图上拖动画框框选要识别的区域（可框多次），完成后点「识别当前框」。');
-  // 加载完成后渲染底部
-  invOcrRenderResults();
-}
-
-async function invOcrCapture(){
-  // 使用 <input type=file capture=environment> 方式触发摄像头，兼容手机浏览器
-  return new Promise((res, rej) => {
-    const inp = document.createElement('input');
-    inp.type = 'file'; inp.accept = 'image/*'; inp.capture = 'environment';
-    inp.onchange = () => res(inp.files[0]);
-    inp.oncancel = () => rej(new Error('用户取消'));
-    inp.click();
-  });
-}
-async function invOcrPick(){
-  return new Promise((res, rej) => {
-    const inp = document.createElement('input');
-    inp.type = 'file'; inp.accept = 'image/*';
-    inp.onchange = () => res(inp.files[0]);
-    inp.oncancel = () => rej(new Error('用户取消'));
-    inp.click();
+  container.innerHTML = invHandlers.map(h =>
+    `<div class="dh-dd-item" data-name="${invE(h.name)}">${invE(h.name)}</div>`).join('');
+  container.querySelectorAll('.dh-dd-item').forEach(el => {
+    el.onclick = () => { inputEl.value = el.dataset.name; container.innerHTML=''; };
   });
 }
 
-async function invOcrBuildOverlay(imgUrl){
-  // 重置点击四角状态（新图加载后旧角点失效）
-  itOcr.capturingCorners = false; itOcr.corners = []; itOcr._lastCornerT = 0;
-  invOcrEndCornerCaptureLayer();
-  // 销毁旧弹层
-  if (itOcr.overlay) itOcr.overlay.remove();
-  const ov = document.createElement('div');
-  ov.className = 'it-ocr-overlay';
-  ov.innerHTML = `
-    <div class="it-ocr-top">
-      <div class="ttl">📷 拍照识别</div>
-      <div class="it-ocr-wb" id="itOcrWb">
-        <button data-wb="gray" class="active">灰世界</button>
-        <button data-wb="white">白点</button>
-        <button data-wb="none">关闭</button>
+async function invDoOp(id){
+  const opType = ($('#invOpType').value||'').trim();
+  const qty = parseInt($('#invOpQty').value||'0');
+  const handler = ($('#invOpHandler').value||'').trim();
+  if (!qty || qty <= 0){ toast('数量必须大于 0'); return; }
+  if (!handler){ toast('请填写经手人'); return; }
+  const res = await (await fetch(invAPI('materials/'+id+'/records'), {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ opType, qty, handler })
+  })).json();
+  const box = $('#invOpRes');
+  if (res.error){ box.innerHTML = '<span style="color:var(--bad);">'+invE(res.error)+'</span>'; }
+  else {
+    box.innerHTML = `<span style="color:var(--ok);">✅ ${res.opType==='in'?'入库':'出库'}成功！当前库存：${res.currentQty}</span>`;
+    $('#invOpQty').value = '';
+    invLoadHandlers(); // 刷新经手人
+    // 更新显示的库存数字
+    const badge = document.querySelector('.inv-qty-badge');
+    if (badge) badge.textContent = '库存：' + res.currentQty;
+  }
+}
+
+// ---- 拍照识别页 ----
+function invPageOcr(){
+  const root = $('#moduleRoot');
+  root.style.justifyContent = 'flex-start'; root.style.paddingTop = '6px';
+  invOcrResults = [];
+  invBoxes = [];
+  root.innerHTML = `
+    <div class="bar"><span class="back" id="invOcrBack">← 返回</span><span style="font-weight:700;">拍照识别</span></div>
+    <div class="card" style="margin:0 6px;">
+      <div style="font-size:13px;color:var(--sub);margin-bottom:10px;">
+        拍照上传单据文档 → 自动透视矫正+白平衡 → 手动框选（可多选）→ OCR识别自动填入编码+材料信息
       </div>
-      <button class="btn" id="itOcrClose">✕ 关闭</button>
-    </div>
-    <div class="it-ocr-canvas-wrap" id="itOcrWrap">
-      <canvas id="itOcrCanvas"></canvas>
-      <div id="itOcrHint" class="it-ocr-hint" style="top:8px;left:8px;">处理中…</div>
-    </div>
-    <div class="it-ocr-bot">
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-        <button class="btn" id="itOcrClickCorner">🖱 点击四角</button>
-        <button class="btn pri" id="itOcrRecognize">🔍 识别当前框</button>
-        <div style="flex:1;font-size:11.5px;color:#94a3b8;" id="itOcrStatus">等待框选</div>
+      <input type="file" id="invOcrInput" accept="image/*" capture="environment" style="display:none;" />
+      <div id="invOcrPreview" style="display:none;"></div>
+      <div id="invOcrCanvasWrap" style="display:none;margin:10px 0;overflow-x:auto;">
+        <div style="display:inline-block;position:relative;" id="invCw">
+          <canvas id="invOcrCanvas"></canvas>
+        </div>
       </div>
-      <div class="it-ocr-results" id="itOcrResults"></div>
-      <div class="actbar" id="itOcrActs" style="display:none;">
-        <button class="btn" id="itOcrCancel">取消</button>
-        <button class="btn ok" id="itOcrConfirm">✅ 使用这 <span id="itOcrCount">0</span> 条</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;" id="invOcrTools">
+        <button class="btn sm" id="invBtnRect" style="background:var(--pri);color:#fff;">📦 框选模式</button>
+        <button class="btn sm" id="invBtnManual" style="background:#8b5cf6;color:#fff;">✋ 手动四点修正</button>
+        <button class="btn sm" id="invBtnClear" style="background:#d97706;color:#fff;">🗑 清空框</button>
+        <button class="btn sm" id="invBtnOcrRun" style="background:var(--ok);color:#fff;">🔍 开始识别</button>
+      </div>
+      <div id="invOcrRes" class="inv-ocr-list" style="margin-top:12px;"></div>
+      <div id="invOcrSaveBar" style="display:none;margin-top:12px;">
+        <button class="btn" id="invOcrSaveAll">💾 批量保存所选记录</button>
       </div>
     </div>`;
-  document.body.appendChild(ov);
-  itOcr.overlay = ov;
-  itOcr.canvas = ov.querySelector('#itOcrCanvas');
-  itOcr.ctx = itOcr.canvas.getContext('2d');
+  navPush(renderInventoryModule);
+  $('#invOcrBack').onclick = invBack;
+  $('#invOcrInput').onchange = invOcrFileChange;
+  // 显示拍照入口
+  $('#invOcrPreview').innerHTML = `
+    <div class="up-card" id="invOcrCamBtn" style="cursor:pointer;border:2px dashed var(--line);padding:24px;">
+      <span class="big">📷</span><b>拍照 / 相册选择</b>
+      <span style="font-size:12px;color:var(--sub);">自动矫正 · 白平衡 · 框选识别</span>
+    </div>`;
+  $('#invOcrCamBtn').onclick = () => $('#invOcrInput').click();
+  $('#invOcrPreview').style.display = 'block';
+}
 
-  // 加载处理后的图
-  const im = new Image();
-  im.crossOrigin = 'anonymous';
-  await new Promise((res, rej) => { im.onload = res; im.onerror = rej; im.src = imgUrl; });
-  itOcr.img = im;
-  itOcr.canvas.width = im.naturalWidth; itOcr.canvas.height = im.naturalHeight;
-  // 显示缩放（按容器宽度等比缩放）
-  const wrap = ov.querySelector('#itOcrWrap');
-  const maxW = wrap.clientWidth - 24;
-  if (im.naturalWidth > maxW){
-    const sc = maxW / im.naturalWidth;
-    itOcr.canvas.style.width = (im.naturalWidth*sc)+'px';
-    itOcr.canvas.style.height = (im.naturalHeight*sc)+'px';
-  }
-  itOcr.ctx.drawImage(im, 0, 0);
-
-  // 事件
-  ov.querySelector('#itOcrClose').onclick = invOcrClose;
-  ov.querySelector('#itOcrClickCorner').onclick = invOcrStartCornerCapture;
-  ov.querySelector('#itOcrRecognize').onclick = invOcrRecognize;
-  ov.querySelector('#itOcrCancel').onclick = invOcrClose;
-  ov.querySelector('#itOcrConfirm').onclick = invOcrConfirm;
-  ov.querySelectorAll('#itOcrWb button').forEach(b => b.onclick = () => invOcrSwitchWb(b.dataset.wb));
-
-  // 画框（绝对定位的 div）
-  itOcr.selEl = document.createElement('div');
-  itOcr.selEl.className = 'it-ocr-sel';
-  itOcr.selEl.style.display = 'none';
-  ov.appendChild(itOcr.selEl);
-
-  // 鼠标 / 触摸画框（用视口坐标定位选区 div：遮罩是 position:fixed，选区相对视口，避免向上/向左偏移）
-  let startX=0, startY=0;
-  const getClient = (e) => {
-    const t = (e.touches ? e.touches[0] : e);
-    return {x: t.clientX, y: t.clientY};
-  };
-  const down = (e) => {
-    e.preventDefault();
-    itOcr.drawing = true;
-    const p = getClient(e);
-    startX = p.x; startY = p.y;
-    itOcr.selEl.style.left = p.x + 'px';
-    itOcr.selEl.style.top  = p.y + 'px';
-    itOcr.selEl.style.width = '0px'; itOcr.selEl.style.height = '0px';
-    itOcr.selEl.style.display = 'block';
-  };
-  const move = (e) => {
-    if (!itOcr.drawing) return;
-    e.preventDefault();
-    const p = getClient(e);
-    const x = Math.min(startX, p.x), y = Math.min(startY, p.y);
-    const w = Math.abs(p.x - startX), h = Math.abs(p.y - startY);
-    itOcr.selEl.style.left = x + 'px'; itOcr.selEl.style.top = y + 'px';
-    itOcr.selEl.style.width = w + 'px'; itOcr.selEl.style.height = h + 'px';
-  };
-  const up = () => {
-    if (!itOcr.drawing) return;
-    itOcr.drawing = false;
-    const r = itOcr.selEl.getBoundingClientRect();
-    if (r.width < 8 || r.height < 8){ itOcr.selEl.style.display='none'; return; }
-    // 转换为矫正后图原始坐标
-    const sc = itOcr.canvas.width / itOcr.canvas.clientWidth;
-    itOcr.rect = {
-      x: Math.round((r.left - itOcr.canvas.getBoundingClientRect().left) * sc),
-      y: Math.round((r.top - itOcr.canvas.getBoundingClientRect().top) * sc),
-      w: Math.round(r.width * sc),
-      h: Math.round(r.height * sc)
+async function invOcrFileChange(e){
+  const file = e.target.files[0]; if (!file) return;
+  // 预览
+  const url = URL.createObjectURL(file);
+  $('#invOcrPreview').innerHTML = `<img src="${url}" style="max-width:100%;max-height:300px;border-radius:10px;border:1px solid var(--line);display:block;margin:0 auto;" />`;
+  // 上传矫正
+  const fd = new FormData(); fd.append('file', file);
+  toast('透视矫正中…');
+  try {
+    const r = await (await fetch(invAPI('ocr/correct'), { method:'POST', body:fd })).json();
+    if (r.error){ toast('矫正失败：'+r.error); return; }
+    // 显示矫正后图到 canvas
+    const img = new Image();
+    img.onload = () => {
+      const cv = $('#invOcrCanvas');
+      cv.width = img.naturalWidth; cv.height = img.naturalHeight;
+      cv.getContext('2d').drawImage(img, 0, 0);
+      $('#invOcrPreview').style.display = 'none';
+      $('#invOcrCanvasWrap').style.display = 'block';
+      $('#invOcrTools').style.display = 'flex';
+      invDrawMode = false;
+      invBoxes = [];
+      invSelRect = null;
+      // 绑定 canvas 事件 + 工具按钮
+      invBindCanvasEvents(cv);
+      invBindTools();
+      toast('矫正完成，请框选要识别的内容');
     };
-    invOcrUpdateHint('已选区域 '+itOcr.rect.w+'×'+itOcr.rect.h+'，点「识别当前框」开始 OCR');
+    img.src = 'data:image/jpeg;base64,' + r.imageBase64;
+  } catch(ex){ toast('矫正失败：'+(ex.message||ex)); }
+}
+
+function invBindCanvasEvents(cv){
+  const wrap = $('#invCw');
+  cv.onmousedown = cv.ontouchstart = invSelStartFn;
+}
+
+function invSelStartFn(e){
+  e.preventDefault();
+  if (!invDrawMode) return;
+  const cv = $('#invOcrCanvas');
+  const rect = cv.getBoundingClientRect();
+  const sx = e.touches ? e.touches[0].clientX : e.clientX;
+  const sy = e.touches ? e.touches[0].clientY : e.clientY;
+  const scaleX = cv.width / rect.width;
+  const scaleY = cv.height / rect.height;
+  const cx = (sx - rect.left) * scaleX;
+  const cy = (sy - rect.top) * scaleY;
+  invSelStart = { x: cx, y: cy };
+  invSelRect = null;
+
+  const onMove = ev => {
+    ev.preventDefault();
+    const mx = ev.touches ? ev.touches[0].clientX : ev.clientX;
+    const my = ev.touches ? ev.touches[0].clientY : ev.clientY;
+    const mx2 = (mx - rect.left) * scaleX;
+    const my2 = (my - rect.top) * scaleY;
+    const x = Math.max(0, Math.min(cx, mx2));
+    const y = Math.max(0, Math.min(cy, my2));
+    const w = Math.abs(mx2 - cx);
+    const h = Math.abs(my2 - cy);
+    invSelRect = { x, y, w, h };
+    invDrawSelRect();
   };
-  itOcr.canvas.addEventListener('mousedown', down);
-  itOcr.canvas.addEventListener('mousemove', move);
-  window.addEventListener('mouseup', up);
-  itOcr.canvas.addEventListener('touchstart', down, {passive:false});
-  itOcr.canvas.addEventListener('touchmove', move, {passive:false});
-  itOcr.canvas.addEventListener('touchend', up);
-
-  invOcrUpdateHint('照片已处理。在图上拖动画框框选要识别的区域（可框多次），完成后点「识别当前框」。');
-}
-
-function invOcrRectReset(){
-  if (itOcr.selEl){ itOcr.selEl.style.display='none'; }
-  itOcr.rect = null;
-}
-
-// ---------- 点击四角矫正 ----------
-// 在「当前显示图」上依次点 左上→右上→右下→左下 四个角，角点坐标即当前画面像素坐标，
-// 直接交给后端 --from-warp 基于 warp.jpg 重矫正，坐标零偏移。
-function invOcrStartCornerCapture(){
-  if (!itOcr.canvas) return;
-  if (itOcr.capturingCorners){
-    invOcrEndCornerCapture();
-    invOcrUpdateHint('已取消点击四角。在图上拖动画框框选要识别的区域。');
-    return;
-  }
-  invOcrDetachCornerListeners();
-  itOcr.capturingCorners = true;
-  itOcr.corners = [];
-  itOcr._lastCornerT = 0;
-  if (itOcr.selEl) itOcr.selEl.style.display = 'none';
-  itOcr.rect = null;
-  invOcrEndCornerCaptureLayer();
-  const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
-  svg.setAttribute('id','itOcrCornerSvg');
-  svg.setAttribute('viewBox','0 0 '+window.innerWidth+' '+window.innerHeight);
-  svg.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:10000;';
-  svg.innerHTML = '<polyline id="itOcrCornerLine" fill="none" stroke="#22d3ee" stroke-width="2" stroke-dasharray="6 4" points=""></polyline>';
-  document.body.appendChild(svg);
-  itOcr.cornerLayer = svg;
-  itOcr.canvas.style.cursor = 'crosshair';
-  invOcrUpdateHint('点击矫正：依次点「左上→右上→右下→左下」四个角，自动重矫正画面（再点「点击四角」可取消）');
-  itOcr._cornerClick = (e) => invOcrRecordCorner(e.clientX, e.clientY);
-  itOcr._cornerTouch = (e) => { if (e.changedTouches && e.changedTouches.length){ const t = e.changedTouches[0]; invOcrRecordCorner(t.clientX, t.clientY); } e.preventDefault(); };
-  itOcr.canvas.addEventListener('click', itOcr._cornerClick);
-  itOcr.canvas.addEventListener('touchend', itOcr._cornerTouch, {passive:false});
-}
-
-function invOcrRecordCorner(vx, vy){
-  if (!itOcr.capturingCorners) return;
-  const rect = itOcr.canvas.getBoundingClientRect();
-  const sc = itOcr.canvas.width / itOcr.canvas.clientWidth;
-  const bx = Math.round((vx - rect.left) * sc);
-  const by = Math.round((vy - rect.top) * sc);
-  itOcr.corners.push([bx, by]);
-  invOcrDrawCorner(vx, vy, itOcr.corners.length);
-  if (itOcr.corners.length >= 4){
-    const cs = itOcr.corners.slice();
-    invOcrEndCornerCapture();
-    invOcrApplyRewarp(cs);
-  }
-}
-
-function invOcrDrawCorner(vx, vy, idx){
-  const svg = itOcr.cornerLayer; if (!svg) return;
-  const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
-  c.setAttribute('cx', vx); c.setAttribute('cy', vy); c.setAttribute('r', 9);
-  c.setAttribute('fill', '#22d3ee'); c.setAttribute('stroke', '#0e7490'); c.setAttribute('stroke-width', 2);
-  svg.appendChild(c);
-  const label = document.createElementNS('http://www.w3.org/2000/svg','text');
-  label.setAttribute('x', vx + 13); label.setAttribute('y', vy + 4);
-  label.setAttribute('fill', '#e0f2fe'); label.setAttribute('font-size', '13');
-  label.textContent = ['左上','右上','右下','左下'][idx-1];
-  svg.appendChild(label);
-  const line = svg.querySelector('#itOcrCornerLine');
-  const pts = line.getAttribute('points') ? line.getAttribute('points') + ' ' : '';
-  line.setAttribute('points', pts + vx + ',' + vy);
-}
-
-function invOcrDetachCornerListeners(){
-  if (itOcr._cornerClick && itOcr.canvas){
-    itOcr.canvas.removeEventListener('click', itOcr._cornerClick);
-    itOcr.canvas.removeEventListener('touchend', itOcr._cornerTouch);
-  }
-  itOcr._cornerClick = null; itOcr._cornerTouch = null;
-}
-
-function invOcrEndCornerCapture(){
-  itOcr.capturingCorners = false;
-  invOcrDetachCornerListeners();
-  invOcrEndCornerCaptureLayer();
-  if (itOcr.canvas) itOcr.canvas.style.cursor = '';
-}
-
-function invOcrEndCornerCaptureLayer(){
-  if (itOcr.cornerLayer){ itOcr.cornerLayer.remove(); itOcr.cornerLayer = null; }
-}
-
-async function invOcrApplyRewarp(corners){
-  itOcr.capturingCorners = false;
-  invOcrDetachCornerListeners();
-  invOcrEndCornerCaptureLayer();
-  if (itOcr.canvas) itOcr.canvas.style.cursor = '';
-  try {
-    invOcrUpdateHint('矫正中…');
-    const body = {sessionId: itOcr.sessionId, whiteBalance: itOcr.wb, corners, fromWarp: true};
-    const r = await fetch(invAPI('ocr/rewarp'), {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
-    const j = await r.json();
-    if (!j.ok){ invOcrUpdateHint('重矫失败：'+j.error); return; }
-    itOcr.warpW = j.width; itOcr.warpH = j.height;
-    const url = j.imageUrl + (j.imageUrl.includes('?')?'&':'?') + 't=' + Date.now();
-    await invOcrBuildOverlay(url);
-    invOcrRectReset();
-    invOcrUpdateHint('已按点击四角重新透视矫正。请重新框选要识别的区域。');
-  } catch (e) { invOcrUpdateHint('重矫失败：'+e.message); }
-}
-
-
-function invOcrUpdateHint(s){
-  if (!itOcr.overlay) return;
-  const h = itOcr.overlay.querySelector('#itOcrHint');
-  if (h) h.textContent = s;
-}
-
-async function invOcrSwitchWb(wb){
-  itOcr.wb = wb;
-  itOcr.overlay.querySelectorAll('#itOcrWb button').forEach(b => b.classList.toggle('active', b.dataset.wb===wb));
-  try {
-    const r = await fetch(invAPI('ocr/rewarp'), {method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({sessionId: itOcr.sessionId, whiteBalance: wb})});
-    const j = await r.json();
-    if (!j.ok){ invOcrUpdateHint('切换失败：'+j.error); return; }
-    itOcr.warpW = j.width; itOcr.warpH = j.height;
-    const url = j.imageUrl + (j.imageUrl.includes('?')?'&':'?') + 't=' + Date.now();
-    const im = new Image(); im.crossOrigin = 'anonymous';
-    await new Promise((res,rej)=>{ im.onload=res; im.onerror=rej; im.src=url; });
-    itOcr.img = im;
-    itOcr.canvas.width = im.naturalWidth; itOcr.canvas.height = im.naturalHeight;
-    const wrap = itOcr.overlay.querySelector('#itOcrWrap');
-    const maxW = wrap.clientWidth - 24;
-    if (im.naturalWidth > maxW){
-      const sc = maxW / im.naturalWidth;
-      itOcr.canvas.style.width = (im.naturalWidth*sc)+'px';
-      itOcr.canvas.style.height = (im.naturalHeight*sc)+'px';
-    } else { itOcr.canvas.style.width=''; itOcr.canvas.style.height=''; }
-    itOcr.ctx.drawImage(im, 0, 0);
-    itOcr.rect = null; itOcr.pendingRois = []; invOcrRectReset();
-    invOcrUpdateHint('已切换白平衡：'+(wb==='gray'?'灰世界':(wb==='white'?'白点':'关闭'))+'。请框选要识别的区域。');
-  } catch (e) { invOcrUpdateHint('切换失败：'+e.message); }
-}
-
-function invOcrRewarp(){
-  // 「手动四角」数字输入面板已移除（2026-09-03）；矫正功能保留「点击四角」入口。
-}
-
-
-
-async function invOcrRecognize(){
-  const rois = (itOcr.pendingRois || []).slice();
-  if (itOcr.rect) rois.push({...itOcr.rect});
-  if (!rois.length){ toast('请先在图上画框'); return; }
-  // 后端契约：rois = [[x,y,w,h], ...]（矫正后图坐标系）。前端存的是对象，发送前转成数组。
-  const arr = rois.map(r => [r.x|0, r.y|0, r.w|0, r.h|0]);
-  await invOcrRecognizeRoi(arr);
-  itOcr.pendingRois = [];
-  invOcrRectReset();
-}
-
-async function invOcrRecognizeRoi(rois){
-  invOcrUpdateHint('识别中…');
-  try {
-    const r = await fetch(invAPI('ocr/recognize'), {method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({sessionId: itOcr.sessionId, rois})});
-    const j = await r.json();
-    if (!j.ok){ invOcrUpdateHint('识别失败：'+j.error); return; }
-    let added = 0;
-    (j.items||[]).forEach(it => {
-      itOcr.results.push({code: it.code||'', info: it.materialInfo||'', hint: it.codeHint||'', existing: it.existing||null, raw: it.lines||[]});
-      if (it.existing){ itOcr.existing.push(it.existing); }
-      added++;
-    });
-    invOcrUpdateHint('本次识别出 ' + added + ' 条（已累加到下方表单，可继续画框识别更多，或点「使用这 N 条」确认）');
-    invOcrRenderResults();
-  } catch (e) { invOcrUpdateHint('识别失败：'+e.message); }
-}
-
-function invOcrRenderResults(){
-  const box = itOcr.overlay.querySelector('#itOcrResults');
-  if (!itOcr.results.length){
-    box.innerHTML = '<div style="color:#94a3b8;font-size:12.5px;text-align:center;padding:10px 0;">尚无识别结果。画框后点「识别当前框」。</div>';
-    itOcr.overlay.querySelector('#itOcrActs').style.display = 'none';
-    return;
-  }
-  box.innerHTML = itOcr.results.map((r,i) => {
-    const hasDup = !!r.existing;
-    const badCode = r.hint && r.hint.indexOf('未识别') >= 0;
-    return `
-      <div class="it-ocr-result ${hasDup?'existing':''}">
-        <div class="it-ocr-result-head">
-          <div class="idx">#${i+1}</div>
-          <input value="${invE(r.code)}" oninput="itOcr.results[${i}].code=this.value" placeholder="编码（10 位数字）" class="${badCode?'bad':''}">
-          <div class="del" onclick="itOcr.results.splice(${i},1);invOcrRenderResults();">✕</div>
-        </div>
-        <div class="it-ocr-result-body">
-          <textarea oninput="itOcr.results[${i}].info=this.value" placeholder="材料信息（文字描述）">${invE(r.info)}</textarea>
-        </div>
-        <div class="it-ocr-result-foot">
-          ${r.hint ? `<span class="badge warn">⚠ ${invE(r.hint)}</span>` : ''}
-          ${hasDup ? `<span class="badge dup">库内已存在 #${r.existing.id}</span> <span class="goto" onclick="invOcrGoExisting(${r.existing.id})">→ 跳转到该材料</span>` : '<span class="badge">✓ 待录入</span>'}
-        </div>
-      </div>`;
-  }).join('');
-  itOcr.overlay.querySelector('#itOcrActs').style.display = 'flex';
-  itOcr.overlay.querySelector('#itOcrCount').textContent = itOcr.results.length;
-}
-
-// 应用内确认对话框：替代原生 confirm，减少系统提示
-function invOcrConfirmDialog(msg){
-  return new Promise((resolve) => {
-    const mask = document.createElement('div');
-    mask.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;z-index:99999;';
-    mask.innerHTML = `
-      <div style="background:#1e293b;border:1px solid #334155;border-radius:12px;padding:18px;width:280px;box-shadow:0 10px 30px rgba(0,0,0,.4);">
-        <div style="color:#e2e8f0;font-size:14px;line-height:1.5;margin-bottom:16px;white-space:pre-wrap;">${msg}</div>
-        <div style="display:flex;gap:10px;">
-          <button type="button" id="itCnOk" style="flex:1;padding:10px;border:none;border-radius:8px;background:#2563eb;color:#fff;font-size:14px;cursor:pointer;">确定</button>
-          <button type="button" id="itCnNo" style="flex:1;padding:10px;border:none;border-radius:8px;background:#475569;color:#fff;font-size:14px;cursor:pointer;">取消</button>
-        </div>
-      </div>`;
-    document.body.appendChild(mask);
-    const close = (v) => { mask.remove(); resolve(v); };
-    mask.querySelector('#itCnOk').onclick = () => close(true);
-    mask.querySelector('#itCnNo').onclick = () => close(false);
-    mask.onclick = (e) => { if (e.target === mask) close(false); };
-  });
-}
-
-async function invOcrGoExisting(id){
-  const ok = await invOcrConfirmDialog('跳转到该材料详情？\n（当前识别结果将保留，但后续操作在该材料上继续）');
-  if (!ok) return;
-  invOcrClose();
-  invOpenDetail(id);
-}
-
-function invOcrConfirm(){
-  const items = itOcr.results.map(r => ({code: (r.code||'').trim(), materialInfo: (r.info||'').trim()}))
-    .filter(r => r.code || r.materialInfo);
-  if (!items.length){ toast('没有有效结果可使用'); return; }
-  invOcrClose();
-  if (typeof itOcr.callback === 'function') invOcrCallbackWrap(itOcr.callback, items);
-  // 回调结束后若用户选择"跳转到某材料"，由 invOcrGoExisting 处理
-}
-
-function invOcrCallbackWrap(cb, items){
-  // 将识别结果交给调用方回调（当前仅有 invOcrFillCreate 单条填充；批量模式由调用方自行处理）
-  if (typeof cb === 'function') cb(items);
-}
-
-function invOcrClose(){
-  itOcr.capturingCorners = false; itOcr.corners = []; itOcr._lastCornerT = 0;
-  invOcrDetachCornerListeners();
-  invOcrEndCornerCaptureLayer();
-  if (itOcr.overlay){ itOcr.overlay.remove(); itOcr.overlay = null; }
-  itOcr.canvas = null;
-  itOcr.img = null; itOcr.rect = null;
-  itOcr.pendingRois = []; itOcr.results = []; itOcr.existing = []; itOcr.sessionId = null;
-}
-
-function escAttr(s){ return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-const _INV_VOID = {input:1,br:1,img:1,hr:1,meta:1,link:1,source:1,area:1,base:1,col:1,embed:1,param:1,track:1,wbr:1};
-function invEl(tag, a, ...rest){
-  let attrs = null, children = rest;
-  if (a !== undefined && a !== null && typeof a === 'object' && !Array.isArray(a) && Object.prototype.toString.call(a) === '[object Object]'){
-    attrs = a;
-  } else {
-    children = [a, ...rest];
-  }
-  let html = '<' + tag;
-  if (attrs){
-    for (const k in attrs){
-      const v = attrs[k];
-      if (v == null || v === false) continue;
-      const val = String(v);
-      if (k === 'class') html += ' class="' + escAttr(val) + '"';
-      else if (k === 'style') html += ' style="' + escAttr(val) + '"';
-      else if (k.startsWith('on')) html += ' ' + k + '="' + escAttr(val) + '"';
-      else if (k === 'value') html += ' value="' + escAttr(val) + '"';
-      else if (k === 'for') html += ' for="' + escAttr(val) + '"';
-      else html += ' ' + k + '="' + escAttr(val) + '"';
+  const onUp = ev => {
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+    document.removeEventListener('touchmove', onMove);
+    document.removeEventListener('touchend', onUp);
+    if (invSelRect && invSelRect.w > 10 && invSelRect.h > 5){
+      const box = { x: Math.round(invSelRect.x), y: Math.round(invSelRect.y),
+                    w: Math.round(invSelRect.w), h: Math.round(invSelRect.h) };
+      invBoxes.push(box);
+      invRenderBoxes();
     }
-  }
-  html += '>';
-  if (_INV_VOID[tag]) return html;
-  children.flat().forEach(c => {
-    if (c == null || c === false) return;
-    html += String(c);
-  });
-  html += '</' + tag + '>';
-  return html;
+    invSelRect = null;
+    invDrawSelRect();
+  };
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+  document.addEventListener('touchmove', onMove, { passive: false });
+  document.addEventListener('touchend', onUp);
 }
 
-function renderInvTailModule(){
-  invHomeView();
+function invDrawSelRect(){
+  const cv = $('#invOcrCanvas');
+  const ctx = cv.getContext('2d');
+  // 重绘图像
+  const img = new Image();
+  img.onload = () => {
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    ctx.drawImage(img, 0, 0, cv.width, cv.height);
+    // 画已选框
+    invBoxes.forEach((b, i) => {
+      ctx.strokeStyle = '#16a34a'; ctx.lineWidth = 3;
+      ctx.setLineDash([]);
+      ctx.strokeRect(b.x, b.y, b.w, b.h);
+      ctx.fillStyle = 'rgba(22,163,74,0.15)';
+      ctx.fillRect(b.x, b.y, b.w, b.h);
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 14px sans-serif';
+      ctx.fillText(String(i+1), b.x+5, b.y+18);
+    });
+    // 画当前拖拽框
+    if (invSelRect){
+      ctx.strokeStyle = '#2c6feb'; ctx.lineWidth = 2;
+      ctx.setLineDash([5,3]);
+      ctx.strokeRect(invSelRect.x, invSelRect.y, invSelRect.w, invSelRect.h);
+      ctx.setLineDash([]);
+    }
+  };
+  img.src = cv.toDataURL();
 }
-// ---- 启动 ----
-loadModules(); loadNet();
+
+function invRenderBoxes(){
+  const cv = $('#invOcrCanvas');
+  invDrawSelRect();
+}
+
+function invBindTools(){
+  $('#invBtnRect').onclick = () => {
+    invDrawMode = !invDrawMode;
+    $('#invBtnRect').style.background = invDrawMode ? 'var(--warn)' : 'var(--pri)';
+    $('#invBtnRect').style.opacity = invDrawMode ? '1' : '0.7';
+  };
+  $('#invBtnClear').onclick = () => { invBoxes = []; invDrawSelRect(); };
+  $('#invBtnManual').onclick = invManual4Pt;
+  $('#invBtnOcrRun').onclick = invRunOcr;
+}
+
+function invManual4Pt(){
+  toast('请在图像四角各点击一次指定单据边界');
+  const cv = $('#invOcrCanvas');
+  invManualPts = [];
+  const onClick = e => {
+    const rect = cv.getBoundingClientRect();
+    const cx = (e.clientX - rect.left) * (cv.width / rect.width);
+    const cy = (e.clientY - rect.top) * (cv.height / rect.height);
+    invManualPts.push(cx, cy);
+    if (invManualPts.length >= 8){
+      cv.removeEventListener('click', onClick);
+      invSubmitCorrect(invManualPts.join(';'));
+    }
+  };
+  cv.addEventListener('click', onClick);
+}
+
+async function invSubmitCorrect(pts){
+  const file = $('#invOcrInput').files[0];
+  if (!file) return;
+  const fd = new FormData(); fd.append('file', file); fd.append('pts', pts);
+  try {
+    const r = await (await fetch(invAPI('ocr/correct'), { method:'POST', body:fd })).json();
+    if (r.error){ toast('修正失败：'+r.error); return; }
+    const img = new Image();
+    img.onload = () => {
+      const cv = $('#invOcrCanvas');
+      cv.width = img.naturalWidth; cv.height = img.naturalHeight;
+      cv.getContext('2d').drawImage(img, 0, 0);
+      invDrawSelRect();
+      toast('修正完成');
+    };
+    img.src = 'data:image/jpeg;base64,' + r.imageBase64;
+  } catch(ex){ toast('修正失败：'+(ex.message||ex)); }
+}
+
+async function invRunOcr(){
+  if (!invBoxes.length){ toast('请先框选要识别的内容'); return; }
+  const file = $('#invOcrInput').files[0];
+  if (!file) return;
+  const resBox = $('#invOcrRes');
+  resBox.innerHTML = '<div class="empty"><span class="spinner"></span> OCR 识别中…</div>';
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('boxes', JSON.stringify(invBoxes.map((b,i)=>({...b,idx:i}))));
+  try {
+    const r = await (await fetch(invAPI('ocr/boxes'), { method:'POST', body:fd })).json();
+    if (r.error){ resBox.innerHTML='<div class="empty" style="color:var(--bad);">'+invE(r.error)+'</div>'; return; }
+    invOcrResults = (r.boxes||[]).map(b => invParseOcrResult(b.text||''));
+    invRenderOcrResults();
+    $('#invOcrSaveBar').style.display = 'block';
+    $('#invOcrSaveAll').onclick = invSaveBatch;
+  } catch(ex){ resBox.innerHTML='<div class="empty" style="color:var(--bad);">识别失败：'+invE(ex.message||ex)+'</div>'; }
+}
+
+function invParseOcrResult(text){
+  // 10位数字 → 编码；其余文字 → 材料信息
+  const m10 = (text.match(/\d{10}/g)||[])[0] || '';
+  const info = text.replace(/\d{10}/g,'').replace(/[_\-=~]+/g,' ').replace(/\s+/g,' ').trim();
+  return { code: m10, materialInfo: info, qty: 0, kuHao: '' };
+}
+
+function invRenderOcrResults(){
+  const resBox = $('#invOcrRes');
+  if (!invOcrResults.length){ resBox.innerHTML='<div class="empty">未识别到有效内容</div>'; return; }
+  resBox.innerHTML = `
+    <div style="font-size:13px;font-weight:700;margin-bottom:8px;">识别结果（可修改后保存）：</div>
+    ${invOcrResults.map((r,i) => `
+      <div class="inv-ocr-item ok">
+        <div style="font-size:12px;color:var(--sub);margin-bottom:4px;">#${i+1}</div>
+        <div class="inv-field">
+          <label>库号</label>
+          <input type="text" id="invR_KuHao_${i}" value="${invE(r.kuHao)}" placeholder="库号" />
+        </div>
+        <div class="inv-field">
+          <label>编码（10位数字）</label>
+          <input type="text" id="invR_Code_${i}" value="${invE(r.code)}" placeholder="10位数字" class="${r.code&&!/^\d{10}$/.test(r.code)?'inv-code-warn':''}" />
+        </div>
+        <div class="inv-field">
+          <label>材料信息</label>
+          <textarea id="invR_Info_${i}" placeholder="材料描述" style="width:100%;padding:8px 10px;border-radius:10px;border:1px solid var(--line);font-size:13px;resize:vertical;min-height:40px;">${invE(r.materialInfo)}</textarea>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;margin-top:4px;">
+          <input type="number" id="invR_Qty_${i}" value="${r.qty||0}" min="0" placeholder="初始库存" style="width:80px;padding:7px 10px;border-radius:10px;border:1px solid var(--line);font-size:13px;" />
+          <span style="font-size:12px;color:var(--sub);">初始库存</span>
+          <button class="btn sm" style="margin-left:auto;background:var(--ok);color:#fff;" onclick="invSaveOne(${i})">💾 保存</button>
+        </div>
+      </div>`).join('')}`;
+}
+
+async function invSaveOne(idx){
+  const r = invOcrResults[idx];
+  if (!r) return;
+  const body = {
+    kuHao: ($('#invR_KuHao_'+idx).value||'').trim() || 'DEFAULT',
+    code: ($('#invR_Code_'+idx).value||'').trim(),
+    materialInfo: ($('#invR_Info_'+idx).value||'').trim(),
+    qty: parseInt($('#invR_Qty_'+idx).value||'0') || 0
+  };
+  if (!body.code){ toast('编码不能为空'); return; }
+  if (!/^\d{10}$/.test(body.code)){ toast('编码必须为10位数字'); return; }
+  try {
+    const res = await (await fetch(invAPI('materials'), { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) })).json();
+    if (res.error){ toast(res.error); }
+    else { toast('✅ 保存成功：'+res.kuHao+' / '+res.code); invOcrResults.splice(idx,1); invRenderOcrResults(); }
+  } catch(ex){ toast('保存失败：'+(ex.message||ex)); }
+}
+
+async function invSaveBatch(){
+  const items = invOcrResults.map((r,i) => ({
+    kuHao: ($('#invR_KuHao_'+i).value||'').trim() || 'DEFAULT',
+    code: ($('#invR_Code_'+i).value||'').trim(),
+    materialInfo: ($('#invR_Info_'+i).value||'').trim(),
+    qty: parseInt($('#invR_Qty_'+i).value||'0') || 0
+  })).filter(it => it.code && /^\d{10}$/.test(it.code));
+  if (!items.length){ toast('没有可保存的有效记录'); return; }
+  const res = await (await fetch(invAPI('materials/batch'), { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({items}) })).json();
+  const ok = res.okCount||0, total = res.total||0;
+  toast(`✅ 保存完成：${ok}/${total} 条成功`);
+  invOcrResults = [];
+  $('#invOcrRes').innerHTML = '';
+  $('#invOcrSaveBar').style.display = 'none';
+}
+console.log('[DEBUG] Before loadModules');
+try { loadModules(); } catch(e) { console.error('[ERROR] loadModules failed:', e); }
+try { loadNet(); } catch(e) { console.error('[ERROR] loadNet failed:', e); }
+console.log('[DEBUG] After loadModules');
+// 内外网自动引导：基于当前 hostname 识别内外网，外网访问时提示切换到更快的内网路径
+// 用 hostname 判断（可靠，不依赖跨协议网络探测——https 外网页面探测 http 内网会被混合内容拦截）
+(function(){
+  try{
+    var host = location.hostname || '';
+    var isLan = /^(127\.|localhost$|192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host);
+    if(isLan) return; // 已是内网访问，无需引导
+    loadNet().then(function(n){
+      if(!n || !n.internalBaseUrl) return;
+      var ib = n.internalBaseUrl;
+      if(document.getElementById('lanGuideBar')) return;
+      var bar = document.createElement('div');
+      bar.id = 'lanGuideBar';
+      bar.style.cssText = 'position:sticky;top:0;z-index:50;background:#e8f5e9;border:1px solid #c8e6c9;border-radius:10px;margin:6px 0;padding:10px 12px;font-size:13px;color:#1b5e20;display:flex;align-items:center;gap:8px;';
+      bar.innerHTML = '<span style="flex:1;">当前为外网访问，检测到本机内网地址可更快访问</span>'
+        + '<button type="button" id="lanGoBtn" style="background:#16a34a;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;">切换内网</button>'
+        + '<button type="button" id="lanCloseBtn" style="background:none;border:none;color:#6b7a8a;font-size:16px;padding:0 2px;">×</button>';
+      var wrap = document.querySelector('.wrap') || document.body;
+      wrap.insertBefore(bar, wrap.firstChild);
+      document.getElementById('lanGoBtn').onclick = function(){ location.replace(ib + location.pathname + location.search); };
+      document.getElementById('lanCloseBtn').onclick = function(){ bar.remove(); };
+    });
+  }catch(e){}
+})();
 // 深链接支持：?mod=defecthistory&model=YCWA15NCWQ&month=2026-03 直达查询（可分享/可被自动化测试）
 (function(){
   try{
@@ -4876,19 +3998,18 @@ loadModules(); loadNet();
         if (modulesCache.length > 0){
           clearInterval(_ok);
           if (modulesCache.find(m => m.key === deepMod)){
-            openModule(deepMod);  // 进入模块菜单
+            activateModule(deepMod);
             setTimeout(() => {
               if (deepMod === 'defecthistory'){
-                const deepMonth = qs.get('month') || undefined;
                 if (deepPage === 'analysis'){
-                  _navPush('dh-analysis', '数据分析', () => dhPageAnalysis(deepMonth), null); dhPageAnalysis(deepMonth);   // 直达数据分析页并自动生成
+                  dhPageAnalysis(qs.get('month') || undefined);   // 直达数据分析页并自动生成
                   return;
                 }
-                _navPush('dh-query', '型号查询', dhPageQuery, null); dhPageQuery();                       // 直接进查询页
+                dhPageQuery();                       // 直接进查询页（activateModule 只渲染菜单）
                 const el = $('#dhQModel');
                 if (el){
                   el.value = deepModel;
-                  const m = deepMonth;
+                  const m = qs.get('month');
                   if (m){ const sel = $('#dhQMonth'); if (sel && Array.from(sel.options).some(o => o.value === m)) sel.value = m; }
                   dhDoQuery();
                 }

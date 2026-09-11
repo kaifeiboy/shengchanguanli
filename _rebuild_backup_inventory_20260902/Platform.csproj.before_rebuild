@@ -15,9 +15,9 @@
   <ItemGroup>
     <!-- PDF OCR 脚本随附输出目录，OcrService 默认从此加载 -->
     <None Update="pdf_ocr.py" CopyToOutputDirectory="PreserveNewest" />
-    <!-- 库存尾数模块（v2 独立重建）Python 脚本：拍照识别 / 明细导出 -->
-    <None Update="Modules\InvTail\inv_ocr.py" CopyToOutputDirectory="PreserveNewest" />
-    <None Update="Modules\InvTail\inv_export.py" CopyToOutputDirectory="PreserveNewest" />
+    <!-- 库存尾数模块 Python 脚本 -->
+    <None Update="Modules\InventoryTail\inventory_ocr.py" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="Modules\InventoryTail\inventory_export.py" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

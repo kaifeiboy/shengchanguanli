@@ -6,7 +6,7 @@ using Platform.Infrastructure;
 using Platform.Modules.Drawings;
 using Platform.Modules.Unbind;
 using Platform.Modules.DefectHistory;
-using Platform.Modules.InvTail;
+using Platform.Modules.InventoryTail;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,7 +25,7 @@ var registry = new ModuleRegistry();
 registry.Register(new DrawingModule());
 registry.Register(new UnbindModule());
 registry.Register(new DefectHistoryModule());
-registry.Register(new InvTailModule());
+registry.Register(new InventoryTailModule());
 registry.RegisterServices(builder.Services);
 
 // 维修解绑模块配置：中转服务地址

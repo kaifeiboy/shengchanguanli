@@ -1,0 +1,13 @@
+{
+  "grayscale": {
+    "enabled": true,
+    "products": ["VQ图纸"],
+    "description": "产品级灰度测试配置，仅指定产品使用优化版本"
+  },
+  "monitoring": {
+    "log_performance": true,
+    "log_errors": true,
+    "performance_threshold_seconds": 10.0,
+    "success_rate_threshold": 0.95
+  }
+}

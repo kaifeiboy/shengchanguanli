@@ -6,7 +6,7 @@
 $ErrorActionPreference = "Continue"
 
 $root      = "E:\workaaa\shengchanguanli"
-$nodeExe   = "C:\Users\Administrator\.workbuddy\binaries\node\versions\22.22.2\node.exe"
+$nodeExe   = "E:\workaaa\shengchanguanli\tools\node\node.exe"
 $watchdogPs = "$root\platform-watchdog.ps1"
 $watchdogJs = "$root\src\Platform\proxy\watchdog.js"
 $proxyDir   = "$root\src\Platform\proxy"

@@ -10,7 +10,10 @@ const path = require('path');
 const ROOT = 'E:\\workaaa\\shengchanguanli';
 const CLOUDFLARED = path.join(ROOT, 'cloudflared.exe');
 const TUNNEL_FILE = path.join(ROOT, 'data', 'tunnel_url.txt');
-const TUNNEL_URL = 'http://localhost:5000';
+// 用 127.0.0.1 而非 localhost：平台只监听 IPv4 0.0.0.0:5000，
+// localhost 在 Go/cloudflared 中会先解析到 ::1 导致 origin 不可达、隧道被回收(URL 失效)。
+// 改用 127.0.0.1 保证隧道稳定、URL 长期可解析。
+const TUNNEL_URL = 'http://127.0.0.1:5000';
 
 function writeTunnelUrl(url) {
   try {

@@ -19,5 +19,5 @@ REM   curl works. Possible causes: ISP UDP/QUIC interference,
 REM   Cloudflare edge routing issue for CN mobile networks.
 REM   ISSUE REMAINS OPEN - use internal network for now.
 REM ============================================================
-"%~dp0cloudflared.exe" tunnel --url http://localhost:5000 --no-autoupdate
+"%~dp0cloudflared.exe" tunnel --url http://127.0.0.1:5000 --no-autoupdate
 pause
