@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Platform.Core;
 using Platform.Infrastructure;
 using Platform.Modules.Drawings;
+using Platform.Modules.DrawingsV2;
 using Platform.Modules.Unbind;
 using Platform.Modules.DefectHistory;
 using Platform.Modules.InvTail;
@@ -19,10 +20,22 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSingleton<NetworkResolver>();
 builder.Services.AddSingleton<FileAccessService>();
 builder.Services.AddSingleton<DbContext>();
+// 平台级 Python 进程基础设施：任何模块都应依赖它，而不是横向借用其它模块的 OcrService。
+builder.Services.AddSingleton<IPythonProcessFactory, PythonProcessFactory>();
+
+// P8：OcrService 注册从 Drawings 模块上移到平台层。
+// 原因：Unbind / DefectHistory 曾通过 DI 依赖它，而它注册在业务模块内 ——
+// 一旦 Drawings 模块被替换或未注册，这两个模块的 DI 解析会失败、平台启动崩溃。
+// 上移后，模块替换不再影响其它模块。（OcrService 自身仍属历史实现，已封存。）
+builder.Services.AddSingleton<OcrService>();
 
 // ---- Module registry: register all modules here ----
 var registry = new ModuleRegistry();
 registry.Register(new DrawingModule());
+// v2（M3）：以 Key="drawingsv2" 与旧 drawings 模块**并存**注册。
+// 只新增 /api/drawingsv2/* 端点，不改动、不删除旧链路，可并行验证、随时可回退。
+// 待 v2 端点覆盖 H5 调用面后（M5）再切换入口，届时用户可见的 URL 与入口不变。
+registry.Register(new DrawingsV2Module());
 registry.Register(new UnbindModule());
 registry.Register(new DefectHistoryModule());
 registry.Register(new InvTailModule());
@@ -74,6 +87,24 @@ app.UseStaticFiles(new Microsoft.AspNetCore.Builder.StaticFileOptions
     }
 });
 
+// v2 照片静态服务：把 PhotoDir 映射到 /drawingsv2-photos，供 H5 回显已上传照片
+{
+    var photoDir = builder.Configuration["DrawingsV2:PhotoDir"];
+    if (string.IsNullOrWhiteSpace(photoDir))
+    {
+        var appDb = builder.Configuration["Database:Path"] ?? Path.Combine(AppContext.BaseDirectory, "app.db");
+        photoDir = Path.Combine(Path.GetDirectoryName(appDb) ?? ".", "drawingsv2_photos");
+    }
+    if (Directory.Exists(photoDir))
+    {
+        app.UseStaticFiles(new Microsoft.AspNetCore.Builder.StaticFileOptions
+        {
+            FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(photoDir),
+            RequestPath = "/drawingsv2-photos"
+        });
+    }
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -82,6 +113,17 @@ if (app.Environment.IsDevelopment())
 
 // ---- Platform-level endpoints ----
 app.MapGet("/api/modules", () => registry.ListMeta());
+
+// P7：文件下载端点上移到平台层。
+// 该端点使用平台 FileAccessService、且为平台级命名（/api/files），此前却由 Drawings
+// 模块代持。上移后平台独立拥有它，Drawings 模块被替换也不会影响文件下载能力。
+// 已核实调用方：H5 图纸详情页与历史记录（均属 drawings 页面），URL 与行为完全不变。
+app.MapGet("/api/files/{*vpath}", (string vpath, FileAccessService fs) =>
+{
+    var phys = fs.ResolvePhysical(vpath);
+    if (phys == null || !File.Exists(phys)) return Results.NotFound();
+    return Results.File(phys, "application/pdf", Path.GetFileName(phys));
+});
 
 app.MapGet("/api/network/info", (NetworkResolver n) =>
 {
