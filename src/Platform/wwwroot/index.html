@@ -1196,6 +1196,28 @@ function uploadUIHtml(){
     <div class="meta-line" style="margin-top:8px;opacity:.7;font-size:11.5px;">
       照片内容识别 → 与「已选图纸」切割出的小图块比对（忽略尺寸/部位标注）
     </div>
+    <!-- v2 试点开关（M5）：默认关闭 —— 关闭时走原有链路，行为与改动前完全一致。
+         开启后本次拍照改走 /api/drawingsv2/compare/upload，按「图纸应打标项」逐项核对并给出八态。 -->
+    <label class="meta-line" style="display:flex;align-items:center;gap:8px;margin-top:10px;cursor:pointer;">
+      <input type="checkbox" id="v2Pilot" ${localStorage.getItem('v2EnginePilot')==='1'?'checked':''} style="width:18px;height:18px;" />
+      <span style="font-size:12.5px;">v2 引擎（试点）<small style="opacity:.65;display:block;">按图纸应打标项逐项核对，不影响原流程</small></span>
+    </label>
+    <!-- M6 视图级配准：仅在 v2 引擎勾选时显示。用户选定拍摄的产品面后，
+         C# 把图纸 mark 的页面级 NormBbox 重算为视图级，照片即视图坐标系，
+         解决真实单面特写照片的位置偏移/误报问题。 -->
+    <div id="v2ViewRow" style="display:${localStorage.getItem('v2EnginePilot')==='1'?'block':'none'};margin-top:6px;padding-left:30px;">
+      <label class="meta-line" style="font-size:12px;opacity:.85;display:block;margin-bottom:3px;">拍摄视图（产品面）</label>
+      <select id="v2View" style="width:100%;padding:6px 8px;border:1px solid var(--bd);border-radius:8px;font-size:12.5px;background:var(--bg);color:var(--fg);">
+        <option value="">整页 / 未指定（默认）</option>
+        <option value="TopCover">上盖 / 面板</option>
+        <option value="BottomCover">下盖 / 底壳</option>
+        <option value="Side">侧面</option>
+        <option value="Nameplate">铭牌</option>
+        <option value="Cable">接线 / 线材</option>
+        <option value="Other">其它</option>
+      </select>
+      <div class="meta-line" style="font-size:11px;opacity:.65;margin-top:3px;">留空=自动识别；选错可能缺标/位置误报</div>
+    </div>
     <div class="partResult"></div>`;
 }
 function bindUpload(card){
@@ -1203,6 +1225,21 @@ function bindUpload(card){
   if(cam) cam.onchange = onPartFile;
   const alb = card.querySelector('.partAlbum');
   if(alb) alb.onchange = onPartFile;
+  // v2 试点开关：状态记在本地，默认关（关 = 完全走原有链路）
+  const sw = card.querySelector('#v2Pilot');
+  if(sw) sw.onchange = ()=>{
+    localStorage.setItem('v2EnginePilot', sw.checked ? '1' : '0');
+    // M6 视图级配准：开关切换时同步显隐视图选择器
+    const vr = card.querySelector('#v2ViewRow');
+    if(vr) vr.style.display = sw.checked ? 'block' : 'none';
+  };
+  // M6 视图选择器：值记本地，下次进来恢复（不强制用户每次重选）
+  const vw = card.querySelector('#v2View');
+  if(vw){
+    const saved = localStorage.getItem('v2View');
+    if(saved && [...vw.options].some(o=>o.value===saved)) vw.value = saved;
+    vw.onchange = ()=> localStorage.setItem('v2View', vw.value || '');
+  }
 }
 // ---- 拍照比对 视图（模块内）----
 async function openCompare(id){
@@ -1222,7 +1259,31 @@ async function openCompare(id){
       <div class="meta-line">型号：<b>${esc(d.model||'-')}</b></div>
       ${uploadUIHtml()}`;
     bindUpload(box);
+    refreshV2Views(d.fileName);
   }catch(e){ box.innerHTML='<div class="empty">加载失败：'+(e.message||e)+'</div>'; }
+}
+
+// 动态填充 v2 视图选择器：按图纸 marks 的实际 View 分布生成选项
+async function refreshV2Views(fileName){
+  const sel = document.querySelector('#v2View');
+  if(!sel) return;
+  // 保留"整页/未指定"默认项，清空其余硬编码选项
+  const saved = localStorage.getItem('v2View') || '';
+  sel.innerHTML = '<option value="">整页 / 未指定（自动识别）</option>';
+  try{
+    const resp = await fetch('api/drawingsv2/views?drawing='+encodeURIComponent(fileName));
+    if(!resp.ok) return;
+    const views = await resp.json();
+    if(!Array.isArray(views) || views.length===0) return;
+    views.forEach(v=>{
+      const opt = document.createElement('option');
+      opt.value = v.view;
+      opt.textContent = (V2_VIEW_LABEL[v.view]||v.view) + ' (' + v.count + '项)';
+      sel.appendChild(opt);
+    });
+    // 恢复上次选择（如果新列表里还有该选项）
+    if(saved && [...sel.options].some(o=>o.value===saved)) sel.value = saved;
+  }catch(e){ /* 静默失败，保留默认选项 */ }
 }
 
 // ---- 图纸详情 视图（模块内，仅查看/下载，无拍照比对功能）----
@@ -1260,6 +1321,9 @@ async function submitPart(file, attempt){
   attempt = attempt || 0;
   const box = document.querySelector('.partResult');
   if(!box) return;
+  // v2 试点：开关开启时改走 v2 链路（八态逐项核对），否则完全走原有链路
+  const v2sw = document.querySelector('#v2Pilot');
+  if(v2sw && v2sw.checked) return await submitV2(file, box);
   box.innerHTML='<div class="meta-line"><span class="spinner"></span> 照片内容识别中…（约 5~15 秒，取决于光线与图片大小）</div>';
   const fd = new FormData(); fd.append('drawingId', curDrawing.id); fd.append('file', file);
   lastPhotoFile = file;          // 保留以供「查看差异」复用
@@ -1283,6 +1347,297 @@ async function submitPart(file, attempt){
     box.innerHTML='<div class="empty">'+esc(msg)+'</div>';
   }
 }
+// ================= v2 试点（M5）：拍照 → /api/drawingsv2/compare/upload → 八态结果 =================
+// 设计原则：不改任何旧端点调用，只在开关打开时走这条新链路；失败也不影响旧链路。
+const V2_STATE = {
+  Matched:        { c:'#16a34a', bg:'rgba(22,163,74,.10)',  t:'一致' },
+  LowConfidence:  { c:'#d97706', bg:'rgba(217,119,6,.10)',  t:'存疑' },
+  Missing:        { c:'#dc2626', bg:'rgba(220,38,38,.10)',  t:'缺标' },
+  Wrong:          { c:'#dc2626', bg:'rgba(220,38,38,.10)',  t:'错标' },
+  Extra:          { c:'#7c3aed', bg:'rgba(124,58,237,.10)', t:'多标' },
+  NotApplicable:  { c:'#6b7280', bg:'rgba(107,114,128,.08)',t:'不适用' },
+  NotComparable:  { c:'#6b7280', bg:'rgba(107,114,128,.08)',t:'不可比' },
+  ProcessingError:{ c:'#6b7280', bg:'rgba(107,114,128,.08)',t:'异常' }
+};
+// M6 视图级配准：MarkView 枚举名 → 中文标签（结果展示用）
+const V2_VIEW_LABEL = {
+  TopCover:'上盖/面板', BottomCover:'下盖/底壳', Side:'侧面',
+  Nameplate:'铭牌', Cable:'接线/线材', Other:'其它'
+};
+async function submitV2(file, box){
+  box.innerHTML='<div class="meta-line"><span class="spinner"></span> v2 逐项核对中…（约 15~40 秒，含透视矫正与定点识别）</div>';
+  const fd = new FormData();
+  // 优先用文件名（v2 档案 key = PDF 文件名去扩展名），兼容 detail 返回 fileName / name
+  fd.append('drawing', curDrawing.fileName || curDrawing.name || String(curDrawing.id));
+  fd.append('file', file);
+  // M6 视图级配准：用户选定的拍摄视图（非空时下传给后端，触发视图级 NormBbox 重算）
+  const vw = document.querySelector('#v2View');
+  if(vw && vw.value) fd.append('view', vw.value);
+  const ctrl = new AbortController();
+  const to = setTimeout(()=> ctrl.abort(), 120000);   // v2 含 OCR，超时放宽到 120s
+  try{
+    const resp = await fetch('api/drawingsv2/compare/upload',{method:'POST',body:fd,signal:ctrl.signal});
+    clearTimeout(to);
+    const r = await resp.json();
+    if(!resp.ok || r.error){ throw new Error(r.error || ('HTTP '+resp.status)); }
+    renderV2Result(box, r);
+  }catch(err){
+    clearTimeout(to);
+    const msg = (err && err.name==='AbortError') ? 'v2 核对超时（>120 秒）' : ('v2 核对失败：'+(err.message||err));
+    box.innerHTML='<div class="empty">'+esc(msg)+'<div class="meta-line" style="margin-top:8px;">可关闭「v2 引擎」开关，按原流程继续</div></div>';
+  }
+}
+function renderV2Result(box, r){
+  const vs = r.verdicts || [];
+  const cnt = r.counts || {};
+  const colorOf = s => (V2_STATE[s]||V2_STATE.ProcessingError).c;
+  const bgOf    = s => (V2_STATE[s]||V2_STATE.ProcessingError).bg;
+  const nameOf  = s => (V2_STATE[s]||V2_STATE.ProcessingError).t;
+
+  let html = '';
+  // 汇总条
+  const order = ['Matched','LowConfidence','NotDetected','Missing','Wrong','Extra','NotComparable','NotApplicable','ProcessingError'];
+  const chips = order.filter(k=>cnt[k]).map(k=>
+    `<span style="display:inline-block;background:${bgOf(k)};border:1px solid ${colorOf(k)};color:${colorOf(k)};
+      border-radius:20px;padding:4px 12px;font-size:12px;font-weight:800;margin:3px 4px 0 0;">${nameOf(k)} ${cnt[k]}</span>`).join('');
+  html += `<div style="margin-top:10px;">
+    <div class="meta-line" style="font-size:13px;font-weight:800;">v2 比对结论</div>
+    <div style="margin-top:6px;">${chips||'<span style="color:var(--sub);font-size:12px;">无判定项</span>'}</div>
+    <div class="meta-line" style="margin-top:6px;font-size:11px;opacity:.7;">
+      档案 #${esc(String(r.profileId||'-'))} · ${esc(r.drawingKey||'')} · 记录 #${esc(String(r.recordId||'-'))} · ${esc(String(Math.round(r.verifyMs||0)))}ms
+    </div>
+    <div class="meta-line" style="margin-top:4px;font-size:11px;opacity:.7;">
+      视图：${r.selectedView ? esc(V2_VIEW_LABEL[r.selectedView]||r.selectedView) : '整页 / 未指定'}${r.inferredView ? '（自动识别）' : (r.selectedView ? '' : '（页面级配准）')}
+    </div></div>`;
+
+  // G1 人工确认状态横幅（只读展示，非确认动作：draft=橙提示 / reviewed=绿勾）
+  if(r.profileStatus === 'reviewed'){
+    html += `<div style="margin-top:10px;background:rgba(22,163,74,.08);border:1px solid #16a34a;border-radius:12px;padding:10px 12px;">
+      <div style="font-weight:800;color:#16a34a;font-size:12.5px;">✅ 该图纸对象已人工确认（reviewed），比对以已确认的对象清单为准</div></div>`;
+  } else if(r.profileStatus){
+    html += `<div style="margin-top:10px;background:rgba(217,119,6,.10);border:1px solid #d97706;border-radius:12px;padding:10px 12px;">
+      <div style="font-weight:800;color:#d97706;font-size:12.5px;">⚠️ 该图纸对象尚未人工确认（draft），结论仅供参考，建议先点下方「✅ 确认图纸对象」复核</div></div>`;
+  }
+
+  if(r.photoUsable === false){
+    html += `<div style="margin-top:10px;background:rgba(220,38,38,.08);border:1px solid var(--bad);border-radius:12px;padding:12px;">
+      <div style="font-weight:800;color:var(--bad);">📷 照片质量不可用</div>
+      <div class="meta-line" style="color:var(--bad);">${esc((r.qualityReasons||[]).join('；')||'未通过质量门控')}</div></div>`;
+  }
+
+  // 照片标注区：canvas 画照片 + 检测框（绿=Matched/红=Missing/黄=LowConfidence）
+  if(r.photo){
+    html += `<div style="margin-top:10px;">
+      <div class="meta-line" style="font-size:13px;font-weight:800;">📷 照片标注</div>
+      <div class="meta-line" style="font-size:11px;opacity:.65;">实线框＝照片上实际检出的位置；虚线框＝图纸要求打标、此处未检出（应在此处）</div>
+      ${r.geometryApplied ? '<div class="meta-line" style="font-size:11px;opacity:.8;color:var(--warn,#b45309);">该照片已做透视矫正（'+esc(r.geometryMethod||'')+'），框基于矫正后视图，原图上位置可能有偏差，以文字结论为准</div>' : ''}
+      <canvas id="v2PhotoCanvas" style="width:100%;border:1px solid var(--border);border-radius:8px;margin-top:6px;"></canvas>
+    </div>`;
+  }
+
+  // 图纸回显区：canvas 画图纸截图 + mark 位置框
+  if(r.drawingPdfPath){
+    const previewUrl = `/api/drawingsv2/drawing-preview?pdf=${encodeURIComponent(r.drawingPdfPath)}&page=${r.drawingPageIndex||0}`;
+    html += `<div style="margin-top:10px;">
+      <div class="meta-line" style="font-size:13px;font-weight:800;">📐 图纸 mark 位置</div>
+      <div class="meta-line" style="font-size:11px;opacity:.65;">框＝该 mark 在图纸页面上的位置（页面坐标，与照片视图无关）</div>
+      <canvas id="v2DrawingCanvas" style="width:100%;border:1px solid var(--border);border-radius:8px;margin-top:6px;"></canvas>
+    </div>`;
+  }
+
+  // 逐项明细
+  html += `<div style="margin-top:10px;">`;
+  vs.forEach(v=>{
+    const c = colorOf(v.state), bg = bgOf(v.state);
+    html += `<div style="border:1px solid ${c};background:${bg};border-radius:12px;padding:10px 12px;margin-top:8px;">
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+        <span style="background:${c};color:#fff;border-radius:6px;padding:1px 8px;font-size:11px;font-weight:800;">${nameOf(v.state)}</span>
+        <b style="font-size:12.5px;">${esc(v.text || (v.type==='Qr'?'二维码':(v.type==='Icon'?'图标':'文本'))) }</b>
+        <span style="font-size:11px;opacity:.7;">${esc(v.type)}</span>
+        ${v.observedData?`<span style="font-size:11px;opacity:.8;">解码：${esc(String(v.observedData).slice(0,32))}</span>`:''}
+        ${(v.offset!=null)?`<span style="font-size:11px;opacity:.7;">偏移 ${Number(v.offset).toFixed(3)}</span>`:''}
+      </div>
+      <div style="margin-top:5px;font-size:11.5px;opacity:.85;line-height:1.5;">${esc(v.evidence||'')}</div>
+    </div>`;
+  });
+  html += `</div>`;
+
+  if((r.skippedNoBbox||[]).length){
+    html += `<div class="meta-line" style="margin-top:8px;font-size:11px;opacity:.6;">有 ${r.skippedNoBbox.length} 项无坐标未参与定点核对</div>`;
+  }
+  // G1 人工复核 + G2 会话汇总入口
+  html += `<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+    <button class="btn sm" id="btnV2Review" style="background:#d97706;color:#fff;border:none;">✅ 确认图纸对象</button>
+    ${r.sessionId ? `<button class="btn sm" id="btnV2Session" style="border:1px solid var(--bd);">🗂 本会话汇总（${esc(String(r.sessionId).slice(0,10))}…）</button>` : ''}
+  </div>`;
+  html += `<div class="meta-line" style="margin-top:10px;font-size:11px;opacity:.6;">
+    v2 只做「应打标对象的识别与位置比对」，不判合格与否；存疑/缺标请人工复核。</div>`;
+  box.innerHTML = html;
+
+  const revBtn = box.querySelector('#btnV2Review');
+  if(revBtn) revBtn.onclick = ()=> openV2Review(r.profileId);
+  const sesBtn = box.querySelector('#btnV2Session');
+  if(sesBtn) sesBtn.onclick = ()=> openV2Session(r.sessionId);
+
+  // 异步绘制照片标注 canvas
+  if(r.photo){
+    drawPhotoAnnotations(r, vs, colorOf);
+  }
+  // 异步绘制图纸回显 canvas
+  if(r.drawingPdfPath){
+    drawDrawingAnnotations(r, vs, colorOf);
+  }
+
+  const miss = cnt.Missing||0, low = cnt.LowConfidence||0, nd = cnt.NotDetected||0;
+  if(miss) toast(`v2：${miss} 项缺标，请复核`);
+  else if(low||nd) toast(`v2：${low} 项存疑 / ${nd} 项未检出，请复核`);
+  else toast('v2：全部一致');
+}
+
+// G1 人工复核：弹出图纸对象清单，勾选=参与比对、取消=禁用误提取项，确认后置 reviewed
+async function openV2Review(profileId){
+  if(!profileId) return;
+  const resp = await fetch('api/drawingsv2/profiles/'+profileId+'/review');
+  if(!resp.ok){ toast('获取复核数据失败'); return; }
+  const d = await resp.json();
+  const marks = (d.marks||[]).filter(m=> (m.type||'')!=='Group');
+  const rows = marks.map(m=>`
+    <label style="display:flex;align-items:center;gap:8px;padding:7px 4px;border-bottom:1px solid var(--bd);font-size:12.5px;cursor:pointer;">
+      <input type="checkbox" data-mk="${esc(m.markKey)}" ${m.isActive!==false?'checked':''} style="width:16px;height:16px;"/>
+      <b>${esc(m.text || (m.type==='Qr'?'二维码':(m.type==='Icon'?'图标':'文本')))}</b>
+      <span style="opacity:.6;font-size:11px;">${esc(m.view||'')} · ${esc(m.type||'')}</span>
+    </label>`).join('');
+  const overlay = buildOverlay(`<div style="max-width:540px;width:94%;">
+    <h3>✅ 确认图纸对象（档案 #${esc(String(profileId))}）</h3>
+    <div class="meta-line" style="font-size:11px;opacity:.7;">勾选=参与比对；取消=禁用该误提取项。确认后该图纸状态置 reviewed，后续比对将以此为准。</div>
+    <div style="max-height:52vh;overflow:auto;margin-top:8px;border:1px solid var(--bd);border-radius:8px;padding:4px 8px;">${rows||'<div class="empty">无对象</div>'}</div>
+    <div style="margin-top:10px;display:flex;gap:8px;justify-content:flex-end;">
+      <button class="btn sm" id="ovCancel">取消</button>
+      <button class="btn sm" id="ovSave" style="background:#16a34a;color:#fff;border:none;">确认并保存</button>
+    </div></div>`);
+  overlay.querySelector('#ovCancel').onclick = ()=> overlay.remove();
+  overlay.querySelector('#ovSave').onclick = async ()=>{
+    const items = [...overlay.querySelectorAll('input[type=checkbox]')].map(c=>({
+      markKey: c.getAttribute('data-mk'), isActive: c.checked, confirmed: c.checked
+    }));
+    const rev = await fetch('api/drawingsv2/profiles/'+profileId+'/review',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({reviewedBy:'现场', items})});
+    if(rev.ok){ toast('已确认，图纸状态置 reviewed'); overlay.remove(); }
+    else { const err = await rev.json().catch(()=>({})); toast('保存失败：'+(err.error||rev.status)); }
+  };
+}
+
+// G2 会话合并：展示一次多部位检验的跨照片聚合结论
+async function openV2Session(sessionId){
+  if(!sessionId) return;
+  const resp = await fetch('api/drawingsv2/sessions/'+encodeURIComponent(sessionId));
+  if(!resp.ok){ toast('会话不存在或为空'); return; }
+  const d = await resp.json();
+  const agg = (d.aggregated||[]).map(a=>`
+    <div style="display:flex;gap:8px;align-items:center;padding:7px 4px;border-bottom:1px solid var(--bd);font-size:12.5px;">
+      <span style="min-width:54px;font-weight:800;color:${(V2_STATE[a.verdict]||V2_STATE.ProcessingError).c};">${(V2_STATE[a.verdict]||V2_STATE.ProcessingError).t}</span>
+      <b>${esc(a.text||a.markKey)}</b>
+      <span style="opacity:.6;font-size:11px;">${esc((a.states||[]).join('/'))}</span>
+    </div>`).join('');
+  const overlay = buildOverlay(`<div style="max-width:540px;width:94%;">
+    <h3>🗂 会话汇总（${esc(String(sessionId).slice(0,12))}…）</h3>
+    <div class="meta-line" style="font-size:11px;opacity:.7;">共 ${esc(String(d.recordCount||0))} 张照片 · 跨部位合并结论（任一部位缺标→缺标；全一致→一致；含存疑/混合→需复核）</div>
+    <div style="max-height:52vh;overflow:auto;margin-top:8px;border:1px solid var(--bd);border-radius:8px;padding:4px 8px;">${agg||'<div class="empty">无数据</div>'}</div>
+    <div style="margin-top:10px;text-align:right;"><button class="btn sm" id="ovClose">关闭</button></div></div>`);
+  overlay.querySelector('#ovClose').onclick = ()=> overlay.remove();
+}
+
+// 简易全屏弹层（浅色商务风，跟随主题变量）
+function buildOverlay(innerHtml){
+  const ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px;';
+  const card = document.createElement('div');
+  card.style.cssText = 'background:var(--bg,#fff);border:1px solid var(--bd,#ddd);border-radius:14px;padding:16px 18px;box-shadow:0 8px 30px rgba(0,0,0,.25);max-height:86vh;overflow:auto;';
+  card.innerHTML = innerHtml;
+  ov.appendChild(card);
+  ov.onclick = (e)=>{ if(e.target===ov) ov.remove(); };
+  document.body.appendChild(ov);
+  return ov;
+}
+
+// 在照片上画检测框：实线=实际检出位置（绿/黄/红），虚线=预期位置（此处应打标但未检出）
+function drawPhotoAnnotations(r, vs, colorOf){
+  const canvas = document.getElementById('v2PhotoCanvas');
+  if(!canvas) return;
+  const img = new Image();
+  img.onload = () => {
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+    const lw = Math.max(2, canvas.width / 400);
+    const fs = Math.max(14, canvas.width/60);
+    vs.forEach(v => {
+      const actual = (v.photoBbox && v.photoBbox.length >= 4) ? v.photoBbox : null;
+      const expected = (v.expectedBbox && v.expectedBbox.length >= 4) ? v.expectedBbox : null;
+      // 虚线：没有实际检出位置时才画「应在此处」，避免与实际框重叠干扰
+      if(!actual && expected){
+        const [ex, ey, ew, eh] = expected;
+        ctx.save();
+        ctx.setLineDash([Math.max(6, canvas.width/90), Math.max(4, canvas.width/140)]);
+        ctx.strokeStyle = colorOf(v.state);
+        ctx.lineWidth = lw;
+        ctx.strokeRect(ex*canvas.width, ey*canvas.height, ew*canvas.width, eh*canvas.height);
+        ctx.setLineDash([]);
+        ctx.fillStyle = colorOf(v.state);
+        ctx.font = `${fs}px sans-serif`;
+        ctx.fillText((v.text ? String(v.text).slice(0,12) : v.type) + '（应在此处）',
+                     ex*canvas.width + 4, ey*canvas.height + 20);
+        ctx.restore();
+        return;
+      }
+      if(!actual) return;
+      const [x, y, w, h] = actual;
+      const px = x * canvas.width, py = y * canvas.height;
+      const pw = w * canvas.width, ph = h * canvas.height;
+      ctx.strokeStyle = colorOf(v.state);
+      ctx.lineWidth = lw;
+      ctx.strokeRect(px, py, pw, ph);
+      // 标签
+      ctx.fillStyle = colorOf(v.state);
+      ctx.font = `${fs}px sans-serif`;
+      const label = v.text ? String(v.text).slice(0, 12) : v.type;
+      ctx.fillText(label, px + 4, py + 20);
+    });
+  };
+  img.src = r.photoUrl || r.photo;
+}
+
+// 在图纸截图上画 mark 位置框
+function drawDrawingAnnotations(r, vs, colorOf){
+  const canvas = document.getElementById('v2DrawingCanvas');
+  if(!canvas) return;
+  const img = new Image();
+  img.onload = () => {
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+    // 画 mark 位置框
+    vs.forEach(v => {
+      if(!v.drawingBbox || v.drawingBbox.length < 4) return;
+      const [x, y, w, h] = v.drawingBbox;
+      const px = x * canvas.width, py = y * canvas.height;
+      const pw = w * canvas.width, ph = h * canvas.height;
+      ctx.strokeStyle = colorOf(v.state);
+      ctx.lineWidth = Math.max(2, canvas.width / 400);
+      ctx.strokeRect(px, py, pw, ph);
+      // 标签
+      ctx.fillStyle = colorOf(v.state);
+      ctx.font = `${Math.max(14, canvas.width/60)}px sans-serif`;
+      const label = v.text ? String(v.text).slice(0, 12) : v.type;
+      ctx.fillText(label, px + 4, py + 20);
+    });
+  };
+  const pdf = encodeURIComponent(r.drawingPdfPath);
+  const page = r.drawingPageIndex || 0;
+  img.src = `/api/drawingsv2/drawing-preview?pdf=${pdf}&page=${page}`;
+}
+
 // ---- 三态结果渲染（完全匹配 / 部分匹配 / 未匹配）----
 function renderMatchResult(box, r){
   let html = '';
