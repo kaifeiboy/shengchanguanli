@@ -1,0 +1,22 @@
+﻿
+TaskName       State
+--------       -----
+SCG_Platform Running
+
+
+
+
+Id        : 8560
+StartTime : 2026/9/27 18:40:02
+Path      : E:\workaaa\shengchanguanli\src\Platform\bin\Debug\net8.0\Platform.e
+            xe
+
+
+
+
+LocalPort OwningProcess
+--------- -------------
+     5000          8560
+
+
+{"ok":true,"pythonExe":"C:\\Users\\Administrator\\.workbuddy\\binaries\\python\\envs\\default\\Scripts\\python.exe","pythonExeExists":true,"scriptPath":"E:\\workaaa\\shengchanguanli\\src\\Platform\\Modules\\DrawingsV2\\Scripts\\vpdf_run.py","scriptExists":true,"dbPath":"E:\\workaaa\\shengchanguanli\\data\\drawingsv2.db","decisionVersion":"m2.3-optimized","selfCheck":"{\"schema\": \"vpdf-selfcheck/1\", \"ok\": true, \"passed\": 13, \"total\": 13}","error":null}

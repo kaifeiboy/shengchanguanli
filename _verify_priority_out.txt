@@ -1,0 +1,44 @@
+
+===== profile 63 : 8 blocks =====
+  B0 name='LOW VOLTAGE｜禁止强电｜地暖阀｜DC15/24V｜A｜B｜TAGE' has_marking=1 | text_layer=['上盖底部二维码标签激光打标格式：', 'A', 'B', '地暖阀'] | curve_text=['TAGE']
+  B1 name='B作业｜(2.6)｜激光刻印(灰色),位置居中｜YCWA16NCWQ｜服务热线：400-620-6607｜()NFC便捷控制｜(NFC便捷控制' has_marking=1 | text_layer=['激光刻印(灰色),位置居中', '3.8', '(2.6)', '3±0.5'] | curve_text=['YCWA16NCWQ', '服务热线：400-620-6607', '()NFC便捷控制', '(NFC便捷控制']
+  B2 name='预热中防零｜设定｜商家｜强力｜无风感｜系统地址｜服务点检｜自清洁｜静音｜森林风｜离家｜系统 地址｜人感｜辅热｜杀菌' has_marking=1 | text_layer=['88±0.5', '88±0.5'] | curve_text=['预热中防零', '设定', '商家', '强力', '无风感', '系统地址']
+  B3 name='A作业｜(2.6)｜YCWA15NCWO｜服务热线：400-620-6607｜()NFC便捷控制｜APP下戴｜YCWA15NCWQ' has_marking=1 | text_layer=['80.5', '9', '9', '3±0.5'] | curve_text=['YCWA15NCWO', '服务热线：400-620-6607', '()NFC便捷控制', 'APP下戴', 'YCWA15NCWQ']
+  B4 name='' has_marking=0 | text_layer=['11.5±0.5', '37.1±0.5'] | curve_text=[]
+  B5 name='A作业｜QHRLA｜200512｜BFF0001｜昆日图公司' has_marking=1 | text_layer=['200512', 'QHRLA', 'BFF0001', '8'] | curve_text=['昆日图公司']
+  B6 name='B作业｜QHRLB｜200512｜BFF0001｜昆日公公司' has_marking=1 | text_layer=['8', '30±0.5', '20', '0.7±0.5'] | curve_text=['昆日公公司']
+
+===== profile 66 : 5 blocks =====
+  B0 name='(3.6)｜B｜YCWA15NC｜服务热线：400-620-6607｜()NFC便捷控制｜预热中防零｜设定｜室内｜节能｜高家｜强力｜无风感｜辅热｜人愿｜系统地址｜服务点检｜杀菌｜自清洁｜YORK｜系统' has_marking=1 | text_layer=['64', '88±0.5', '88±0.5', 'B'] | curve_text=['YCWA15NC', '服务热线：400-620-6607', '()NFC便捷控制', '预热中防零', '设定', '室内']
+  B1 name='QHS9E｜200512｜BFF0001｜C-XXXX-XXXX｜二维码内容以实际生产为准' has_marking=1 | text_layer=['上盖固定板此处粘贴贴纸', '二维码内容以实际生产为准', '3±2', '15'] | curve_text=[]
+  B2 name='' has_marking=0 | text_layer=['11.5±0.5', '37.1±0.5'] | curve_text=[]
+  B3 name='' has_marking=0 | text_layer=[] | curve_text=[]
+  B4 name='B｜YCWA15NC｜服务热线：400-620-66(｜服务热线：400-620-66' has_marking=1 | text_layer=['B', '上盖打标内容'] | curve_text=['YCWA15NC', '服务热线：400-620-66(', '服务热线：400-620-66']
+
+===== profile 67 : 6 blocks =====
+  B0 name='YCTA113CGQ｜QHS94｜100095｜XXXXXXX｜C-XXXX-0XXXXX' has_marking=1 | text_layer=['YCTA113CGQ', 'QHS94', '100095', 'XXXXXXX'] | curve_text=[]
+  B1 name='YORK' has_marking=1 | text_layer=[] | curve_text=['YORK']
+  B2 name='后盖铭牌贴纸｜约克彩屏集控器｜a｜型号：YCTA113CGQ｜电源：220V-50Hz｜CMIIT ID:25J378KW2152｜b｜青岛江森自控空调有限公司｜中国制造｜YORK｜RS485｜禁止强电' has_marking=1 | text_layer=['丝印接线标识', '约克彩屏集控器', '型号：YCTA113CGQ', '电源：220V-50Hz'] | curve_text=['YORK', 'RS485', '禁止强电']
+  B3 name='' has_marking=0 | text_layer=[] | curve_text=[]
+  B4 name='' has_marking=0 | text_layer=[] | curve_text=[]
+
+===== profile 65 : 6 blocks =====
+  B0 name='HITACHI｜HTACH' has_marking=1 | text_layer=[] | curve_text=['HITACHI', 'HTACH']
+  B1 name='LOW VOLTAGE｜地暖阀｜禁止强电｜A｜B' has_marking=1 | text_layer=['A', 'B', '地暖阀', '禁止强电'] | curve_text=[]
+  B2 name='服务热线｜PC-P1HVQA｜400-860-1111｜NFC' has_marking=1 | text_layer=['PC-P1HVQA', '服务热线', '400-860-1111', 'NFC'] | curve_text=[]
+  B3 name='QHRW6｜200512｜B280001' has_marking=1 | text_layer=['200512', 'B280001', 'QHRW6', '3'] | curve_text=[]
+  B4 name='' has_marking=0 | text_layer=[] | curve_text=[]
+
+===== 恢复内容校验 =====
+  profile 63 B1: OK (缺失 [])
+  profile 63 B3: OK (缺失 [])
+  profile 66 B0: OK (缺失 [])
+  profile 66 B4: OK (缺失 [])
+  profile 67 B2: OK (缺失 [])
+
+===== 规则违反统计 =====
+curve_text 与 text_layer 原文重叠的条目数: 0
+
+===== 结论 =====
+规则满足(无重叠): True
+5 恢复块全部含铭牌内容: True

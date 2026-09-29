@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <!-- 本机仅安装 .NET 8 SDK（8.0.422 / runtime 8.0.28），交付原值 net10.0 无法生成 -->
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- 已随模块迁移到 tools/DrawingsV2_Validation/，源码路径改为指向模块目录 -->
+    <Compile Include="../../../src/Platform/Modules/DrawingsV2/Decision/V2Models.cs" Link="V2Models.cs" />
+    <Compile Include="../../../src/Platform/Modules/DrawingsV2/Decision/BlockMatcher.cs" Link="BlockMatcher.cs" />
+    <Compile Include="../../../src/Platform/Modules/DrawingsV2/Decision/TextNormalizer.cs" Link="TextNormalizer.cs" />
+    <Compile Include="../../../src/Platform/Modules/DrawingsV2/Decision/MarkRules.cs" Link="MarkRules.cs" />
+    <Compile Include="../../../src/Platform/Modules/DrawingsV2/Decision/VectorPdfParser.cs" Link="VectorPdfParser.cs" />
+    <Compile Include="../../../src/Platform/Modules/DrawingsV2/Decision/MarkBuilder.cs" Link="MarkBuilder.cs" />
+    <Compile Include="../../../src/Platform/Modules/DrawingsV2/Decision/MarkVerifier.cs" Link="MarkVerifier.cs" />
+  </ItemGroup>
+</Project>

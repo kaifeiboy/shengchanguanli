@@ -1,0 +1,44 @@
+图纸数: 8
+
+==============================================================================
+profile 50  02-HYXC-VH01GZ效果图25.12.20-Model
+   '200512'         CenturyGothic     4.39  dim   -> text  NEW
+   '1250001'        CenturyGothic     4.39  dim   -> text  NEW
+   '1'              SimHei            7.45  dim   -> meta  
+
+==============================================================================
+profile 52  02-PC-P1HPQA效果图25.7.19-Model
+   '200512'         CenturyGothic     4.39  dim   -> text  NEW
+   '1'              SimSun            6.43  dim   -> meta  
+   '2'              SimSun            6.43  dim   -> meta  
+
+==============================================================================
+profile 61  02-PC-P1HVQ效果图25.6.20-Model
+   '400-860-1111'   Arial-BoldMT      5.38  dim   -> text  NEW
+   '200512'         CenturyGothic     3.29  dim   -> text  NEW
+   '3'              SimHei            7.16  dim   -> meta  
+   '4'              SimHei            7.16  dim   -> meta  
+
+==============================================================================
+profile 62  02-PC-P1HJQ效果图25.7.15dwg-Model
+   '3'              SimSun            8.36  dim   -> meta  
+   '4008601111'     SimHei            4.84  dim   -> text  NEW
+   '200512'         SimHei            3.58  dim   -> text  NEW
+   '1'              SimSun            8.36  dim   -> meta  
+   '2'              SimSun            8.36  dim   -> meta  
+
+==============================================================================
+profile 64  PC-P1HEQ-效果图25.7.15-Model
+   '5'              SimSun           10.06  dim   -> meta  
+   '3'              SimHei            8.25  dim   -> meta  
+   '2'              SimHei            8.25  dim   -> meta  
+   '200512'         CenturyGothic     4.22  dim   -> text  NEW
+   '4'              SimHei            8.25  dim   -> meta  
+
+==============================================================================
+profile 67  02-约克彩屏集控器YCTA113CGQ效果图25.11.12-Model
+   '100095'         SimSun            3.77  dim   -> text  NEW
+
+##############################################################################
+去重变化合计: 21
+流向: [(('dim', 'meta'), 12), (('dim', 'text'), 9)]

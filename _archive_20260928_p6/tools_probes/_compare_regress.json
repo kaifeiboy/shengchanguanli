@@ -1,0 +1,23 @@
+﻿{
+    "recordId":  null,
+    "profileId":  61,
+    "drawingKey":  "02-PC-P1HVQ效果图25.6.20-Model",
+    "profileStatus":  "reviewed",
+    "requiresViewSelection":  true,
+    "result":  "NeedsReview",
+    "reason":  "自动部位证据不足，未进行对象判定。请选择拍摄部位后重试。",
+    "viewCandidates":  [
+                           {
+                               "view":  "TopCover",
+                               "score":  2,
+                               "reason":  "文本:服务热线"
+                           }
+                       ],
+    "photo":  "E:\\workaaa\\shengchanguanli\\data\\drawingsv2_photos\\202609\\64_64d971618edb64178292a85ccc6001529c3842e34b70e9655ef9a07369c4be9d.jpg",
+    "photoSha256":  "64d971618edb64178292a85ccc6001529c3842e34b70e9655ef9a07369c4be9d",
+    "geometryApplied":  false,
+    "geometryMethod":  "no-quad",
+    "verdicts":  [
+
+                 ]
+}

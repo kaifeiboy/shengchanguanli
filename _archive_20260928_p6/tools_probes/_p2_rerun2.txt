@@ -1,0 +1,10 @@
+﻿START 18:47:05
+profile 50 OK elapsed=22s
+profile 52 OK elapsed=28s
+profile 56 OK elapsed=26s
+profile 57 OK elapsed=25s
+profile 61 OK elapsed=24s
+profile 62 OK elapsed=25s
+profile 64 OK elapsed=42s
+profile 67 OK elapsed=50s
+END 18:51:06

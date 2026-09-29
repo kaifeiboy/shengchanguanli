@@ -1,0 +1,83 @@
+﻿  姝ｅ湪纭畾瑕佽繕鍘熺殑椤圭洰鈥?
+  宸茶繕鍘?E:\workaaa\shengchanguanli\src\Platform\Platform.csproj (鐢ㄦ椂 2.51 绉?銆?
+E:\workaaa\shengchanguanli\src\Platform\Modules\Drawings\DrawingService.cs(1198,39): warning CS8625: 鏃犳硶灏?null 瀛楅潰閲忚浆鎹负闈?null 鐨勫紩鐢ㄧ被鍨嬨€?[E:\workaaa\shengchanguanli\src\Platform\Platform.csproj]
+E:\workaaa\shengchanguanli\src\Platform\Modules\Drawings\DrawingService.cs(1199,37): warning CS8625: 鏃犳硶灏?null 瀛楅潰閲忚浆鎹负闈?null 鐨勫紩鐢ㄧ被鍨嬨€?[E:\workaaa\shengchanguanli\src\Platform\Platform.csproj]
+E:\workaaa\shengchanguanli\src\Platform\Modules\DrawingsV2\Decision\V2Store.cs(478,59): warning CS8602: 瑙ｅ紩鐢ㄥ彲鑳藉嚭鐜扮┖寮曠敤銆?[E:\workaaa\shengchanguanli\src\Platform\Platform.csproj]
+E:\workaaa\shengchanguanli\src\Platform\Modules\DrawingsV2\DrawingsV2Module.cs(186,33): warning CS1998: 姝ゅ紓姝ユ柟娉曠己灏?"await" 杩愮畻绗︼紝灏嗕互鍚屾鏂瑰紡杩愯銆傝鑰冭檻浣跨敤 "await" 杩愮畻绗︾瓑寰呴潪闃绘鐨?API 璋冪敤锛屾垨鑰呬娇鐢?"await Task.Run(...)" 鍦ㄥ悗鍙扮嚎绋嬩笂鎵ц鍗犵敤澶ч噺 CPU 鐨勫伐浣溿€?[E:\workaaa\shengchanguanli\src\Platform\Platform.csproj]
+E:\workaaa\shengchanguanli\src\Platform\Modules\DrawingsV2\DrawingsV2Module.cs(207,33): warning CS1998: 姝ゅ紓姝ユ柟娉曠己灏?"await" 杩愮畻绗︼紝灏嗕互鍚屾鏂瑰紡杩愯銆傝鑰冭檻浣跨敤 "await" 杩愮畻绗︾瓑寰呴潪闃绘鐨?API 璋冪敤锛屾垨鑰呬娇鐢?"await Task.Run(...)" 鍦ㄥ悗鍙扮嚎绋嬩笂鎵ц鍗犵敤澶ч噺 CPU 鐨勫伐浣溿€?[E:\workaaa\shengchanguanli\src\Platform\Platform.csproj]
+E:\workaaa\shengchanguanli\src\Platform\Modules\DrawingsV2\DrawingsV2Module.cs(223,33): warning CS1998: 姝ゅ紓姝ユ柟娉曠己灏?"await" 杩愮畻绗︼紝灏嗕互鍚屾鏂瑰紡杩愯銆傝鑰冭檻浣跨敤 "await" 杩愮畻绗︾瓑寰呴潪闃绘鐨?API 璋冪敤锛屾垨鑰呬娇鐢?"await Task.Run(...)" 鍦ㄥ悗鍙扮嚎绋嬩笂鎵ц鍗犵敤澶ч噺 CPU 鐨勫伐浣溿€?[E:\workaaa\shengchanguanli\src\Platform\Platform.csproj]
+E:\workaaa\shengchanguanli\src\Platform\Modules\DrawingsV2\DrawingsV2Module.cs(240,33): warning CS1998: 姝ゅ紓姝ユ柟娉曠己灏?"await" 杩愮畻绗︼紝灏嗕互鍚屾鏂瑰紡杩愯銆傝鑰冭檻浣跨敤 "await" 杩愮畻绗︾瓑寰呴潪闃绘鐨?API 璋冪敤锛屾垨鑰呬娇鐢?"await Task.Run(...)" 鍦ㄥ悗鍙扮嚎绋嬩笂鎵ц鍗犵敤澶ч噺 CPU 鐨勫伐浣溿€?[E:\workaaa\shengchanguanli\src\Platform\Platform.csproj]
+E:\workaaa\shengchanguanli\src\Platform\Modules\DrawingsV2\DrawingsV2Module.cs(250,33): warning CS1998: 姝ゅ紓姝ユ柟娉曠己灏?"await" 杩愮畻绗︼紝灏嗕互鍚屾鏂瑰紡杩愯銆傝鑰冭檻浣跨敤 "await" 杩愮畻绗︾瓑寰呴潪闃绘鐨?API 璋冪敤锛屾垨鑰呬娇鐢?"await Task.Run(...)" 鍦ㄥ悗鍙扮嚎绋嬩笂鎵ц鍗犵敤澶ч噺 CPU 鐨勫伐浣溿€?[E:\workaaa\shengchanguanli\src\Platform\Platform.csproj]
+E:\workaaa\shengchanguanli\src\Platform\Modules\DrawingsV2\Decision\MarkVerifier.cs(965,16): warning CS8602: 瑙ｅ紩鐢ㄥ彲鑳藉嚭鐜扮┖寮曠敤銆?[E:\workaaa\shengchanguanli\src\Platform\Platform.csproj]
+E:\workaaa\shengchanguanli\src\Platform\Modules\Drawings\DrawingService.cs(1839,23): warning CS8619: 绫诲瀷鈥淭ask<DrawingService.DiffMarkers?>鈥濈殑鍊间腑寮曠敤绫诲瀷鐨勪负 Null 鎬т笌鐩爣绫诲瀷鈥淭ask<DrawingService.DiffMarkers>鈥濅笉鍖归厤銆?[E:\workaaa\shengchanguanli\src\Platform\Platform.csproj]
+E:\workaaa\shengchanguanli\src\Platform\Modules\Drawings\DrawingService.cs(1838,48): warning CS8619: 绫诲瀷鈥淭ask<DrawingService.DiffMarkers>鈥濈殑鍊间腑寮曠敤绫诲瀷鐨勪负 Null 鎬т笌鐩爣绫诲瀷鈥淭ask<DrawingService.DiffMarkers?>鈥濅笉鍖归厤銆?[E:\workaaa\shengchanguanli\src\Platform\Platform.csproj]
+E:\workaaa\shengchanguanli\src\Platform\Modules\Drawings\DrawingService.cs(1946,15): warning CS8619: 绫诲瀷鈥淭ask<DrawingService.DiffMarkers?>鈥濈殑鍊间腑寮曠敤绫诲瀷鐨勪负 Null 鎬т笌鐩爣绫诲瀷鈥淭ask<DrawingService.DiffMarkers>鈥濅笉鍖归厤銆?[E:\workaaa\shengchanguanli\src\Platform\Platform.csproj]
+E:\workaaa\shengchanguanli\src\Platform\Modules\Drawings\DrawingService.cs(1945,39): warning CS8619: 绫诲瀷鈥淭ask<DrawingService.DiffMarkers>鈥濈殑鍊间腑寮曠敤绫诲瀷鐨勪负 Null 鎬т笌鐩爣绫诲瀷鈥淭ask<DrawingService.DiffMarkers?>鈥濅笉鍖归厤銆?[E:\workaaa\shengchanguanli\src\Platform\Platform.csproj]
+  Platform -> E:\workaaa\shengchanguanli\src\Platform\bin\Debug\net8.0\Platform.dll
+
+宸叉垚鍔熺敓鎴愩€?
+
+E:\workaaa\shengchanguanli\src\Platform\Modules\Drawings\DrawingService.cs(1198,39): warning CS8625: 鏃犳硶灏?null 瀛楅潰閲忚浆鎹负闈?null 鐨勫紩鐢ㄧ被鍨嬨€?[E:\workaaa\shengchanguanli\src\Platform\Platform.csproj]
+E:\workaaa\shengchanguanli\src\Platform\Modules\Drawings\DrawingService.cs(1199,37): warning CS8625: 鏃犳硶灏?null 瀛楅潰閲忚浆鎹负闈?null 鐨勫紩鐢ㄧ被鍨嬨€?[E:\workaaa\shengchanguanli\src\Platform\Platform.csproj]
+E:\workaaa\shengchanguanli\src\Platform\Modules\DrawingsV2\Decision\V2Store.cs(478,59): warning CS8602: 瑙ｅ紩鐢ㄥ彲鑳藉嚭鐜扮┖寮曠敤銆?[E:\workaaa\shengchanguanli\src\Platform\Platform.csproj]
+E:\workaaa\shengchanguanli\src\Platform\Modules\DrawingsV2\DrawingsV2Module.cs(186,33): warning CS1998: 姝ゅ紓姝ユ柟娉曠己灏?"await" 杩愮畻绗︼紝灏嗕互鍚屾鏂瑰紡杩愯銆傝鑰冭檻浣跨敤 "await" 杩愮畻绗︾瓑寰呴潪闃绘鐨?API 璋冪敤锛屾垨鑰呬娇鐢?"await Task.Run(...)" 鍦ㄥ悗鍙扮嚎绋嬩笂鎵ц鍗犵敤澶ч噺 CPU 鐨勫伐浣溿€?[E:\workaaa\shengchanguanli\src\Platform\Platform.csproj]
+E:\workaaa\shengchanguanli\src\Platform\Modules\DrawingsV2\DrawingsV2Module.cs(207,33): warning CS1998: 姝ゅ紓姝ユ柟娉曠己灏?"await" 杩愮畻绗︼紝灏嗕互鍚屾鏂瑰紡杩愯銆傝鑰冭檻浣跨敤 "await" 杩愮畻绗︾瓑寰呴潪闃绘鐨?API 璋冪敤锛屾垨鑰呬娇鐢?"await Task.Run(...)" 鍦ㄥ悗鍙扮嚎绋嬩笂鎵ц鍗犵敤澶ч噺 CPU 鐨勫伐浣溿€?[E:\workaaa\shengchanguanli\src\Platform\Platform.csproj]
+E:\workaaa\shengchanguanli\src\Platform\Modules\DrawingsV2\DrawingsV2Module.cs(223,33): warning CS1998: 姝ゅ紓姝ユ柟娉曠己灏?"await" 杩愮畻绗︼紝灏嗕互鍚屾鏂瑰紡杩愯銆傝鑰冭檻浣跨敤 "await" 杩愮畻绗︾瓑寰呴潪闃绘鐨?API 璋冪敤锛屾垨鑰呬娇鐢?"await Task.Run(...)" 鍦ㄥ悗鍙扮嚎绋嬩笂鎵ц鍗犵敤澶ч噺 CPU 鐨勫伐浣溿€?[E:\workaaa\shengchanguanli\src\Platform\Platform.csproj]
+E:\workaaa\shengchanguanli\src\Platform\Modules\DrawingsV2\DrawingsV2Module.cs(240,33): warning CS1998: 姝ゅ紓姝ユ柟娉曠己灏?"await" 杩愮畻绗︼紝灏嗕互鍚屾鏂瑰紡杩愯銆傝鑰冭檻浣跨敤 "await" 杩愮畻绗︾瓑寰呴潪闃绘鐨?API 璋冪敤锛屾垨鑰呬娇鐢?"await Task.Run(...)" 鍦ㄥ悗鍙扮嚎绋嬩笂鎵ц鍗犵敤澶ч噺 CPU 鐨勫伐浣溿€?[E:\workaaa\shengchanguanli\src\Platform\Platform.csproj]
+E:\workaaa\shengchanguanli\src\Platform\Modules\DrawingsV2\DrawingsV2Module.cs(250,33): warning CS1998: 姝ゅ紓姝ユ柟娉曠己灏?"await" 杩愮畻绗︼紝灏嗕互鍚屾鏂瑰紡杩愯銆傝鑰冭檻浣跨敤 "await" 杩愮畻绗︾瓑寰呴潪闃绘鐨?API 璋冪敤锛屾垨鑰呬娇鐢?"await Task.Run(...)" 鍦ㄥ悗鍙扮嚎绋嬩笂鎵ц鍗犵敤澶ч噺 CPU 鐨勫伐浣溿€?[E:\workaaa\shengchanguanli\src\Platform\Platform.csproj]
+E:\workaaa\shengchanguanli\src\Platform\Modules\DrawingsV2\Decision\MarkVerifier.cs(965,16): warning CS8602: 瑙ｅ紩鐢ㄥ彲鑳藉嚭鐜扮┖寮曠敤銆?[E:\workaaa\shengchanguanli\src\Platform\Platform.csproj]
+E:\workaaa\shengchanguanli\src\Platform\Modules\Drawings\DrawingService.cs(1839,23): warning CS8619: 绫诲瀷鈥淭ask<DrawingService.DiffMarkers?>鈥濈殑鍊间腑寮曠敤绫诲瀷鐨勪负 Null 鎬т笌鐩爣绫诲瀷鈥淭ask<DrawingService.DiffMarkers>鈥濅笉鍖归厤銆?[E:\workaaa\shengchanguanli\src\Platform\Platform.csproj]
+E:\workaaa\shengchanguanli\src\Platform\Modules\Drawings\DrawingService.cs(1838,48): warning CS8619: 绫诲瀷鈥淭ask<DrawingService.DiffMarkers>鈥濈殑鍊间腑寮曠敤绫诲瀷鐨勪负 Null 鎬т笌鐩爣绫诲瀷鈥淭ask<DrawingService.DiffMarkers?>鈥濅笉鍖归厤銆?[E:\workaaa\shengchanguanli\src\Platform\Platform.csproj]
+E:\workaaa\shengchanguanli\src\Platform\Modules\Drawings\DrawingService.cs(1946,15): warning CS8619: 绫诲瀷鈥淭ask<DrawingService.DiffMarkers?>鈥濈殑鍊间腑寮曠敤绫诲瀷鐨勪负 Null 鎬т笌鐩爣绫诲瀷鈥淭ask<DrawingService.DiffMarkers>鈥濅笉鍖归厤銆?[E:\workaaa\shengchanguanli\src\Platform\Platform.csproj]
+E:\workaaa\shengchanguanli\src\Platform\Modules\Drawings\DrawingService.cs(1945,39): warning CS8619: 绫诲瀷鈥淭ask<DrawingService.DiffMarkers>鈥濈殑鍊间腑寮曠敤绫诲瀷鐨勪负 Null 鎬т笌鐩爣绫诲瀷鈥淭ask<DrawingService.DiffMarkers?>鈥濅笉鍖归厤銆?[E:\workaaa\shengchanguanli\src\Platform\Platform.csproj]
+    13 涓鍛?
+    0 涓敊璇?
+
+宸茬敤鏃堕棿 00:00:34.50
+EXIT=0
+
+E:\workaaa\shengchanguanli\src\Platform\Modules\DrawingsV2\Decision\V2Store.cs(
+478,59): warning CS8602: 瑙ｅ紩鐢ㄥ彲鑳藉嚭鐜扮┖寮曠敤銆?[E:\workaaa\shengchanguanli\src\Platf
+orm\Platform.csproj]
+E:\workaaa\shengchanguanli\src\Platform\Modules\DrawingsV2\DrawingsV2Module.cs(
+186,33): warning CS1998: 姝ゅ紓姝ユ柟娉曠己灏?"await" 杩愮畻绗︼紝灏嗕互鍚屾鏂瑰紡杩愯銆傝鑰冭檻浣跨敤 "await"
+ 杩愮畻绗︾瓑寰呴潪闃绘鐨?API 璋冪敤锛屾垨鑰呬娇鐢?"await Task.Run(...)" 鍦ㄥ悗鍙扮嚎绋嬩笂鎵ц鍗犵敤澶ч噺 CPU 鐨勫伐浣
+溿€?[E:\workaaa\shengchanguanli\src\Platform\Platform.csproj]
+E:\workaaa\shengchanguanli\src\Platform\Modules\DrawingsV2\DrawingsV2Module.cs(
+207,33): warning CS1998: 姝ゅ紓姝ユ柟娉曠己灏?"await" 杩愮畻绗︼紝灏嗕互鍚屾鏂瑰紡杩愯銆傝鑰冭檻浣跨敤 "await"
+ 杩愮畻绗︾瓑寰呴潪闃绘鐨?API 璋冪敤锛屾垨鑰呬娇鐢?"await Task.Run(...)" 鍦ㄥ悗鍙扮嚎绋嬩笂鎵ц鍗犵敤澶ч噺 CPU 鐨勫伐浣
+溿€?[E:\workaaa\shengchanguanli\src\Platform\Platform.csproj]
+E:\workaaa\shengchanguanli\src\Platform\Modules\DrawingsV2\DrawingsV2Module.cs(
+223,33): warning CS1998: 姝ゅ紓姝ユ柟娉曠己灏?"await" 杩愮畻绗︼紝灏嗕互鍚屾鏂瑰紡杩愯銆傝鑰冭檻浣跨敤 "await"
+ 杩愮畻绗︾瓑寰呴潪闃绘鐨?API 璋冪敤锛屾垨鑰呬娇鐢?"await Task.Run(...)" 鍦ㄥ悗鍙扮嚎绋嬩笂鎵ц鍗犵敤澶ч噺 CPU 鐨勫伐浣
+溿€?[E:\workaaa\shengchanguanli\src\Platform\Platform.csproj]
+E:\workaaa\shengchanguanli\src\Platform\Modules\DrawingsV2\DrawingsV2Module.cs(
+240,33): warning CS1998: 姝ゅ紓姝ユ柟娉曠己灏?"await" 杩愮畻绗︼紝灏嗕互鍚屾鏂瑰紡杩愯銆傝鑰冭檻浣跨敤 "await"
+ 杩愮畻绗︾瓑寰呴潪闃绘鐨?API 璋冪敤锛屾垨鑰呬娇鐢?"await Task.Run(...)" 鍦ㄥ悗鍙扮嚎绋嬩笂鎵ц鍗犵敤澶ч噺 CPU 鐨勫伐浣
+溿€?[E:\workaaa\shengchanguanli\src\Platform\Platform.csproj]
+E:\workaaa\shengchanguanli\src\Platform\Modules\DrawingsV2\DrawingsV2Module.cs(
+250,33): warning CS1998: 姝ゅ紓姝ユ柟娉曠己灏?"await" 杩愮畻绗︼紝灏嗕互鍚屾鏂瑰紡杩愯銆傝鑰冭檻浣跨敤 "await"
+ 杩愮畻绗︾瓑寰呴潪闃绘鐨?API 璋冪敤锛屾垨鑰呬娇鐢?"await Task.Run(...)" 鍦ㄥ悗鍙扮嚎绋嬩笂鎵ц鍗犵敤澶ч噺 CPU 鐨勫伐浣
+溿€?[E:\workaaa\shengchanguanli\src\Platform\Platform.csproj]
+E:\workaaa\shengchanguanli\src\Platform\Modules\DrawingsV2\Decision\MarkVerifie
+r.cs(965,16): warning CS8602: 瑙ｅ紩鐢ㄥ彲鑳藉嚭鐜扮┖寮曠敤銆?[E:\workaaa\shengchanguanli\src\
+Platform\Platform.csproj]
+E:\workaaa\shengchanguanli\src\Platform\Modules\Drawings\DrawingService.cs(1839
+,23): warning CS8619: 绫诲瀷鈥淭ask<DrawingService.DiffMarkers?>鈥濈殑鍊间腑寮曠敤绫诲瀷鐨勪负 Null
+ 鎬т笌鐩爣绫诲瀷鈥淭ask<DrawingService.DiffMarkers>鈥濅笉鍖归厤銆?[E:\workaaa\shengchanguanli\
+src\Platform\Platform.csproj]
+E:\workaaa\shengchanguanli\src\Platform\Modules\Drawings\DrawingService.cs(1838
+,48): warning CS8619: 绫诲瀷鈥淭ask<DrawingService.DiffMarkers>鈥濈殑鍊间腑寮曠敤绫诲瀷鐨勪负 Null 
+鎬т笌鐩爣绫诲瀷鈥淭ask<DrawingService.DiffMarkers?>鈥濅笉鍖归厤銆?[E:\workaaa\shengchanguanli\
+src\Platform\Platform.csproj]
+E:\workaaa\shengchanguanli\src\Platform\Modules\Drawings\DrawingService.cs(1946
+,15): warning CS8619: 绫诲瀷鈥淭ask<DrawingService.DiffMarkers?>鈥濈殑鍊间腑寮曠敤绫诲瀷鐨勪负 Null
+ 鎬т笌鐩爣绫诲瀷鈥淭ask<DrawingService.DiffMarkers>鈥濅笉鍖归厤銆?[E:\workaaa\shengchanguanli\
+src\Platform\Platform.csproj]
+E:\workaaa\shengchanguanli\src\Platform\Modules\Drawings\DrawingService.cs(1945
+,39): warning CS8619: 绫诲瀷鈥淭ask<DrawingService.DiffMarkers>鈥濈殑鍊间腑寮曠敤绫诲瀷鐨勪负 Null 
+鎬т笌鐩爣绫诲瀷鈥淭ask<DrawingService.DiffMarkers?>鈥濅笉鍖归厤銆?[E:\workaaa\shengchanguanli\
+src\Platform\Platform.csproj]
+EXIT=0
+
+

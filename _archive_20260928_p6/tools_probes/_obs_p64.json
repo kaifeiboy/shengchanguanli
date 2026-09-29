@@ -1,0 +1,66 @@
+{
+  "schema": "observe/1",
+  "generator": {
+    "name": "observe",
+    "version": "1.0.0",
+    "cv2": "5.0.0"
+  },
+  "source": {
+    "file_name": "88_88ecb5111f8be0829b1ebfac2c37c5c6d7f3ee7bd8298ab0c6a38ae9308beae4.jpg",
+    "sha256": "88ecb5111f8be0829b1ebfac2c37c5c6d7f3ee7bd8298ab0c6a38ae9308beae4",
+    "width": 960,
+    "height": 1280
+  },
+  "quality": {
+    "sharpness": 226.94,
+    "brightness": 118.74,
+    "contrast": 72.2,
+    "dynamic_range": 233.0,
+    "highlight_ratio": 0.0,
+    "shadow_ratio": 0.2215,
+    "width": 3072,
+    "height": 4096,
+    "usable": true,
+    "reasons": [],
+    "ocr_override": false,
+    "ocr_texts": 1,
+    "ocr_codes": 0
+  },
+  "geometry": {
+    "applied": false,
+    "method": "no-quad",
+    "corners": null,
+    "width": 3072,
+    "height": 4096,
+    "trusted": false
+  },
+  "subject": null,
+  "texts": [
+    {
+      "id": "o0000",
+      "text": "PC-P1HEQ服务热线：4008601111",
+      "conf": 0.9147,
+      "bbox": [
+        238.94,
+        785.94,
+        768.06,
+        843.06
+      ],
+      "norm_bbox": [
+        0.248896,
+        0.614016,
+        0.551167,
+        0.044625
+      ],
+      "angle": 358.68
+    }
+  ],
+  "codes": [],
+  "diagnostics": {
+    "observe_ms": 3550.5,
+    "code_detector": "pyzbar",
+    "code_degraded": false,
+    "text_regions": 1,
+    "code_count": 0
+  }
+}

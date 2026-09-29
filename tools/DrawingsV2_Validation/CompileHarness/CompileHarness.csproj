@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <!-- 本机仅安装 .NET 8 SDK（8.0.422 / runtime 8.0.28），交付原值 net10.0 无法生成 -->
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.11" />
+    <!-- 已随模块迁移到 tools/DrawingsV2_Validation/，源码路径改为指向模块目录 -->
+    <Compile Include="../../../src/Platform/Modules/DrawingsV2/Decision/*.cs" Link="Decision/%(Filename)%(Extension)" />
+    <Compile Include="../../../src/Platform/Modules/DrawingsV2/Runtime/*.cs" Link="Runtime/%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,34 @@
+﻿{
+    "profileId":  61,
+    "photo":  "E:\\workaaa\\shengchanguanli\\data\\drawingsv2_photos\\202609\\64_64d971618edb64178292a85ccc6001529c3842e34b70e9655ef9a07369c4be9d.jpg",
+    "photoSha256":  "64d971618edb64178292a85ccc6001529c3842e34b70e9655ef9a07369c4be9d",
+    "nPhotoTexts":  1,
+    "match":  {
+                  "enabled":  false,
+                  "reason":  "照片文本未命中任何图块（保持既有整图兜底，不引入新失败模式）",
+                  "nBlocks":  5,
+                  "nCandidates":  4,
+                  "top":  null,
+                  "candidates":  [
+                                     {
+
+                                     },
+                                     {
+
+                                     },
+                                     {
+
+                                     },
+                                     {
+
+                                     }
+                                 ],
+                  "extra":  [
+
+                            ],
+                  "photoTexts":  [
+                                     "PC-P1HVQ服务热线400-860-1111 NNFC"
+                                 ]
+              },
+    "elapsedMs":  4351.1
+}

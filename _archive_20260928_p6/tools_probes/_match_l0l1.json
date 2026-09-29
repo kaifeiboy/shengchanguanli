@@ -1,0 +1,1932 @@
+﻿
+===== profile 61  ab_ab54f2916c6948beb2b25f7306bf62bd21323ef211d2da2df6ae38395727c23c.jpg =====
+{
+    "profileId":  61,
+    "photo":  "E:\\workaaa\\shengchanguanli\\data\\drawingsv2_photos\\202609\\ab_ab54f2916c6948beb2b25f7306bf62bd21323ef211d2da2df6ae38395727c23c.jpg",
+    "photoSha256":  "ab54f2916c6948beb2b25f7306bf62bd21323ef211d2da2df6ae38395727c23c",
+    "nPhotoTexts":  3,
+    "nPhotoCodes":  1,
+    "quality":  {
+                    "usable":  true,
+                    "reasons":  [
+
+                                ],
+                    "ocrTexts":  3
+                },
+    "match":  {
+                  "enabled":  true,
+                  "reason":  "",
+                  "degraded":  false,
+                  "degradeReason":  null,
+                  "nBlocks":  5,
+                  "nCandidates":  4,
+                  "top":  {
+                              "id":  93,
+                              "blockIndex":  3,
+                              "blockKey":  "a37518a91633bc0a99486880",
+                              "name":  "QHRW5｜200512｜B280001",
+                              "viewHint":  "Unspecified",
+                              "score":  2,
+                              "nGreen":  2,
+                              "nRed":  1,
+                              "nYellow":  0,
+                              "nGray":  2,
+                              "nHit":  2,
+                              "nCodeOk":  1,
+                              "nCodeMissing":  0,
+                              "elements":  [
+                                               {
+                                                   "kind":  "text",
+                                                   "text":  "200512",
+                                                   "color":  "green",
+                                                   "reason":  "命中：文本一致",
+                                                   "photoText":  "200512",
+                                                   "hit":  true,
+                                                   "norm":  [
+                                                                0.266176,
+                                                                0.639907,
+                                                                0.012403,
+                                                                0.005529
+                                                            ],
+                                                   "ocrConf":  1
+                                               },
+                                               {
+                                                   "kind":  "text",
+                                                   "text":  "B280001",
+                                                   "color":  "red",
+                                                   "reason":  "缺标：块内有此打标内容，照片侧未 OCR 到",
+                                                   "photoText":  null,
+                                                   "hit":  false,
+                                                   "norm":  [
+                                                                0.266176,
+                                                                0.644949,
+                                                                0.014545,
+                                                                0.005529
+                                                            ],
+                                                   "ocrConf":  1
+                                               },
+                                               {
+                                                   "kind":  "text",
+                                                   "text":  "QHRW5",
+                                                   "color":  "green",
+                                                   "reason":  "命中：文本一致",
+                                                   "photoText":  "QHRW5",
+                                                   "hit":  true,
+                                                   "norm":  [
+                                                                0.265891,
+                                                                0.635066,
+                                                                0.013713,
+                                                                0.005529
+                                                            ],
+                                                   "ocrConf":  1
+                                               },
+                                               {
+                                                   "kind":  "meta",
+                                                   "text":  "3",
+                                                   "color":  "gray",
+                                                   "reason":  "图纸元信息（日期/版本/标注序号）：d 类不参与匹配（2026-09-27 L1 新增）",
+                                                   "photoText":  null,
+                                                   "hit":  false,
+                                                   "norm":  [
+                                                                0.288836,
+                                                                0.634508,
+                                                                0.0085,
+                                                                0.012028
+                                                            ],
+                                                   "ocrConf":  1
+                                               },
+                                               {
+                                                   "kind":  "meta",
+                                                   "text":  "4",
+                                                   "color":  "gray",
+                                                   "reason":  "图纸元信息（日期/版本/标注序号）：d 类不参与匹配（2026-09-27 L1 新增）",
+                                                   "photoText":  null,
+                                                   "hit":  false,
+                                                   "norm":  [
+                                                                0.307221,
+                                                                0.632894,
+                                                                0.0085,
+                                                                0.012028
+                                                            ],
+                                                   "ocrConf":  1
+                                               },
+                                               {
+                                                   "kind":  "qr",
+                                                   "text":  "",
+                                                   "color":  "green",
+                                                   "reason":  "二维码：图纸与照片两侧均具备（粗判，仅验存在性，不读内容）",
+                                                   "photoText":  "二维码",
+                                                   "hit":  true,
+                                                   "norm":  [
+                                                                0.245938,
+                                                                0.630924,
+                                                                0.015819,
+                                                                0.022387
+                                                            ],
+                                                   "ocrConf":  null
+                                               }
+                                           ]
+                          },
+                  "candidates":  [
+                                     {
+                                         "id":  93,
+                                         "blockIndex":  3,
+                                         "blockKey":  "a37518a91633bc0a99486880",
+                                         "name":  "QHRW5｜200512｜B280001",
+                                         "viewHint":  "Unspecified",
+                                         "score":  2,
+                                         "nGreen":  2,
+                                         "nRed":  1,
+                                         "nYellow":  0,
+                                         "nGray":  2,
+                                         "nHit":  2,
+                                         "nCodeOk":  1,
+                                         "nCodeMissing":  0,
+                                         "elements":  [
+                                                          {
+                                                              "kind":  "text",
+                                                              "text":  "200512",
+                                                              "color":  "green",
+                                                              "reason":  "命中：文本一致",
+                                                              "photoText":  "200512",
+                                                              "hit":  true,
+                                                              "norm":  [
+                                                                           0.266176,
+                                                                           0.639907,
+                                                                           0.012403,
+                                                                           0.005529
+                                                                       ],
+                                                              "ocrConf":  1
+                                                          },
+                                                          {
+                                                              "kind":  "text",
+                                                              "text":  "B280001",
+                                                              "color":  "red",
+                                                              "reason":  "缺标：块内有此打标内容，照片侧未 OCR 到",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0.266176,
+                                                                           0.644949,
+                                                                           0.014545,
+                                                                           0.005529
+                                                                       ],
+                                                              "ocrConf":  1
+                                                          },
+                                                          {
+                                                              "kind":  "text",
+                                                              "text":  "QHRW5",
+                                                              "color":  "green",
+                                                              "reason":  "命中：文本一致",
+                                                              "photoText":  "QHRW5",
+                                                              "hit":  true,
+                                                              "norm":  [
+                                                                           0.265891,
+                                                                           0.635066,
+                                                                           0.013713,
+                                                                           0.005529
+                                                                       ],
+                                                              "ocrConf":  1
+                                                          },
+                                                          {
+                                                              "kind":  "meta",
+                                                              "text":  "3",
+                                                              "color":  "gray",
+                                                              "reason":  "图纸元信息（日期/版本/标注序号）：d 类不参与匹配（2026-09-27 L1 新增）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0.288836,
+                                                                           0.634508,
+                                                                           0.0085,
+                                                                           0.012028
+                                                                       ],
+                                                              "ocrConf":  1
+                                                          },
+                                                          {
+                                                              "kind":  "meta",
+                                                              "text":  "4",
+                                                              "color":  "gray",
+                                                              "reason":  "图纸元信息（日期/版本/标注序号）：d 类不参与匹配（2026-09-27 L1 新增）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0.307221,
+                                                                           0.632894,
+                                                                           0.0085,
+                                                                           0.012028
+                                                                       ],
+                                                              "ocrConf":  1
+                                                          },
+                                                          {
+                                                              "kind":  "qr",
+                                                              "text":  "",
+                                                              "color":  "green",
+                                                              "reason":  "二维码：图纸与照片两侧均具备（粗判，仅验存在性，不读内容）",
+                                                              "photoText":  "二维码",
+                                                              "hit":  true,
+                                                              "norm":  [
+                                                                           0.245938,
+                                                                           0.630924,
+                                                                           0.015819,
+                                                                           0.022387
+                                                                       ],
+                                                              "ocrConf":  null
+                                                          }
+                                                      ]
+                                     },
+                                     {
+                                         "id":  90,
+                                         "blockIndex":  0,
+                                         "blockKey":  "61c228929046970b6c8773ea",
+                                         "name":  "HITACHI｜HTACH",
+                                         "viewHint":  "Front",
+                                         "score":  0,
+                                         "nGreen":  0,
+                                         "nRed":  2,
+                                         "nYellow":  0,
+                                         "nGray":  0,
+                                         "nHit":  0,
+                                         "nCodeOk":  0,
+                                         "nCodeMissing":  0,
+                                         "elements":  [
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "HITACHI",
+                                                              "color":  "red",
+                                                              "reason":  "缺标：块内有此打标内容，照片侧未 OCR 到",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.743
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "HTACH",
+                                                              "color":  "red",
+                                                              "reason":  "缺标：块内有此打标内容，照片侧未 OCR 到",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.735
+                                                          }
+                                                      ]
+                                     },
+                                     {
+                                         "id":  91,
+                                         "blockIndex":  1,
+                                         "blockKey":  "200a8bf1506b9a27c31d590b",
+                                         "name":  "服务热线｜PC-P1HVQ｜400-860-1111｜NFC",
+                                         "viewHint":  "Unspecified",
+                                         "score":  0,
+                                         "nGreen":  0,
+                                         "nRed":  4,
+                                         "nYellow":  0,
+                                         "nGray":  0,
+                                         "nHit":  0,
+                                         "nCodeOk":  0,
+                                         "nCodeMissing":  0,
+                                         "elements":  [
+                                                          {
+                                                              "kind":  "text",
+                                                              "text":  "PC-P1HVQ",
+                                                              "color":  "red",
+                                                              "reason":  "缺标：块内有此打标内容，照片侧未 OCR 到",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0.236247,
+                                                                           0.150761,
+                                                                           0.038723,
+                                                                           0.009046
+                                                                       ],
+                                                              "ocrConf":  1
+                                                          },
+                                                          {
+                                                              "kind":  "text",
+                                                              "text":  "服务热线",
+                                                              "color":  "red",
+                                                              "reason":  "缺标：块内有此打标内容，照片侧未 OCR 到",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0.274869,
+                                                                           0.149743,
+                                                                           0.025058,
+                                                                           0.009358
+                                                                       ],
+                                                              "ocrConf":  1
+                                                          },
+                                                          {
+                                                              "kind":  "text",
+                                                              "text":  "400-860-1111",
+                                                              "color":  "red",
+                                                              "reason":  "缺标：块内有此打标内容，照片侧未 OCR 到",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0.300095,
+                                                                           0.150761,
+                                                                           0.038736,
+                                                                           0.009046
+                                                                       ],
+                                                              "ocrConf":  1
+                                                          },
+                                                          {
+                                                              "kind":  "text",
+                                                              "text":  "NFC",
+                                                              "color":  "red",
+                                                              "reason":  "缺标：块内有此打标内容，照片侧未 OCR 到",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0.351259,
+                                                                           0.151507,
+                                                                           0.009589,
+                                                                           0.006785
+                                                                       ],
+                                                              "ocrConf":  1
+                                                          }
+                                                      ]
+                                     }
+                                 ],
+                  "extra":  [
+                                {
+                                    "kind":  "photo_extra",
+                                    "text":  "17437232",
+                                    "color":  "yellow",
+                                    "reason":  "照片多出：Top 块内没有此内容（多标/不确定）",
+                                    "photoText":  "17437232",
+                                    "hit":  false,
+                                    "norm":  [
+                                                 0.297396,
+                                                 0.675391,
+                                                 0.10625,
+                                                 0.021875
+                                             ],
+                                    "ocrConf":  0.755
+                                }
+                            ],
+                  "photoTexts":  [
+                                     "QHRW5",
+                                     "200512",
+                                     "17437232"
+                                 ]
+              },
+    "elapsedMs":  5401.8
+}
+===== profile 61  64_64d971618edb64178292a85ccc6001529c3842e34b70e9655ef9a07369c4be9d.jpg =====
+{
+    "profileId":  61,
+    "photo":  "E:\\workaaa\\shengchanguanli\\data\\drawingsv2_photos\\202609\\64_64d971618edb64178292a85ccc6001529c3842e34b70e9655ef9a07369c4be9d.jpg",
+    "photoSha256":  "64d971618edb64178292a85ccc6001529c3842e34b70e9655ef9a07369c4be9d",
+    "nPhotoTexts":  1,
+    "nPhotoCodes":  0,
+    "quality":  {
+                    "usable":  true,
+                    "reasons":  [
+
+                                ],
+                    "ocrTexts":  1
+                },
+    "match":  {
+                  "enabled":  true,
+                  "reason":  "",
+                  "degraded":  true,
+                  "degradeReason":  "照片侧仅 OCR 到 1 条有效文本（\u003c3），未命中项判『未检出』（黄）而非缺标（红）",
+                  "nBlocks":  5,
+                  "nCandidates":  4,
+                  "top":  {
+                              "id":  91,
+                              "blockIndex":  1,
+                              "blockKey":  "200a8bf1506b9a27c31d590b",
+                              "name":  "服务热线｜PC-P1HVQ｜400-860-1111｜NFC",
+                              "viewHint":  "Unspecified",
+                              "score":  3,
+                              "nGreen":  3,
+                              "nRed":  0,
+                              "nYellow":  1,
+                              "nGray":  0,
+                              "nHit":  3,
+                              "nCodeOk":  0,
+                              "nCodeMissing":  0,
+                              "elements":  [
+                                               {
+                                                   "kind":  "text",
+                                                   "text":  "PC-P1HVQ",
+                                                   "color":  "green",
+                                                   "reason":  "命中：照片文本包含该内容（整行粘连场景）",
+                                                   "photoText":  "PC-P1HVQ服务热线400-860-1111 NNFC",
+                                                   "hit":  true,
+                                                   "norm":  [
+                                                                0.236247,
+                                                                0.150761,
+                                                                0.038723,
+                                                                0.009046
+                                                            ],
+                                                   "ocrConf":  1
+                                               },
+                                               {
+                                                   "kind":  "text",
+                                                   "text":  "服务热线",
+                                                   "color":  "green",
+                                                   "reason":  "命中：照片文本包含该内容（整行粘连场景）",
+                                                   "photoText":  "PC-P1HVQ服务热线400-860-1111 NNFC",
+                                                   "hit":  true,
+                                                   "norm":  [
+                                                                0.274869,
+                                                                0.149743,
+                                                                0.025058,
+                                                                0.009358
+                                                            ],
+                                                   "ocrConf":  1
+                                               },
+                                               {
+                                                   "kind":  "text",
+                                                   "text":  "400-860-1111",
+                                                   "color":  "green",
+                                                   "reason":  "命中：照片文本包含该内容（整行粘连场景）",
+                                                   "photoText":  "PC-P1HVQ服务热线400-860-1111 NNFC",
+                                                   "hit":  true,
+                                                   "norm":  [
+                                                                0.300095,
+                                                                0.150761,
+                                                                0.038736,
+                                                                0.009046
+                                                            ],
+                                                   "ocrConf":  1
+                                               },
+                                               {
+                                                   "kind":  "text",
+                                                   "text":  "NFC",
+                                                   "color":  "yellow",
+                                                   "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                   "photoText":  null,
+                                                   "hit":  false,
+                                                   "norm":  [
+                                                                0.351259,
+                                                                0.151507,
+                                                                0.009589,
+                                                                0.006785
+                                                            ],
+                                                   "ocrConf":  1
+                                               }
+                                           ]
+                          },
+                  "candidates":  [
+                                     {
+                                         "id":  91,
+                                         "blockIndex":  1,
+                                         "blockKey":  "200a8bf1506b9a27c31d590b",
+                                         "name":  "服务热线｜PC-P1HVQ｜400-860-1111｜NFC",
+                                         "viewHint":  "Unspecified",
+                                         "score":  3,
+                                         "nGreen":  3,
+                                         "nRed":  0,
+                                         "nYellow":  1,
+                                         "nGray":  0,
+                                         "nHit":  3,
+                                         "nCodeOk":  0,
+                                         "nCodeMissing":  0,
+                                         "elements":  [
+                                                          {
+                                                              "kind":  "text",
+                                                              "text":  "PC-P1HVQ",
+                                                              "color":  "green",
+                                                              "reason":  "命中：照片文本包含该内容（整行粘连场景）",
+                                                              "photoText":  "PC-P1HVQ服务热线400-860-1111 NNFC",
+                                                              "hit":  true,
+                                                              "norm":  [
+                                                                           0.236247,
+                                                                           0.150761,
+                                                                           0.038723,
+                                                                           0.009046
+                                                                       ],
+                                                              "ocrConf":  1
+                                                          },
+                                                          {
+                                                              "kind":  "text",
+                                                              "text":  "服务热线",
+                                                              "color":  "green",
+                                                              "reason":  "命中：照片文本包含该内容（整行粘连场景）",
+                                                              "photoText":  "PC-P1HVQ服务热线400-860-1111 NNFC",
+                                                              "hit":  true,
+                                                              "norm":  [
+                                                                           0.274869,
+                                                                           0.149743,
+                                                                           0.025058,
+                                                                           0.009358
+                                                                       ],
+                                                              "ocrConf":  1
+                                                          },
+                                                          {
+                                                              "kind":  "text",
+                                                              "text":  "400-860-1111",
+                                                              "color":  "green",
+                                                              "reason":  "命中：照片文本包含该内容（整行粘连场景）",
+                                                              "photoText":  "PC-P1HVQ服务热线400-860-1111 NNFC",
+                                                              "hit":  true,
+                                                              "norm":  [
+                                                                           0.300095,
+                                                                           0.150761,
+                                                                           0.038736,
+                                                                           0.009046
+                                                                       ],
+                                                              "ocrConf":  1
+                                                          },
+                                                          {
+                                                              "kind":  "text",
+                                                              "text":  "NFC",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0.351259,
+                                                                           0.151507,
+                                                                           0.009589,
+                                                                           0.006785
+                                                                       ],
+                                                              "ocrConf":  1
+                                                          }
+                                                      ]
+                                     },
+                                     {
+                                         "id":  90,
+                                         "blockIndex":  0,
+                                         "blockKey":  "61c228929046970b6c8773ea",
+                                         "name":  "HITACHI｜HTACH",
+                                         "viewHint":  "Front",
+                                         "score":  0,
+                                         "nGreen":  0,
+                                         "nRed":  0,
+                                         "nYellow":  2,
+                                         "nGray":  0,
+                                         "nHit":  0,
+                                         "nCodeOk":  0,
+                                         "nCodeMissing":  0,
+                                         "elements":  [
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "HITACHI",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.743
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "HTACH",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.735
+                                                          }
+                                                      ]
+                                     },
+                                     {
+                                         "id":  92,
+                                         "blockIndex":  2,
+                                         "blockKey":  "61ddc28aa9a78c1c23ae35bd",
+                                         "name":  "LOW VOLTAGE｜禁止强电｜A｜B",
+                                         "viewHint":  "Back",
+                                         "score":  0,
+                                         "nGreen":  0,
+                                         "nRed":  0,
+                                         "nYellow":  2,
+                                         "nGray":  2,
+                                         "nHit":  0,
+                                         "nCodeOk":  0,
+                                         "nCodeMissing":  0,
+                                         "elements":  [
+                                                          {
+                                                              "kind":  "text",
+                                                              "text":  "A",
+                                                              "color":  "gray",
+                                                              "reason":  "内容过短/噪声串，不参与命中",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0.84152,
+                                                                           0.452273,
+                                                                           0.004492,
+                                                                           0.009046
+                                                                       ],
+                                                              "ocrConf":  1
+                                                          },
+                                                          {
+                                                              "kind":  "text",
+                                                              "text":  "B",
+                                                              "color":  "gray",
+                                                              "reason":  "内容过短/噪声串，不参与命中",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0.852209,
+                                                                           0.452273,
+                                                                           0.004492,
+                                                                           0.009046
+                                                                       ],
+                                                              "ocrConf":  1
+                                                          },
+                                                          {
+                                                              "kind":  "text",
+                                                              "text":  "禁止强电",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0.84038,
+                                                                           0.441196,
+                                                                           0.017332,
+                                                                           0.007217
+                                                                       ],
+                                                              "ocrConf":  1
+                                                          },
+                                                          {
+                                                              "kind":  "text",
+                                                              "text":  "LOW VOLTAGE",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0.837245,
+                                                                           0.433128,
+                                                                           0.017897,
+                                                                           0.007217
+                                                                       ],
+                                                              "ocrConf":  1
+                                                          }
+                                                      ]
+                                     }
+                                 ],
+                  "extra":  [
+
+                            ],
+                  "photoTexts":  [
+                                     "PC-P1HVQ服务热线400-860-1111 NNFC"
+                                 ]
+              },
+    "elapsedMs":  4490.6
+}
+===== profile 62  7b_7b3bf6465f99f2b54f0f9ab1123317238894c5ee2ed7a77f469c63c134548406.jpg =====
+{
+    "profileId":  62,
+    "photo":  "E:\\workaaa\\shengchanguanli\\data\\drawingsv2_photos\\202609\\7b_7b3bf6465f99f2b54f0f9ab1123317238894c5ee2ed7a77f469c63c134548406.jpg",
+    "photoSha256":  "7b3bf6465f99f2b54f0f9ab1123317238894c5ee2ed7a77f469c63c134548406",
+    "nPhotoTexts":  1,
+    "nPhotoCodes":  0,
+    "quality":  {
+                    "usable":  true,
+                    "reasons":  [
+                                    "清晰度偏低但 OCR 已识别内容，按可比对处理（原判定：失焦（清晰度 31 \u003c 100））"
+                                ],
+                    "ocrTexts":  1
+                },
+    "match":  {
+                  "enabled":  true,
+                  "reason":  "",
+                  "degraded":  true,
+                  "degradeReason":  "照片侧仅 OCR 到 1 条有效文本（\u003c3），未命中项判『未检出』（黄）而非缺标（红）",
+                  "nBlocks":  5,
+                  "nCandidates":  4,
+                  "top":  {
+                              "id":  97,
+                              "blockIndex":  2,
+                              "blockKey":  "12f02e53cbf34c5c418d380f",
+                              "name":  "PC-P1HJQ 服务热线：｜4008601111",
+                              "viewHint":  "Nameplate",
+                              "score":  2,
+                              "nGreen":  2,
+                              "nRed":  0,
+                              "nYellow":  0,
+                              "nGray":  0,
+                              "nHit":  2,
+                              "nCodeOk":  0,
+                              "nCodeMissing":  0,
+                              "elements":  [
+                                               {
+                                                   "kind":  "text",
+                                                   "text":  "PC-P1HJQ 服务热线：",
+                                                   "color":  "green",
+                                                   "reason":  "命中：照片文本包含该内容（整行粘连场景）",
+                                                   "photoText":  "PC-P1HJQ服务热线：4008601111",
+                                                   "hit":  true,
+                                                   "norm":  [
+                                                                0.253064,
+                                                                0.691919,
+                                                                0.087264,
+                                                                0.008821
+                                                            ],
+                                                   "ocrConf":  1
+                                               },
+                                               {
+                                                   "kind":  "text",
+                                                   "text":  "4008601111",
+                                                   "color":  "green",
+                                                   "reason":  "命中：照片文本包含该内容（整行粘连场景）",
+                                                   "photoText":  "PC-P1HJQ服务热线：4008601111",
+                                                   "hit":  true,
+                                                   "norm":  [
+                                                                0.311924,
+                                                                0.691919,
+                                                                0.052958,
+                                                                0.008821
+                                                            ],
+                                                   "ocrConf":  1
+                                               }
+                                           ]
+                          },
+                  "candidates":  [
+                                     {
+                                         "id":  97,
+                                         "blockIndex":  2,
+                                         "blockKey":  "12f02e53cbf34c5c418d380f",
+                                         "name":  "PC-P1HJQ 服务热线：｜4008601111",
+                                         "viewHint":  "Nameplate",
+                                         "score":  2,
+                                         "nGreen":  2,
+                                         "nRed":  0,
+                                         "nYellow":  0,
+                                         "nGray":  0,
+                                         "nHit":  2,
+                                         "nCodeOk":  0,
+                                         "nCodeMissing":  0,
+                                         "elements":  [
+                                                          {
+                                                              "kind":  "text",
+                                                              "text":  "PC-P1HJQ 服务热线：",
+                                                              "color":  "green",
+                                                              "reason":  "命中：照片文本包含该内容（整行粘连场景）",
+                                                              "photoText":  "PC-P1HJQ服务热线：4008601111",
+                                                              "hit":  true,
+                                                              "norm":  [
+                                                                           0.253064,
+                                                                           0.691919,
+                                                                           0.087264,
+                                                                           0.008821
+                                                                       ],
+                                                              "ocrConf":  1
+                                                          },
+                                                          {
+                                                              "kind":  "text",
+                                                              "text":  "4008601111",
+                                                              "color":  "green",
+                                                              "reason":  "命中：照片文本包含该内容（整行粘连场景）",
+                                                              "photoText":  "PC-P1HJQ服务热线：4008601111",
+                                                              "hit":  true,
+                                                              "norm":  [
+                                                                           0.311924,
+                                                                           0.691919,
+                                                                           0.052958,
+                                                                           0.008821
+                                                                       ],
+                                                              "ocrConf":  1
+                                                          }
+                                                      ]
+                                     },
+                                     {
+                                         "id":  95,
+                                         "blockIndex":  0,
+                                         "blockKey":  "640e680ba0a50fcc2defdbae",
+                                         "name":  "试运行热启动点检模式冲突｜设定｜室温｜自动｜开送小时后｜服务｜地址系统｜模式｜风量/风向｜HITACHI｜定时｜长按取消｜试运行热启动｜点检模式冲突｜开关小时后｜系统",
+                                         "viewHint":  "Front",
+                                         "score":  0,
+                                         "nGreen":  0,
+                                         "nRed":  0,
+                                         "nYellow":  16,
+                                         "nGray":  0,
+                                         "nHit":  0,
+                                         "nCodeOk":  0,
+                                         "nCodeMissing":  0,
+                                         "elements":  [
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "试运行热启动点检模式冲突",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.909
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "设定",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.664
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "室温",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.651
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "自动",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.666
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "开送小时后",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.736
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "服务",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.623
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "地址系统",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.797
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "模式",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.666
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "风量/风向",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.829
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "HITACHI",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.87
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "定时",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.662
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "长按取消",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.799
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "试运行热启动",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.772
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "点检模式冲突",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.736
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "开关小时后",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.742
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "系统",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.665
+                                                          }
+                                                      ]
+                                     },
+                                     {
+                                         "id":  96,
+                                         "blockIndex":  1,
+                                         "blockKey":  "9334228626ebe9722659a09e",
+                                         "name":  "LOW VOLTAGE｜禁止强电｜DC15/24V",
+                                         "viewHint":  "Back",
+                                         "score":  0,
+                                         "nGreen":  0,
+                                         "nRed":  0,
+                                         "nYellow":  3,
+                                         "nGray":  1,
+                                         "nHit":  0,
+                                         "nCodeOk":  0,
+                                         "nCodeMissing":  0,
+                                         "elements":  [
+                                                          {
+                                                              "kind":  "meta",
+                                                              "text":  "3",
+                                                              "color":  "gray",
+                                                              "reason":  "图纸元信息（日期/版本/标注序号）：d 类不参与匹配（2026-09-27 L1 新增）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0.752162,
+                                                                           0.466181,
+                                                                           0.004965,
+                                                                           0.014052
+                                                                       ],
+                                                              "ocrConf":  1
+                                                          },
+                                                          {
+                                                              "kind":  "text",
+                                                              "text":  "DC15/24V",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0.74418,
+                                                                           0.507454,
+                                                                           0.043086,
+                                                                           0.008971
+                                                                       ],
+                                                              "ocrConf":  1
+                                                          },
+                                                          {
+                                                              "kind":  "text",
+                                                              "text":  "禁止强电",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0.744038,
+                                                                           0.495915,
+                                                                           0.021665,
+                                                                           0.009021
+                                                                       ],
+                                                              "ocrConf":  1
+                                                          },
+                                                          {
+                                                              "kind":  "text",
+                                                              "text":  "LOW VOLTAGE",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0.741615,
+                                                                           0.487769,
+                                                                           0.022944,
+                                                                           0.007939
+                                                                       ],
+                                                              "ocrConf":  1
+                                                          }
+                                                      ]
+                                     }
+                                 ],
+                  "extra":  [
+
+                            ],
+                  "photoTexts":  [
+                                     "PC-P1HJQ服务热线：4008601111"
+                                 ]
+              },
+    "elapsedMs":  3922.7
+}
+===== profile 64  88_88ecb5111f8be0829b1ebfac2c37c5c6d7f3ee7bd8298ab0c6a38ae9308beae4.jpg =====
+{
+    "profileId":  64,
+    "photo":  "E:\\workaaa\\shengchanguanli\\data\\drawingsv2_photos\\202609\\88_88ecb5111f8be0829b1ebfac2c37c5c6d7f3ee7bd8298ab0c6a38ae9308beae4.jpg",
+    "photoSha256":  "88ecb5111f8be0829b1ebfac2c37c5c6d7f3ee7bd8298ab0c6a38ae9308beae4",
+    "nPhotoTexts":  1,
+    "nPhotoCodes":  0,
+    "quality":  {
+                    "usable":  true,
+                    "reasons":  [
+
+                                ],
+                    "ocrTexts":  1
+                },
+    "match":  {
+                  "enabled":  true,
+                  "reason":  "",
+                  "degraded":  true,
+                  "degradeReason":  "照片侧仅 OCR 到 1 条有效文本（\u003c3），未命中项判『未检出』（黄）而非缺标（红）",
+                  "nBlocks":  5,
+                  "nCandidates":  5,
+                  "top":  {
+                              "id":  104,
+                              "blockIndex":  4,
+                              "blockKey":  "dff24ddd0fc74065fa05fb37",
+                              "name":  "PC-P1HEQ 服务热线：4008601111",
+                              "viewHint":  "Nameplate",
+                              "score":  1,
+                              "nGreen":  1,
+                              "nRed":  0,
+                              "nYellow":  0,
+                              "nGray":  0,
+                              "nHit":  1,
+                              "nCodeOk":  0,
+                              "nCodeMissing":  0,
+                              "elements":  [
+                                               {
+                                                   "kind":  "text",
+                                                   "text":  "PC-P1HEQ 服务热线：4008601111",
+                                                   "color":  "green",
+                                                   "reason":  "命中：文本一致",
+                                                   "photoText":  "PC-P1HEQ服务热线：4008601111",
+                                                   "hit":  true,
+                                                   "norm":  [
+                                                                0.249786,
+                                                                0.124775,
+                                                                0.208591,
+                                                                0.014476
+                                                            ],
+                                                   "ocrConf":  1
+                                               }
+                                           ]
+                          },
+                  "candidates":  [
+                                     {
+                                         "id":  104,
+                                         "blockIndex":  4,
+                                         "blockKey":  "dff24ddd0fc74065fa05fb37",
+                                         "name":  "PC-P1HEQ 服务热线：4008601111",
+                                         "viewHint":  "Nameplate",
+                                         "score":  1,
+                                         "nGreen":  1,
+                                         "nRed":  0,
+                                         "nYellow":  0,
+                                         "nGray":  0,
+                                         "nHit":  1,
+                                         "nCodeOk":  0,
+                                         "nCodeMissing":  0,
+                                         "elements":  [
+                                                          {
+                                                              "kind":  "text",
+                                                              "text":  "PC-P1HEQ 服务热线：4008601111",
+                                                              "color":  "green",
+                                                              "reason":  "命中：文本一致",
+                                                              "photoText":  "PC-P1HEQ服务热线：4008601111",
+                                                              "hit":  true,
+                                                              "norm":  [
+                                                                           0.249786,
+                                                                           0.124775,
+                                                                           0.208591,
+                                                                           0.014476
+                                                                       ],
+                                                              "ocrConf":  1
+                                                          }
+                                                      ]
+                                     },
+                                     {
+                                         "id":  100,
+                                         "blockIndex":  0,
+                                         "blockKey":  "b58689be55dfcb8c8fa95113",
+                                         "name":  "LOW VOLTAGE｜禁止强电｜DC15/24V",
+                                         "viewHint":  "Back",
+                                         "score":  0,
+                                         "nGreen":  0,
+                                         "nRed":  0,
+                                         "nYellow":  3,
+                                         "nGray":  1,
+                                         "nHit":  0,
+                                         "nCodeOk":  0,
+                                         "nCodeMissing":  0,
+                                         "elements":  [
+                                                          {
+                                                              "kind":  "meta",
+                                                              "text":  "5",
+                                                              "color":  "gray",
+                                                              "reason":  "图纸元信息（日期/版本/标注序号）：d 类不参与匹配（2026-09-27 L1 新增）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0.789501,
+                                                                           0.372767,
+                                                                           0.005976,
+                                                                           0.016912
+                                                                       ],
+                                                              "ocrConf":  1
+                                                          },
+                                                          {
+                                                              "kind":  "text",
+                                                              "text":  "DC15/24V",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0.76285,
+                                                                           0.460709,
+                                                                           0.051854,
+                                                                           0.010796
+                                                                       ],
+                                                              "ocrConf":  1
+                                                          },
+                                                          {
+                                                              "kind":  "text",
+                                                              "text":  "禁止强电",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0.762993,
+                                                                           0.446337,
+                                                                           0.026074,
+                                                                           0.010857
+                                                                       ],
+                                                              "ocrConf":  1
+                                                          },
+                                                          {
+                                                              "kind":  "text",
+                                                              "text":  "LOW VOLTAGE",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0.76,
+                                                                           0.436364,
+                                                                           0.034239,
+                                                                           0.009554
+                                                                       ],
+                                                              "ocrConf":  1
+                                                          }
+                                                      ]
+                                     },
+                                     {
+                                         "id":  101,
+                                         "blockIndex":  1,
+                                         "blockKey":  "e40ccde52a4beab9b486f6c3",
+                                         "name":  "HITACH｜制冷｜制热｜除湿｜送风｜自动｜A警报e滤网｜森林风｜房间｜节能｜设定｜健康｜左右｜静音｜睡眠｜辅热｜自清洁｜3D风向｜超远｜风吹人风避人｜无人节能｜热启动集中控制｜.88时品｜点检无此功能｜试运转应急运转｜定时",
+                                         "viewHint":  "Front",
+                                         "score":  0,
+                                         "nGreen":  0,
+                                         "nRed":  0,
+                                         "nYellow":  37,
+                                         "nGray":  2,
+                                         "nHit":  0,
+                                         "nCodeOk":  0,
+                                         "nCodeMissing":  0,
+                                         "elements":  [
+                                                          {
+                                                              "kind":  "meta",
+                                                              "text":  "3",
+                                                              "color":  "gray",
+                                                              "reason":  "图纸元信息（日期/版本/标注序号）：d 类不参与匹配（2026-09-27 L1 新增）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0.200048,
+                                                                           0.385877,
+                                                                           0.009793,
+                                                                           0.013858
+                                                                       ],
+                                                              "ocrConf":  1
+                                                          },
+                                                          {
+                                                              "kind":  "meta",
+                                                              "text":  "3",
+                                                              "color":  "gray",
+                                                              "reason":  "图纸元信息（日期/版本/标注序号）：d 类不参与匹配（2026-09-27 L1 新增）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0.311924,
+                                                                           0.221911,
+                                                                           0.009793,
+                                                                           0.013858
+                                                                       ],
+                                                              "ocrConf":  1
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "HITACH",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.808
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "制冷",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.667
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "制热",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.551
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "除湿",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.666
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "送风",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.658
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "自动",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.666
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "A警报e滤网",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.607
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "森林风",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.748
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "房间",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.665
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "节能",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.666
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "设定",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.666
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "健康",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.666
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "左右",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.662
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "静音",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.665
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "睡眠",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.665
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "辅热",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.665
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "自清洁",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.748
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "3D风向",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.79
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "超远",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.661
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "风吹人风避人",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.837
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "无人节能",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.797
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "热启动集中控制",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.874
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  ".88时品",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.568
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "点检无此功能",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.854
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "试运转应急运转",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.812
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "定时",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.647
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "功能",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.666
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "模式",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.525
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "风向",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.663
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "HTACH",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.767
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "A警报",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.66
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "系小",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.664
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "开地",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.666
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "点，检无此功能",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.864
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "关址",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.505
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "统时",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.666
+                                                          },
+                                                          {
+                                                              "kind":  "curve_text",
+                                                              "text":  "风量",
+                                                              "color":  "yellow",
+                                                              "reason":  "未检出：照片侧 OCR 证据不足，不判缺标（宁黄勿红）",
+                                                              "photoText":  null,
+                                                              "hit":  false,
+                                                              "norm":  [
+                                                                           0,
+                                                                           0,
+                                                                           0,
+                                                                           0
+                                                                       ],
+                                                              "ocrConf":  0.578
+                                                          }
+                                                      ]
+                                     }
+                                 ],
+                  "extra":  [
+
+                            ],
+                  "photoTexts":  [
+                                     "PC-P1HEQ服务热线：4008601111"
+                                 ]
+              },
+    "elapsedMs":  3326.7
+}

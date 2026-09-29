@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    v2 决策层离线验证台。
+    刻意独立于 src/Platform：只 link 编译 DrawingsV2/Decision 下的纯 C# 决策层，
+    不引用 ASP.NET、不参与平台构建，因此平台工程与生产实例完全不受本目录影响。
+    唯一的外部依赖是 Microsoft.Data.Sqlite —— 仅用于验证 v2_* 落库契约（读写自建的临时库文件，
+    不碰平台 app.db），等价于 InvTail 那样的独立库隔离策略。
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>V2Harness</RootNamespace>
+    <AssemblyName>v2harness</AssemblyName>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.11" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+    <Compile Include="..\..\src\Platform\Modules\DrawingsV2\Decision\**\*.cs" />
+  </ItemGroup>
+
+</Project>

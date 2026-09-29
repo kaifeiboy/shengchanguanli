@@ -1,0 +1,16 @@
+﻿TaskState=267009 LastRun=09/27/2026 16:04:04
+
+
+Id        : 14292
+StartTime : 2026/9/27 16:05:06
+Path      : E:\workaaa\shengchanguanli\src\Platform\bin\Debug\net8.0\Platform.e
+            xe
+
+
+
+
+LocalPort OwningProcess
+--------- -------------
+     5000         14292
+
+

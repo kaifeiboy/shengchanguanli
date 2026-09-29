@@ -1,0 +1,849 @@
+{
+ "recordId": null,
+ "profileId": 63,
+ "drawingKey": "02-新约克86线控器效果图-25.7.15-Model",
+ "profileStatus": "reviewed",
+ "requiresViewSelection": true,
+ "result": "NeedsReview",
+ "reason": "照片证据不足，未产出比对结论。请拍清晰、正对部件的照片后重试。",
+ "viewCandidates": [],
+ "photo": "D:/workwechat/WXWork/1688858196673779/Cache/Image/2026-09/a0fddd0eea9aad8ee234ba95f595007c_compress.jpg",
+ "photoUrl": "/drawingsv2-photos/D:/workwechat/WXWork/1688858196673779/Cache/Image/2026-09/a0fddd0eea9aad8ee234ba95f595007c_compress.jpg",
+ "photoSha256": "514008cd616313611a9311ed9bffd8b22b4f5f5ccce0dc0032bbe12f53f0cac4",
+ "geometryApplied": false,
+ "geometryMethod": "no-quad",
+ "blockMatch": {
+  "enabled": true,
+  "reason": "",
+  "degraded": true,
+  "degradeReason": "照片侧仅 OCR 到 1 条有效文本（<3）；文本差异仍判红（用户口径：文本一律绿或红）",
+  "nBlocks": 8,
+  "nCandidates": 7,
+  "top": {
+   "id": 251,
+   "blockIndex": 3,
+   "blockKey": "f89c46097c43e07cae4f517d",
+   "name": "YCWA15NCWO｜服务热线：400-620-6607｜()NFC便捷控制｜APP下戴｜YCWA15NCWQ",
+   "viewHint": "Nameplate",
+   "blockNorm": [
+    0.085511,
+    0.04,
+    0.256532,
+    0.202689
+   ],
+   "pageIndex": 0,
+   "score": 3,
+   "nGreen": 3,
+   "nRed": 1,
+   "nYellow": 0,
+   "nGray": 9,
+   "nHit": 3,
+   "nCodeOk": 0,
+   "nCodeMissing": 0,
+   "elements": [
+    {
+     "kind": "dim",
+     "text": "80.5",
+     "color": "gray",
+     "reason": "线性尺寸标注：d 类不参与匹配（有量纲证据）",
+     "photoText": null,
+     "hit": false,
+     "norm": [
+      0.193349,
+      0.068937,
+      0.046136,
+      0.016322
+     ],
+     "ocrConf": 1,
+     "photoNorm": null,
+     "mappingLevel": ""
+    },
+    {
+     "kind": "meta",
+     "text": "9",
+     "color": "gray",
+     "reason": "图纸元信息（日期/版本/标注序号）：d 类不参与匹配（2026-09-27 L1 新增）",
+     "photoText": null,
+     "hit": false,
+     "norm": [
+      0.283346,
+      0.180182,
+      0.011534,
+      0.016322
+     ],
+     "ocrConf": 1,
+     "photoNorm": null,
+     "mappingLevel": ""
+    },
+    {
+     "kind": "meta",
+     "text": "9",
+     "color": "gray",
+     "reason": "图纸元信息（日期/版本/标注序号）：d 类不参与匹配（2026-09-27 L1 新增）",
+     "photoText": null,
+     "hit": false,
+     "norm": [
+      0.255344,
+      0.152232,
+      0.011534,
+      0.016322
+     ],
+     "ocrConf": 1,
+     "photoNorm": null,
+     "mappingLevel": ""
+    },
+    {
+     "kind": "dim",
+     "text": "3±0.5",
+     "color": "gray",
+     "reason": "线性尺寸标注：d 类不参与匹配（有量纲证据）",
+     "photoText": null,
+     "hit": false,
+     "norm": [
+      0.284561,
+      0.068937,
+      0.05767,
+      0.016322
+     ],
+     "ocrConf": 1,
+     "photoNorm": null,
+     "mappingLevel": ""
+    },
+    {
+     "kind": "dim",
+     "text": "0.8±0.5",
+     "color": "gray",
+     "reason": "线性尺寸标注：d 类不参与匹配（有量纲证据）",
+     "photoText": null,
+     "hit": false,
+     "norm": [
+      0.31242,
+      0.075191,
+      0.011534,
+      0.114254
+     ],
+     "ocrConf": 1,
+     "photoNorm": null,
+     "mappingLevel": ""
+    },
+    {
+     "kind": "note",
+     "text": "A作业",
+     "color": "gray",
+     "reason": "说明文字：d 类不参与匹配",
+     "photoText": null,
+     "hit": false,
+     "norm": [
+      0.178527,
+      0.039224,
+      0.029802,
+      0.016869
+     ],
+     "ocrConf": 1,
+     "photoNorm": null,
+     "mappingLevel": ""
+    },
+    {
+     "kind": "dim",
+     "text": "3.8",
+     "color": "gray",
+     "reason": "线性尺寸标注：d 类不参与匹配（有量纲证据）",
+     "photoText": null,
+     "hit": false,
+     "norm": [
+      0.094938,
+      0.194328,
+      0.011534,
+      0.048966
+     ],
+     "ocrConf": 1,
+     "photoNorm": null,
+     "mappingLevel": ""
+    },
+    {
+     "kind": "dim",
+     "text": "(2.6)",
+     "color": "gray",
+     "reason": "线性尺寸标注：d 类不参与匹配（有量纲证据）",
+     "photoText": null,
+     "hit": false,
+     "norm": [
+      0.094225,
+      0.097348,
+      0.011534,
+      0.08161
+     ],
+     "ocrConf": 1,
+     "photoNorm": null,
+     "mappingLevel": ""
+    },
+    {
+     "kind": "curve_text",
+     "text": "YCWA15NCWO",
+     "color": "gray",
+     "reason": "同块内与命中文本为 OCR 单字符变体（如 Q↔O），判为同一处文本，不计缺标",
+     "photoText": null,
+     "hit": false,
+     "norm": [
+      0,
+      0,
+      0,
+      0
+     ],
+     "ocrConf": 0.845,
+     "photoNorm": null,
+     "mappingLevel": "L3"
+    },
+    {
+     "kind": "curve_text",
+     "text": "服务热线：400-620-6607",
+     "color": "green",
+     "reason": "命中：照片文本包含该内容（整行粘连场景）",
+     "photoText": "YCWA15NCWQ服务热线：400-620-6607 （）NFC便捷控制",
+     "hit": true,
+     "norm": [
+      0,
+      0,
+      0,
+      0
+     ],
+     "ocrConf": 0.923,
+     "photoNorm": [
+      0.171896,
+      0.629891,
+      0.577833,
+      0.031031
+     ],
+     "mappingLevel": "L2"
+    },
+    {
+     "kind": "curve_text",
+     "text": "()NFC便捷控制",
+     "color": "green",
+     "reason": "命中：照片文本包含该内容（整行粘连场景）",
+     "photoText": "YCWA15NCWQ服务热线：400-620-6607 （）NFC便捷控制",
+     "hit": true,
+     "norm": [
+      0,
+      0,
+      0,
+      0
+     ],
+     "ocrConf": 0.816,
+     "photoNorm": [
+      0.171896,
+      0.629891,
+      0.577833,
+      0.031031
+     ],
+     "mappingLevel": "L2"
+    },
+    {
+     "kind": "curve_text",
+     "text": "APP下戴",
+     "color": "red",
+     "reason": "未检出但判红：照片侧 OCR 证据不足，按文本差异口径仍标红（degraded）",
+     "photoText": null,
+     "hit": false,
+     "norm": [
+      0,
+      0,
+      0,
+      0
+     ],
+     "ocrConf": 0.702,
+     "photoNorm": null,
+     "mappingLevel": "L3"
+    },
+    {
+     "kind": "curve_text",
+     "text": "YCWA15NCWQ",
+     "color": "green",
+     "reason": "命中：照片文本包含该内容（整行粘连场景）",
+     "photoText": "YCWA15NCWQ服务热线：400-620-6607 （）NFC便捷控制",
+     "hit": true,
+     "norm": [
+      0,
+      0,
+      0,
+      0
+     ],
+     "ocrConf": 0.801,
+     "photoNorm": [
+      0.171896,
+      0.629891,
+      0.577833,
+      0.031031
+     ],
+     "mappingLevel": "L2"
+    }
+   ]
+  },
+  "candidates": [
+   {
+    "id": 251,
+    "blockIndex": 3,
+    "blockKey": "f89c46097c43e07cae4f517d",
+    "name": "YCWA15NCWO｜服务热线：400-620-6607｜()NFC便捷控制｜APP下戴｜YCWA15NCWQ",
+    "viewHint": "Nameplate",
+    "blockNorm": [
+     0.085511,
+     0.04,
+     0.256532,
+     0.202689
+    ],
+    "pageIndex": 0,
+    "score": 3,
+    "nGreen": 3,
+    "nRed": 1,
+    "nYellow": 0,
+    "nGray": 9,
+    "nHit": 3,
+    "nCodeOk": 0,
+    "nCodeMissing": 0,
+    "elements": [
+     {
+      "kind": "dim",
+      "text": "80.5",
+      "color": "gray",
+      "reason": "线性尺寸标注：d 类不参与匹配（有量纲证据）",
+      "photoText": null,
+      "hit": false,
+      "norm": [
+       0.193349,
+       0.068937,
+       0.046136,
+       0.016322
+      ],
+      "ocrConf": 1,
+      "photoNorm": null,
+      "mappingLevel": ""
+     },
+     {
+      "kind": "meta",
+      "text": "9",
+      "color": "gray",
+      "reason": "图纸元信息（日期/版本/标注序号）：d 类不参与匹配（2026-09-27 L1 新增）",
+      "photoText": null,
+      "hit": false,
+      "norm": [
+       0.283346,
+       0.180182,
+       0.011534,
+       0.016322
+      ],
+      "ocrConf": 1,
+      "photoNorm": null,
+      "mappingLevel": ""
+     },
+     {
+      "kind": "meta",
+      "text": "9",
+      "color": "gray",
+      "reason": "图纸元信息（日期/版本/标注序号）：d 类不参与匹配（2026-09-27 L1 新增）",
+      "photoText": null,
+      "hit": false,
+      "norm": [
+       0.255344,
+       0.152232,
+       0.011534,
+       0.016322
+      ],
+      "ocrConf": 1,
+      "photoNorm": null,
+      "mappingLevel": ""
+     },
+     {
+      "kind": "dim",
+      "text": "3±0.5",
+      "color": "gray",
+      "reason": "线性尺寸标注：d 类不参与匹配（有量纲证据）",
+      "photoText": null,
+      "hit": false,
+      "norm": [
+       0.284561,
+       0.068937,
+       0.05767,
+       0.016322
+      ],
+      "ocrConf": 1,
+      "photoNorm": null,
+      "mappingLevel": ""
+     },
+     {
+      "kind": "dim",
+      "text": "0.8±0.5",
+      "color": "gray",
+      "reason": "线性尺寸标注：d 类不参与匹配（有量纲证据）",
+      "photoText": null,
+      "hit": false,
+      "norm": [
+       0.31242,
+       0.075191,
+       0.011534,
+       0.114254
+      ],
+      "ocrConf": 1,
+      "photoNorm": null,
+      "mappingLevel": ""
+     },
+     {
+      "kind": "note",
+      "text": "A作业",
+      "color": "gray",
+      "reason": "说明文字：d 类不参与匹配",
+      "photoText": null,
+      "hit": false,
+      "norm": [
+       0.178527,
+       0.039224,
+       0.029802,
+       0.016869
+      ],
+      "ocrConf": 1,
+      "photoNorm": null,
+      "mappingLevel": ""
+     },
+     {
+      "kind": "dim",
+      "text": "3.8",
+      "color": "gray",
+      "reason": "线性尺寸标注：d 类不参与匹配（有量纲证据）",
+      "photoText": null,
+      "hit": false,
+      "norm": [
+       0.094938,
+       0.194328,
+       0.011534,
+       0.048966
+      ],
+      "ocrConf": 1,
+      "photoNorm": null,
+      "mappingLevel": ""
+     },
+     {
+      "kind": "dim",
+      "text": "(2.6)",
+      "color": "gray",
+      "reason": "线性尺寸标注：d 类不参与匹配（有量纲证据）",
+      "photoText": null,
+      "hit": false,
+      "norm": [
+       0.094225,
+       0.097348,
+       0.011534,
+       0.08161
+      ],
+      "ocrConf": 1,
+      "photoNorm": null,
+      "mappingLevel": ""
+     },
+     {
+      "kind": "curve_text",
+      "text": "YCWA15NCWO",
+      "color": "gray",
+      "reason": "同块内与命中文本为 OCR 单字符变体（如 Q↔O），判为同一处文本，不计缺标",
+      "photoText": null,
+      "hit": false,
+      "norm": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "ocrConf": 0.845,
+      "photoNorm": null,
+      "mappingLevel": "L3"
+     },
+     {
+      "kind": "curve_text",
+      "text": "服务热线：400-620-6607",
+      "color": "green",
+      "reason": "命中：照片文本包含该内容（整行粘连场景）",
+      "photoText": "YCWA15NCWQ服务热线：400-620-6607 （）NFC便捷控制",
+      "hit": true,
+      "norm": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "ocrConf": 0.923,
+      "photoNorm": [
+       0.171896,
+       0.629891,
+       0.577833,
+       0.031031
+      ],
+      "mappingLevel": "L2"
+     },
+     {
+      "kind": "curve_text",
+      "text": "()NFC便捷控制",
+      "color": "green",
+      "reason": "命中：照片文本包含该内容（整行粘连场景）",
+      "photoText": "YCWA15NCWQ服务热线：400-620-6607 （）NFC便捷控制",
+      "hit": true,
+      "norm": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "ocrConf": 0.816,
+      "photoNorm": [
+       0.171896,
+       0.629891,
+       0.577833,
+       0.031031
+      ],
+      "mappingLevel": "L2"
+     },
+     {
+      "kind": "curve_text",
+      "text": "APP下戴",
+      "color": "red",
+      "reason": "未检出但判红：照片侧 OCR 证据不足，按文本差异口径仍标红（degraded）",
+      "photoText": null,
+      "hit": false,
+      "norm": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "ocrConf": 0.702,
+      "photoNorm": null,
+      "mappingLevel": "L3"
+     },
+     {
+      "kind": "curve_text",
+      "text": "YCWA15NCWQ",
+      "color": "green",
+      "reason": "命中：照片文本包含该内容（整行粘连场景）",
+      "photoText": "YCWA15NCWQ服务热线：400-620-6607 （）NFC便捷控制",
+      "hit": true,
+      "norm": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "ocrConf": 0.801,
+      "photoNorm": [
+       0.171896,
+       0.629891,
+       0.577833,
+       0.031031
+      ],
+      "mappingLevel": "L2"
+     }
+    ]
+   },
+   {
+    "id": 249,
+    "blockIndex": 1,
+    "blockKey": "a584b2260cbc88d2bfd682e2",
+    "name": "YCWA16NCWQ｜服务热线：400-620-6607｜(NFC便捷控制",
+    "viewHint": "Nameplate",
+    "blockNorm": [
+     0.370546,
+     0.041614,
+     0.256532,
+     0.223529
+    ],
+    "pageIndex": 0,
+    "score": 2,
+    "nGreen": 2,
+    "nRed": 1,
+    "nYellow": 0,
+    "nGray": 9,
+    "nHit": 2,
+    "nCodeOk": 0,
+    "nCodeMissing": 0,
+    "elements": [
+     {
+      "kind": "note",
+      "text": "激光刻印(灰色),位置居中",
+      "color": "gray",
+      "reason": "说明文字：d 类不参与匹配",
+      "photoText": null,
+      "hit": false,
+      "norm": [
+       0.552494,
+       0.222535,
+       0.083968,
+       0.00914
+      ],
+      "ocrConf": 1,
+      "photoNorm": null,
+      "mappingLevel": ""
+     },
+     {
+      "kind": "dim",
+      "text": "3.8",
+      "color": "gray",
+      "reason": "线性尺寸标注：d 类不参与匹配（有量纲证据）",
+      "photoText": null,
+      "hit": false,
+      "norm": [
+       0.385817,
+       0.194328,
+       0.011534,
+       0.048966
+      ],
+      "ocrConf": 1,
+      "photoNorm": null,
+      "mappingLevel": ""
+     },
+     {
+      "kind": "dim",
+      "text": "(2.6)",
+      "color": "gray",
+      "reason": "线性尺寸标注：d 类不参与匹配（有量纲证据）",
+      "photoText": null,
+      "hit": false,
+      "norm": [
+       0.385104,
+       0.097348,
+       0.011534,
+       0.08161
+      ],
+      "ocrConf": 1,
+      "photoNorm": null,
+      "mappingLevel": ""
+     },
+     {
+      "kind": "dim",
+      "text": "3±0.5",
+      "color": "gray",
+      "reason": "线性尺寸标注：d 类不参与匹配（有量纲证据）",
+      "photoText": null,
+      "hit": false,
+      "norm": [
+       0.56304,
+       0.068937,
+       0.05767,
+       0.016322
+      ],
+      "ocrConf": 1,
+      "photoNorm": null,
+      "mappingLevel": ""
+     },
+     {
+      "kind": "meta",
+      "text": "9",
+      "color": "gray",
+      "reason": "图纸元信息（日期/版本/标注序号）：d 类不参与匹配（2026-09-27 L1 新增）",
+      "photoText": null,
+      "hit": false,
+      "norm": [
+       0.534679,
+       0.149811,
+       0.011534,
+       0.016322
+      ],
+      "ocrConf": 1,
+      "photoNorm": null,
+      "mappingLevel": ""
+     },
+     {
+      "kind": "meta",
+      "text": "9",
+      "color": "gray",
+      "reason": "图纸元信息（日期/版本/标注序号）：d 类不参与匹配（2026-09-27 L1 新增）",
+      "photoText": null,
+      "hit": false,
+      "norm": [
+       0.555413,
+       0.180182,
+       0.011534,
+       0.016322
+      ],
+      "ocrConf": 1,
+      "photoNorm": null,
+      "mappingLevel": ""
+     },
+     {
+      "kind": "note",
+      "text": "B作业",
+      "color": "gray",
+      "reason": "说明文字：d 类不参与匹配",
+      "photoText": null,
+      "hit": false,
+      "norm": [
+       0.462138,
+       0.041039,
+       0.029802,
+       0.016869
+      ],
+      "ocrConf": 1,
+      "photoNorm": null,
+      "mappingLevel": ""
+     },
+     {
+      "kind": "dim",
+      "text": "80.6",
+      "color": "gray",
+      "reason": "线性尺寸标注：d 类不参与匹配（有量纲证据）",
+      "photoText": null,
+      "hit": false,
+      "norm": [
+       0.471972,
+       0.068937,
+       0.046136,
+       0.016322
+      ],
+      "ocrConf": 1,
+      "photoNorm": null,
+      "mappingLevel": ""
+     },
+     {
+      "kind": "meta",
+      "text": "3",
+      "color": "gray",
+      "reason": "图纸元信息（日期/版本/标注序号）：d 类不参与匹配（2026-09-27 L1 新增）",
+      "photoText": null,
+      "hit": false,
+      "norm": [
+       0.58,
+       0.236199,
+       0.00325,
+       0.009198
+      ],
+      "ocrConf": 1,
+      "photoNorm": null,
+      "mappingLevel": ""
+     },
+     {
+      "kind": "curve_text",
+      "text": "YCWA16NCWQ",
+      "color": "red",
+      "reason": "未检出但判红：照片侧 OCR 证据不足，按文本差异口径仍标红（degraded）",
+      "photoText": null,
+      "hit": false,
+      "norm": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "ocrConf": 0.815,
+      "photoNorm": null,
+      "mappingLevel": "L3"
+     },
+     {
+      "kind": "curve_text",
+      "text": "服务热线：400-620-6607",
+      "color": "green",
+      "reason": "命中：照片文本包含该内容（整行粘连场景）",
+      "photoText": "YCWA15NCWQ服务热线：400-620-6607 （）NFC便捷控制",
+      "hit": true,
+      "norm": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "ocrConf": 0.905,
+      "photoNorm": [
+       0.171896,
+       0.629891,
+       0.577833,
+       0.031031
+      ],
+      "mappingLevel": "L2"
+     },
+     {
+      "kind": "curve_text",
+      "text": "(NFC便捷控制",
+      "color": "green",
+      "reason": "命中：照片文本包含该内容（整行粘连场景）",
+      "photoText": "YCWA15NCWQ服务热线：400-620-6607 （）NFC便捷控制",
+      "hit": true,
+      "norm": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "ocrConf": 0.848,
+      "photoNorm": [
+       0.171896,
+       0.629891,
+       0.577833,
+       0.031031
+      ],
+      "mappingLevel": "L2"
+     }
+    ]
+   },
+   {
+    "id": 255,
+    "blockIndex": 7,
+    "blockKey": "207caf85a8a106cb968b43bf",
+    "name": "6, T)｜YORK",
+    "viewHint": "Side",
+    "blockNorm": [
+     0.128361,
+     0.484034,
+     0.306556,
+     0.078992
+    ],
+    "pageIndex": 0,
+    "score": 0,
+    "nGreen": 0,
+    "nRed": 2,
+    "nYellow": 0,
+    "nGray": 0,
+    "nHit": 0,
+    "nCodeOk": 0,
+    "nCodeMissing": 0,
+    "elements": [
+     {
+      "kind": "curve_text",
+      "text": "6, T)",
+      "color": "red",
+      "reason": "未检出但判红：照片侧 OCR 证据不足，按文本差异口径仍标红（degraded）",
+      "photoText": null,
+      "hit": false,
+      "norm": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "ocrConf": 0.538,
+      "photoNorm": null,
+      "mappingLevel": "L3"
+     },
+     {
+      "kind": "curve_text",
+      "text": "YORK",
+      "color": "red",
+      "reason": "未检出但判红：照片侧 OCR 证据不足，按文本差异口径仍标红（degraded）",
+      "photoText": null,
+      "hit": false,
+      "norm": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "ocrConf": 0.72,
+      "photoNorm": null,
+      "mappingLevel": "L3"
+     }
+    ]
+   }
+  ],
+  "extra": [],
+  "photoTexts": [
+   "YCWA15NCWQ服务热线：400-620-6607 （）NFC便捷控制"
+  ],
+  "nPhotoCodes": 0
+ },
+ "drawingPdfPath": "E:/生产打标效果图/02-新约克86线控器效果图-25.7.15-Model.pdf",
+ "drawingPageIndex": 0,
+ "verdicts": []
+}

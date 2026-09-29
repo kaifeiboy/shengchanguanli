@@ -1,0 +1,13 @@
+﻿
+   Id StartTime         
+   -- ---------         
+13392 2026/9/27 16:09:44
+
+
+
+LocalPort OwningProcess
+--------- -------------
+     5000         13392
+
+
+{"ok":true,"pythonExe":"C:\\Users\\Administrator\\.workbuddy\\binaries\\python\\envs\\default\\Scripts\\python.exe","pythonExeExists":true,"scriptPath":"E:\\workaaa\\shengchanguanli\\src\\Platform\\Modules\\DrawingsV2\\Scripts\\vpdf_run.py","scriptExists":true,"dbPath":"E:\\workaaa\\shengchanguanli\\data\\drawingsv2.db","decisionVersion":"m2.3-optimized","selfCheck":"{\"schema\": \"vpdf-selfcheck/1\", \"ok\": true, \"passed\": 13, \"total\": 13}","error":null}
