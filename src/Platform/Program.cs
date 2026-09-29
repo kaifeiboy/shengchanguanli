@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Platform.Core;
 using Platform.Infrastructure;
-using Platform.Modules.Drawings;
 using Platform.Modules.DrawingsV2;
 using Platform.Modules.Unbind;
 using Platform.Modules.DefectHistory;
@@ -23,18 +22,9 @@ builder.Services.AddSingleton<DbContext>();
 // 平台级 Python 进程基础设施：任何模块都应依赖它，而不是横向借用其它模块的 OcrService。
 builder.Services.AddSingleton<IPythonProcessFactory, PythonProcessFactory>();
 
-// P8：OcrService 注册从 Drawings 模块上移到平台层。
-// 原因：Unbind / DefectHistory 曾通过 DI 依赖它，而它注册在业务模块内 ——
-// 一旦 Drawings 模块被替换或未注册，这两个模块的 DI 解析会失败、平台启动崩溃。
-// 上移后，模块替换不再影响其它模块。（OcrService 自身仍属历史实现，已封存。）
-builder.Services.AddSingleton<OcrService>();
-
 // ---- Module registry: register all modules here ----
 var registry = new ModuleRegistry();
-registry.Register(new DrawingModule());
-// v2（M3）：以 Key="drawingsv2" 与旧 drawings 模块**并存**注册。
-// 只新增 /api/drawingsv2/* 端点，不改动、不删除旧链路，可并行验证、随时可回退。
-// 待 v2 端点覆盖 H5 调用面后（M5）再切换入口，届时用户可见的 URL 与入口不变。
+// 2026-09-29 阶段四：V1（Modules/Drawings）已物理删除，打标首件比对只保留 V2。
 registry.Register(new DrawingsV2Module());
 registry.Register(new UnbindModule());
 registry.Register(new DefectHistoryModule());
@@ -134,14 +124,6 @@ app.MapGet("/api/network/info", (NetworkResolver n) =>
         if (File.Exists(f)) ext = File.ReadAllText(f).Trim();
     }
     return Results.Ok(n.GetInfo("5000", ext));
-});
-
-// L1 引擎锁定：启动即后台预热 OCR worker（拉起常驻进程 + 引擎 warm-up），
-// 使首拍匹配跳过冷启动窗口，从根上消除「忽好忽坏」。后台执行，不阻塞 Kestrel 启动。
-_ = Task.Run(() =>
-{
-    try { app.Services.GetRequiredService<DrawingService>().WarmupCache(); }
-    catch { }
 });
 
 app.Run();

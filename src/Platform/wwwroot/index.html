@@ -549,7 +549,6 @@
 // ---- 全局状态 ----
 const $ = (s) => document.querySelector(s);
 let curDrawing = null;          // 当前选中的图纸
-let lastPhotoFile = null;        // 最近一次比对用的照片（供差异标记复用）
 let pendingAction = null;       // 'compare' | 'detail'（选图纸弹层用途分支）
 let modulesCache = [];          // 加载的模块列表
 
@@ -1204,15 +1203,8 @@ function uploadUIHtml(){
       </label>
     </div>
     <div class="meta-line" style="margin-top:8px;opacity:.7;font-size:11.5px;">
-      照片内容识别 → 与「已选图纸」切割出的小图块比对（忽略尺寸/部位标注）
+      拍照/相册 → 与「已选图纸」的全部逻辑图块做文本命中比对（型号驱动，不依赖部位）
     </div>
-    <!-- v2 引擎（型号驱动的逻辑图块文本命中）：默认开启。开启时拍照改走 /api/drawingsv2/compare/upload，
-         按「所选图纸(型号)的全部逻辑图块」直接做文本命中比对（绿=一致 / 红=差异 / 黄=图标·QR缺失 / 灰=跳过），
-         不依赖拍摄部位(view)分类。如需回退旧链路，可把本地 v2EnginePilot 置 '0'。 -->
-    <label class="meta-line" style="display:flex;align-items:center;gap:8px;margin-top:10px;cursor:pointer;">
-      <input type="checkbox" id="v2Pilot" ${localStorage.getItem('v2EnginePilot')==='0'?'':'checked'} style="width:18px;height:18px;" />
-      <span style="font-size:12.5px;">v2 引擎（型号驱动逻辑图块匹配）<small style="opacity:.65;display:block;">按所选图纸全部逻辑图块直接比对，不依赖部位</small></span>
-    </label>
     <div class="partResult"></div>`;
 }
 function bindUpload(card){
@@ -1220,11 +1212,6 @@ function bindUpload(card){
   if(cam) cam.onchange = onPartFile;
   const alb = card.querySelector('.partAlbum');
   if(alb) alb.onchange = onPartFile;
-  // v2 引擎开关：状态记在本地，默认开（开 = 按所选图纸逻辑图块直接比对，型号驱动、不依赖部位）
-  const sw = card.querySelector('#v2Pilot');
-  if(sw) sw.onchange = ()=>{
-    localStorage.setItem('v2EnginePilot', sw.checked ? '1' : '0');
-  };
 }
 // ---- 拍照比对 视图（模块内）----
 // 2026-09-29 阶段三：数据源切 V2 profiles（V2_PROFILES 缓存），不再调 V1 detail。
@@ -1269,45 +1256,10 @@ function openDetail(id){
 // ---- 上传照片识别部位（含 45s 超时保护）----
 async function onPartFile(e){
   const f0 = e.target.files[0]; if(!f0 || !curDrawing) return;
-  await submitPart(f0);
+  const box = document.querySelector('.partResult');
+  if(box) await submitV2(f0, box);
   e.target.value='';
 }
-// ---- 送比对（实时拍 / 相册 共用）----
-// attempt：内部自动重试次数（仅当服务端瞬时抖动「识别服务暂时不可用」时重试 1 次，对用户透明）
-async function submitPart(file, attempt){
-  if(!file || !curDrawing) return;
-  attempt = attempt || 0;
-  const box = document.querySelector('.partResult');
-  if(!box) return;
-  // v2 试点：开关开启时改走 v2 链路（八态逐项核对），否则完全走原有链路
-  const v2sw = document.querySelector('#v2Pilot');
-  if(v2sw && v2sw.checked) return await submitV2(file, box);
-  box.innerHTML='<div class="meta-line"><span class="spinner"></span> 照片内容识别中…（约 5~15 秒，取决于光线与图片大小）</div>';
-  const fd = new FormData(); fd.append('drawingId', curDrawing.id); fd.append('file', file);
-  lastPhotoFile = file;          // 保留以供「查看差异」复用
-  const ctrl = new AbortController();
-  const to = setTimeout(() => ctrl.abort(), 45000);
-  try{
-    const r = await (await fetch('api/drawings/match-block',{method:'POST',body:fd,signal:ctrl.signal})).json();
-    clearTimeout(to);
-    // 服务端瞬时抖动（OCR 引擎偶发不可用）：自动重试 1 次，避免用户误以为照片拍烂了
-    if (r && r.qualityError && r.qualityError.indexOf('暂时不可用') >= 0 && attempt === 0) {
-      box.innerHTML='<div class="meta-line"><span class="spinner"></span> 识别服务瞬时抖动，正在自动重试…</div>';
-      setTimeout(() => submitPart(file, 1), 1200);
-      return;
-    }
-    renderMatchResult(box, r);
-  }catch(err){
-    clearTimeout(to);
-    const msg = (err && err.name==='AbortError')
-      ? '识别超时（>45 秒）。请检查：①光线是否过暗/过曝；②重拍后再试'
-      : ('识别失败：'+(err.message||err));
-    box.innerHTML='<div class="empty">'+esc(msg)+'</div>';
-  }
-}
-// ================= v2 试点（M5）：拍照 → /api/drawingsv2/compare/upload → 八态结果 =================
-// 设计原则：不改任何旧端点调用，只在开关打开时走这条新链路；失败也不影响旧链路。
-const V2_HUMAN = { HumanPresent:'实物有标', HumanMissing:'实物缺标', HumanWrongPart:'拍错部位' };
 const V2_STATE = {
   Matched:        { c:'#16a34a', bg:'rgba(22,163,74,.10)',  t:'一致' },
   LowConfidence:  { c:'#d97706', bg:'rgba(217,119,6,.10)',  t:'存疑' },
@@ -1802,266 +1754,6 @@ function bmSummaryHTML(r){
     <div class="meta-line" style="font-size:11px;opacity:.8;margin-top:4px;">命中块：${esc(top?(top.name||('#'+top.blockIndex)):'-')} · 得分 ${top?top.score:0} · 一致${top?top.nGreen:0}/差异${top?top.nRed:0}/图标QR缺${top?top.nYellow:0}${bm.degraded?' · ⚠️ '+esc(bm.degradeReason||'照片召回不足'):''}</div>
     ${eRows || '<div class="meta-line" style="font-size:11px;opacity:.7;margin-top:4px;">命中块内无逐元素结论（元素均为跳过项，无需标示）</div>'}
   </div>`;
-}
-
-// ---- 三态结果渲染（完全匹配 / 部分匹配 / 未匹配）----
-function renderMatchResult(box, r){
-  let html = '';
-    
-    // Rule 3: 三态结果渲染（完全匹配 / 部分匹配 / 未匹配）
-    const st = r.matchStatus || 'none';  // full | partial | none
-    
-    if (st === 'full') {
-      // ===== 完全匹配 =====
-      const pct = Math.round((r.score||0)*100);
-      const _red = (r.diff && r.diff.redRegions) || [];
-      const _yel = (r.diff && r.diff.yellowRegions) || [];
-      const hasDiff = _red.length > 0 || _yel.length > 0;
-      const diffCount = _red.length + _yel.length;
-      // ⭐ 双展示：照片整体差异标示（整图直接标示）视图 + 配套标准参考切块
-      html += photoDiffSectionHTML(curDrawing.id);
-      html += cutBlockHTML(r);
-      // 差异标记详情（下方仅展示图例/明细/判定，不再重复贴图）
-      if (r.diff) { html += renderDiffMarkers(r.diff); }
-      toast(hasDiff ? `⚠ 匹配但有 ${diffCount} 处差异` : '✓ 完全匹配小图块');
-      
-    } else if (st === 'partial') {
-      // ===== 部分匹配（标示不匹配项）=====
-      html += `<div class="meta-line" style="text-align:center;margin:12px 0;">
-        <span style="display:inline-block;background:var(--warn);color:#fff;padding:6px 18px;border-radius:20px;font-size:14px;font-weight:800;box-shadow:0 2px 8px rgba(217,119,6,.3);">△ 部分匹配</span>
-        <span style="margin-left:8px;color:var(--txt);font-size:12px;">${esc(r.fileName||'')}</span>
-      </div>`;
-      // ⭐ 双展示：照片整体差异标示（整图直接标示）视图 + 配套标准参考切块
-      html += photoDiffSectionHTML(curDrawing.id);
-      html += cutBlockHTML(r);
-      if (r.mismatchedTokens && r.mismatchedTokens.length > 0) {
-        const showTokens = r.mismatchedTokens.slice(0, 15);  // 最多显示15个
-        html += `<details open style="margin-top:10px;">
-          <summary style="font-size:12px;color:var(--warn);cursor:pointer;font-weight:700;">⚠ 未匹配到的内容（${r.mismatchedTokens.length}项，点击收起）</summary>
-          <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px;">`;
-        showTokens.forEach(function(t){
-          html += `<span style="background:rgba(217,119,6,.1);border:1px solid var(--warn);border-radius:6px;padding:2px 8px;font-size:11px;color:var(--warn);">${esc(t)}</span>`;
-        });
-        if (r.mismatchedTokens.length > 15)
-          html += `<span style="font-size:11px;color:var(--sub);">...等${r.mismatchedTokens.length}项</span>`;
-        html += `</div></details>`;
-      }
-      toast('△ 部分匹配（有差异项）');
-      
-    } else {
-      // ===== 未匹配 =====
-      const fn = r.fileName || (curDrawing&&curDrawing.fileName) || '';
-      if (r.qualityError) {
-        // 质量门控未通过（无法识别）
-        html += `<div style="margin-top:6px;background:rgba(220,38,38,.08);border:1px solid var(--bad);border-radius:14px;padding:16px;text-align:center;">
-          <div style="font-size:16px;font-weight:800;color:var(--bad);">📷 照片无法识别</div>
-          <div class="meta-line" style="margin-top:8px;color:var(--bad);opacity:.95;">${esc(r.qualityError)}</div>
-          <div class="meta-line" style="margin-top:10px;text-align:left;font-size:12px;opacity:.85;color:var(--txt);">
-            <b>拍摄建议：</b><br/>· 对准部件上刻印的文字或编号<br/>· 避免模糊、反光、过远拍摄<br/>· 确保「型号」「服务热线」等字样清晰可见
-          </div>
-          <div class="meta-line" style="margin-top:8px;font-size:11px;opacity:.6;text-align:left;word-break:break-all;color:var(--txt);">原始识别：${esc((r.photoText||'').slice(0,120)) || '(空)'}</div>
-        </div>`;
-        toast('⚠ 照片无法识别，请重拍');
-      } else {
-        // 有OCR内容但未匹配到任何图块
-        html += `<div style="margin-top:6px;background:rgba(107,114,128,.06);border:1px solid var(--line);border-radius:14px;padding:16px;text-align:center;">
-          <div style="font-size:16px;font-weight:800;color:var(--sub);">○ 未匹配</div>
-          <div class="meta-line" style="margin-top:8px;color:var(--sub);opacity:.95;">所选图纸「<b>${esc(fn)}</b>」中，未找到与照片内容相符的小图块</div>
-          <div class="meta-line" style="margin-top:6px;opacity:.72;color:var(--txt);">
-            请确认：① 拍摄的是本图纸对应的实物部件；② 部件上的文字/型号清晰可见
-          </div>
-          <div class="meta-line" style="margin-top:8px;font-size:11px;opacity:.6;text-align:left;word-break:break-all;color:var(--txt);">识别到的文字：${esc((r.photoText||'').slice(0,160))}</div>
-        </div>`;
-        toast('○ 未匹配到小图块');
-      }
-    }
-    
-    // 候选图块列表（所有状态都显示，放在结果下方）
-    if (r.candidates && r.candidates.length) {
-      html += `<details style="margin-top:12px;"><summary style="font-size:12px;color:var(--sub);cursor:pointer;">比对过的小图块（${r.candidates.length} 块）</summary>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px;margin-top:8px;">`;
-      html += r.candidates.map(c=>`<div style="text-align:center;font-size:11px;opacity:.85;color:var(--txt);">
-        <img src="${esc(c.imageUrl)}" style="width:100%;height:64px;object-fit:contain;border-radius:8px;border:1px solid var(--line);background:#fff;" onerror="this.style.visibility='hidden'"/>
-        <div>#${c.idx} · ${Math.round((c.score||0)*100)}%${c.w>0?' · '+c.w+'×'+c.h:''}</div>
-      </div>`).join('');
-      html += `</div></details>`;
-    }
-    box.innerHTML = html;
-  // ⭐ 双展示：异步生成照片整体标示（整图直接标示）
-  if ((st === 'full' || st === 'partial') && curDrawing) {
-    renderPhotoDiff(curDrawing.id, lastPhotoFile);
-  }
-}
-
-// ---- 差异标记展示 ----
-async function showDiffMarkers(did, idx, file, box){
-  const old = box.innerHTML;
-  box.innerHTML = '<div class="meta-line"><span class="spinner"></span> 计算差异标记中…（约 3~8 秒）</div>';
-  const fd = new FormData(); fd.append('drawingId', did); fd.append('blockIdx', idx); fd.append('file', file);
-  const ctrl = new AbortController();
-  const to = setTimeout(() => ctrl.abort(), 30000);
-  try{
-    const r = await (await fetch('api/drawings/mark-diff',{method:'POST',body:fd,signal:ctrl.signal})).json();
-    clearTimeout(to);
-    if (!r.success) {
-      box.innerHTML = `<div class="empty">差异标记失败：${esc(r.error||'未知')}</div>`;
-      return;
-    }
-    // 渲染
-    let html = '';
-    // 标记图
-    html += `<div style="margin:10px 0;text-align:center;">
-      <img src="${esc(r.markedImageUrl)}" style="max-width:100%;max-height:300px;border-radius:14px;border:1px solid var(--line);" alt="差异标记图"/>
-    </div>`;
-    // 图例
-    const iconN = (r.iconRegions||[]).length, iconMissN = (r.iconMissingRegions||[]).length, iconExtraN = (r.iconExtraRegions||[]).length;
-    html += `<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;font-size:11px;color:var(--txt);margin:6px 0;">
-      <span><span style="display:inline-block;width:10px;height:10px;background:#dc2626;border-radius:2px;vertical-align:middle;"></span> 产品缺标 (${r.redRegions.length})</span>
-      <span><span style="display:inline-block;width:10px;height:10px;background:#d97706;border-radius:2px;vertical-align:middle;"></span> 产品多标 (${r.yellowRegions.length})</span>
-      <span><span style="display:inline-block;width:10px;height:10px;background:#22c55e;border-radius:2px;vertical-align:middle;"></span> 一致 (${r.greenRegions.length})</span>
-      <span><span style="display:inline-block;width:10px;height:10px;background:#888;border-radius:2px;vertical-align:middle;"></span> CAD标注 (${r.grayRegions.length})</span>
-      <span><span style="display:inline-block;width:10px;height:10px;background:#8b5cf6;border-radius:2px;vertical-align:middle;"></span> 图标在位 (${iconN})</span>
-      <span><span style="display:inline-block;width:10px;height:10px;background:#dc2626;border-radius:2px;vertical-align:middle;"></span> 缺图标 (${iconMissN})</span>
-      <span><span style="display:inline-block;width:10px;height:10px;background:#d97706;border-radius:2px;vertical-align:middle;"></span> 多图标 (${iconExtraN})</span>
-    </div>`;
-    // 扶正角度提示
-    if (r.deskewAngle && Math.abs(r.deskewAngle) >= 0.3) {
-      html += `<div style="text-align:center;font-size:10.5px;color:#64748b;margin:4px 0;">📐 照片已自动扶正 ${r.deskewAngle.toFixed(1)}°</div>`;
-    }
-    // 不匹配项明细
-    if (r.blockExclusive && r.blockExclusive.length > 0) {
-      html += `<details open style="margin-top:10px;">
-        <summary style="font-size:12px;color:var(--bad);cursor:pointer;font-weight:700;">⚠ 产品缺失（${r.blockExclusive.length}项）</summary>
-        <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px;">`;
-      r.blockExclusive.forEach(function(t){
-        html += `<span style="background:rgba(220,38,38,.1);border:1px solid var(--bad);border-radius:6px;padding:2px 8px;font-size:11px;color:var(--bad);">${esc(t)}</span>`;
-      });
-      html += `</div></details>`;
-    }
-    if (r.photoExclusive && r.photoExclusive.length > 0) {
-      html += `<details open style="margin-top:6px;">
-        <summary style="font-size:12px;color:var(--warn);cursor:pointer;font-weight:700;">⚠ 产品多出（${r.photoExclusive.length}项）</summary>
-        <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px;">`;
-      r.photoExclusive.forEach(function(t){
-        html += `<span style="background:rgba(217,119,6,.1);border:1px solid var(--warn);border-radius:6px;padding:2px 8px;font-size:11px;color:var(--warn);">${esc(t)}</span>`;
-      });
-      html += `</div></details>`;
-    }
-    if (r.cadOnly && r.cadOnly.length > 0) {
-      html += `<details style="margin-top:6px;">
-        <summary style="font-size:12px;color:var(--sub);cursor:pointer;">CAD标注（${r.cadOnly.length}项，已排除）</summary>
-        <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px;">`;
-      r.cadOnly.forEach(function(t){
-        html += `<span style="background:rgba(136,136,136,.1);border:1px solid var(--sub);border-radius:6px;padding:2px 8px;font-size:11px;color:var(--sub);">${esc(t)}</span>`;
-      });
-      html += `</div></details>`;
-    }
-    // 判定文案
-    let verdict = '';
-    if (r.redRegions.length === 0 && r.yellowRegions.length === 0 && iconMissN === 0) {
-      verdict = `<div style="margin-top:10px;background:rgba(34,197,94,.08);border:1px solid var(--ok);border-radius:14px;padding:12px;text-align:center;color:var(--ok);font-weight:700;">✓ 产品与图纸标注一致（含图标）</div>`;
-    } else {
-      let parts = [];
-      if (r.redRegions.length) parts.push(r.redRegions.length + ' 处缺失');
-      if (r.yellowRegions.length) parts.push(r.yellowRegions.length + ' 处多出');
-      if (iconMissN) parts.push(iconMissN + ' 处缺图标');
-      if (iconExtraN) parts.push(iconExtraN + ' 处多图标');
-      verdict = `<div style="margin-top:10px;background:rgba(220,38,38,.08);border:1px solid var(--bad);border-radius:14px;padding:12px;text-align:center;color:var(--bad);font-weight:700;">⚠ ${parts.join(' / ')}</div>`;
-    }
-    // 保留原匹配结果 + 附加差异
-    box.innerHTML = old + '<div class="card" style="margin-top:12px;border:1px solid var(--line);">' +
-      '<div class="meta-line" style="font-weight:700;color:var(--txt);">🔍 差异标记</div>' + html + verdict + '</div>';
-  }catch(err){
-    clearTimeout(to);
-    box.innerHTML = `<div class="empty">差异标记失败：${esc((err&&err.message)||err)}</div>`;
-  }
-}
-
-// ---- 标准参考切图块（与照片整体标示配套的无标示图纸切块）----
-// 仅展示匹配到的标准参考切块（r.blockImageUrl，图纸切块，无差异标示），
-// 与上方「📷 照片整体差异标示」形成对照，不重复贴带标示的照片。
-function cutBlockHTML(r){
-  if (!r || !r.blockImageUrl) return '';
-  return `<details open style="border:1px solid var(--line);border-radius:12px;padding:6px 10px;background:#fff;margin:10px 0;">
-    <summary style="font-size:11.5px;color:var(--sub);cursor:pointer;font-weight:600;list-style:none;outline:none;">📐 图纸切块（标准参考 · 无标示） ▾</summary>
-    <img src="${esc(r.blockImageUrl)}" style="width:100%;height:auto;max-height:220px;object-fit:contain;border-radius:10px;margin-top:8px;opacity:.92;" alt="标准参考切块"/>
-  </details>`;
-}
-
-// ---- 照片整体差异标示（Phase 4/5 双展示：整图直接标示视图）----
-// ⭐ 调用 /diff-photo 在整张照片上直接画每块 ROI 外框 + 逐文本行框（跨块污染已消除），
-//    与下方「图块视图」（命中块差异）形成双展示。照片读不到的块 → low_conf，由图块视图兜底。
-function photoDiffSectionHTML(did){
-  return `<details open style="border:1px solid var(--line);border-radius:12px;padding:6px 10px;background:#fff;margin:10px 0;">
-    <summary style="font-size:12px;color:var(--txt);cursor:pointer;font-weight:700;list-style:none;outline:none;">📷 照片整体差异标示（整图直接标示 · 推荐） ▾</summary>
-    <div id="photoDiffBody_${did}" style="margin-top:8px;"><span class="spinner"></span> 正在生成照片整体标示…</div>
-  </details>`;
-}
-async function renderPhotoDiff(did, file){
-  const el = document.getElementById('photoDiffBody_' + did);
-  if (!el) return;
-  if (!file) { el.innerHTML = '<div class="meta-line" style="color:var(--sub);">无可用照片（请重拍后查看）</div>'; return; }
-  try {
-    const fd = new FormData(); fd.append('drawingId', did); fd.append('file', file);
-    const r = await (await fetch('api/drawings/diff-photo', { method: 'POST', body: fd })).json();
-    if (!r.success) { el.innerHTML = '<div class="empty">照片整体标示失败：' + esc(r.error || '未知') + '</div>'; return; }
-    let h = '';
-    h += `<div style="text-align:center;"><img src="${esc(r.markedImageUrl)}" style="width:100%;height:auto;max-height:340px;object-fit:contain;border-radius:10px;border:1px solid var(--line);" alt="照片整体标示"/></div>`;
-    if (r.deskewAngle && Math.abs(r.deskewAngle) >= 0.3) {
-      h += `<div style="text-align:center;font-size:10.5px;color:#64748b;margin:4px 0;">📐 照片已自动扶正 ${r.deskewAngle.toFixed(1)}°</div>`;
-    }
-    const order = { red: 0, yellow: 1, green: 2, gray: 3, low_conf: 4 };
-    const colorMap = { red: '#dc2626', yellow: '#d97706', green: '#22c55e', gray: '#9ca3af', low_conf: '#94a3b8' };
-    const labelMap = { red: '缺标', yellow: '多标/图标', green: '一致', gray: '尺寸标注', low_conf: '未读到' };
-    if (r.blocks && r.blocks.length) {
-      const sorted = [...r.blocks].sort((a, b) => (order[a.status] || 9) - (order[b.status] || 9));
-      h += `<div style="display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-top:8px;">`;
-      sorted.forEach(b => {
-        const ic = { missing: b.iconMissing || 0, extra: b.iconExtra || 0 };
-        const icTxt = (ic.missing || ic.extra) ? ('·图' + (ic.missing ? '缺' + ic.missing : '') + (ic.extra ? '多' + ic.extra : '')) : '';
-        h += `<span style="display:inline-flex;align-items:center;gap:4px;font-size:10.5px;padding:2px 7px;border-radius:8px;background:#fff;border:1px solid ${colorMap[b.status] || '#ccc'};color:${colorMap[b.status] || '#333'};">
-          <span style="width:8px;height:8px;border-radius:2px;background:${colorMap[b.status] || '#ccc'};"></span>块${b.bIdx}·${labelMap[b.status] || b.status}${icTxt}</span>`;
-      });
-      h += `</div>`;
-      const low = r.blocks.filter(b => b.status === 'low_conf').length;
-      if (low > 0) h += `<div style="font-size:10.5px;color:var(--sub);text-align:center;margin-top:6px;">${low} 个块照片未读到文字 → 见下方「图块视图」兜底比对</div>`;
-    }
-    el.innerHTML = h;
-  } catch (err) {
-    el.innerHTML = '<div class="empty">照片整体标示失败：' + esc((err && err.message) || err) + '</div>';
-  }
-}
-
-// ---- 差异标记内联渲染（已嵌入匹配结果，照片在外部主区展示，本区仅显示明细+判定）----
-function renderDiffMarkers(d){
-  let html = '';
-  const red = d.redRegions||[], yellow = d.yellowRegions||[], green = d.greenRegions||[], gray = d.grayRegions||[];
-  const icons = d.iconRegions||[];  // 🔮 图标区域（QR/NFC/非文字小块，紫色=到位）
-  const iconMissing = d.iconMissingRegions||[];  // 🔴 块有照片无（缺图标）
-  const iconExtra = d.iconExtraRegions||[];      // 🟡 照片有块无（多图标）
-  const pe = d.photoExclusive||[], be = d.blockExclusive||[], co = d.cadOnly||[];
-  const mc = d.missingChars||[];
-
-  // ⭐ 极简差异摘要（一行 pill），含图标到位/缺/多计数
-  const totalDiff = red.length + yellow.length;
-  if (totalDiff > 0 || icons.length > 0 || iconMissing.length > 0 || iconExtra.length > 0) {
-    const parts = [];
-    if (red.length) parts.push('<b style="color:#fff;background:#dc2626;padding:2px 9px;border-radius:6px;font-size:12.5px;">' + red.length + ' 处缺标</b>');
-    if (yellow.length) parts.push('<b style="color:#fff;background:#d97706;padding:2px 9px;border-radius:6px;font-size:12.5px;">' + yellow.length + ' 处多标</b>');
-    if (icons.length) parts.push('<b style="color:#fff;background:#8b5cf6;padding:2px 9px;border-radius:6px;font-size:12.5px;">' + icons.length + ' 处图标</b>');
-    if (iconMissing.length) parts.push('<b style="color:#fff;background:#dc2626;padding:2px 9px;border-radius:6px;font-size:12.5px;">🔮' + iconMissing.length + ' 处缺图标</b>');
-    if (iconExtra.length) parts.push('<b style="color:#fff;background:#d97706;padding:2px 9px;border-radius:6px;font-size:12.5px;">🔮' + iconExtra.length + ' 处多图标</b>');
-    if (green.length) parts.push('<span style="color:#15803d;font-weight:600;">' + green.length + ' 一致</span>');
-    html += '<div style="text-align:center;padding:9px 12px;background:rgba(220,38,38,.04);border-radius:12px;border:1px solid rgba(220,38,38,.12);font-size:12.5px;color:#475569;">' + parts.join(' <span style="color:#cbd5e1;margin:0 4px;">·</span> ') + '</div>';
-  }
-
-  // 判定（一行大字，红/绿渐变背景）
-  if (red.length === 0 && yellow.length === 0) {
-    html += '<div style="margin-top:8px;background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:2px solid #15803d;border-radius:12px;padding:14px;text-align:center;color:#15803d;font-weight:800;font-size:16px;letter-spacing:1px;">✓ 产品与图纸标注一致</div>';
-  } else {
-    html += '<div style="margin-top:8px;background:linear-gradient(135deg,#fef2f2,#fee2e2);border:2px solid #dc2626;border-radius:12px;padding:14px;text-align:center;color:#dc2626;font-weight:800;font-size:16px;letter-spacing:1px;box-shadow:0 2px 8px rgba(220,38,38,.15);">⚠ 图中红框处为差异点（' + totalDiff + ' 处）</div>';
-  }
-  return html;
 }
 
 // ---- 历史记录（模块内视图）----
