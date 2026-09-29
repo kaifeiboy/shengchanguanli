@@ -46,3 +46,15 @@ natapp/
 # 通过隧道下发的临时运行态
 data/tunnel_url.txt
 data/natapp_token.txt
+
+# IDE / 助手工具目录
+.comate/
+.trae/
+
+# 大体积一次性归档与验证产物（本地留存，不入库）
+outputs/
+_archive_20260926_preclean/
+_archive_20260926_cdrive/
+
+# Windows 快捷方式
+*.lnk
