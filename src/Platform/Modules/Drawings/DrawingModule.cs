@@ -26,7 +26,8 @@ public class DrawingModule : IModule
 
     public void RegisterServices(IServiceCollection services)
     {
-        services.AddSingleton<OcrService>();
+        // P8：OcrService 已上移到平台层注册（Program.cs）。
+        // 业务模块不再代持被其它模块依赖的共享服务，避免模块替换引发平台启动崩溃。
         services.AddSingleton<DrawingService>();
     }
 
@@ -288,12 +289,6 @@ public class DrawingModule : IModule
             });
         });
 
-        // 文件下载（复用本地文件访问层，带路径穿越防护）
-        app.MapGet("/api/files/{*vpath}", (string vpath, FileAccessService fs) =>
-        {
-            var phys = fs.ResolvePhysical(vpath);
-            if (phys == null || !File.Exists(phys)) return Results.NotFound();
-            return Results.File(phys, "application/pdf", Path.GetFileName(phys));
-        });
+        // P7：/api/files 已上移到平台层（Program.cs），此处不再映射，避免重复路由。
     }
 }
