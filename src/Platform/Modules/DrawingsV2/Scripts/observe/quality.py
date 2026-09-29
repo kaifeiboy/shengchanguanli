@@ -35,6 +35,18 @@ OVEREXPOSED_RATIO = 0.99   # >250 的像素占比
 UNDEREXPOSED_RATIO = 0.95  # <40 的像素占比
 DYNAMIC_RANGE_MIN = 30.0   # P99 - P1 低于此值认为几乎没有可分辨内容
 
+# ---- OCR 证据豁免（文档 §5 / §6） ----
+# 【为什么要有】清晰度（拉普拉斯方差）是**统计代理指标**，不是"能否比对"本身。
+# 实测 42 例中有 8 例被判"失焦"（sharp 16~98 < 100）而整张照片拒绝比对，
+# 但这些照片短边 1080~3072、动态范围 219~239，OCR 全部稳定识别出内容，
+# p63 三例甚至识别出了该部位全部 4 个打标对象（LOW VOLTAGE/禁止强电/地暖阀/DC15/24V）。
+# 文档 §5：质量不满足才返回"请重拍"，**不直接判缺标**；
+# 文档 §6：照片侧**必须**识别文字并保存置信度 —— OCR 是照片侧的正式环节。
+# 因此：OCR 取到有效证据 = 这张照片可以比对，清晰度类门槛只在 OCR 取不到证据时才拒绝。
+OCR_CONF_MIN = 0.5
+# 可被 OCR 证据豁免的理由前缀（清晰度/对比类统计门槛）
+OVERRIDABLE_REASONS = ("失焦", "灰阶动态范围不足")
+
 
 @dataclass
 class Quality:
@@ -48,6 +60,9 @@ class Quality:
     height: int = 0
     usable: bool = True
     reasons: list = field(default_factory=list)
+    ocr_override: bool = False   # OCR 证据是否已豁免清晰度类拒绝（文档 §5/§6）
+    ocr_texts: int = 0           # OCR 取到的有效文本条数
+    ocr_codes: int = 0           # 检测到的码数量
 
     def to_dict(self) -> dict:
         return {
@@ -61,6 +76,9 @@ class Quality:
             "height": self.height,
             "usable": self.usable,
             "reasons": list(self.reasons),
+            "ocr_override": self.ocr_override,
+            "ocr_texts": self.ocr_texts,
+            "ocr_codes": self.ocr_codes,
         }
 
 
@@ -108,4 +126,59 @@ def assess(bgr: np.ndarray) -> Quality:
         q.reasons.append(f"灰阶动态范围不足（P99-P1={dr:.0f} < {DYNAMIC_RANGE_MIN:.0f}，几乎无可分辨内容）")
 
     q.usable = len(q.reasons) == 0
+    return q
+
+
+def apply_ocr_evidence(q: Quality, texts, codes) -> Quality:
+    """以 OCR 识别结果作为「这张照片能否比对」的前置判断依据（文档 §5 / §6）。
+
+    规则：
+      - OCR 取到有效证据（≥1 条文本且最高置信度 ≥ OCR_CONF_MIN，或 ≥1 个二维码）
+        → 清晰度/动态范围这类**统计代理指标**由"拒绝"降级为"提示"，usable 置真；
+      - OCR 取不到证据 → 维持原判定（该请重拍就请重拍）；
+      - 分辨率过低、过曝、过暗属于"主体过小/内容消失"，不因 OCR 侥幸命中而豁免。
+
+    这样做不放松标准，只是把判定依据从"图像统计量"换成"实际能不能读出内容"，
+    符合 §5「质量不满足才请重拍，不直接判缺标」与 §6「照片侧必须识别文字」。
+    """
+    n = 0
+    best = 0.0
+    for t in (texts or []):
+        try:
+            s = (t.get("text") or "").strip()
+        except Exception:
+            s = ""
+        if not s:
+            continue
+        n += 1
+        try:
+            best = max(best, float(t.get("conf") or 0.0))
+        except Exception:
+            pass
+
+    code_n = 0
+    try:
+        code_n = len(codes or [])
+    except Exception:
+        code_n = 0
+
+    q.ocr_texts = n
+    q.ocr_codes = code_n
+
+    if not ((n > 0 and best >= OCR_CONF_MIN) or code_n > 0):
+        return q
+
+    kept, relaxed = [], []
+    for r in q.reasons:
+        if any(str(r).startswith(p) for p in OVERRIDABLE_REASONS):
+            relaxed.append(r)
+        else:
+            kept.append(r)
+
+    if relaxed:
+        q.reasons = kept + [
+            "清晰度偏低但 OCR 已识别内容，按可比对处理（原判定：" + "；".join(relaxed) + "）"
+        ]
+        q.usable = len(kept) == 0
+        q.ocr_override = True
     return q

@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Platform.Modules.DrawingsV2.Decision;
 
@@ -7,12 +8,18 @@ namespace Platform.Modules.DrawingsV2.Decision;
 ///
 /// 【设计原则：正向证据驱动】
 /// 只有拿到**正向证据**的块才会成为 mark：条款声明、已知打标内容命中、图像对象。
-/// 不做「圈一块区域再排除」的脆弱启发式 —— 那是旧方案 drawing_blocks 的老路。
+/// 不做「圈一块区域再排除」的脆弱启发式 —— 特指旧方案 drawing_blocks 的【纯文本+图像
+/// 38pt 聚类】（实测 p62 聚出 8 块全是标题栏/会签栏、产品部位 0 个，已废弃）。
+/// ⚠ 不要与本项目的【逻辑图块】混淆：逻辑图块基于几何部位分离（轮廓骨架 8-连通 +
+/// 空白走廊切分，见 docs/逻辑图块方案_2026-09-26.md），是产品部位的可靠来源，
+/// 与本类的【文本排版块 TextRun】（同一 block_index 的 span 归并）是不同层的概念。
 ///
 /// 【三条证据链（RuleId）】
 ///   R1 条款声明：图纸自己在「技术要求」里写明要打什么（最高可信）
 ///   R2 已知内容：条款没写，但图上出现了已实测的打标内容词（兜底，置信度较低）
 ///   R3 图像对象：页面上的图像 → 二维码 / 图标（方案：只验存在性与位置，不解码）
+///   R5 视觉兜底：转曲（outline）内容 —— 文字层读不到，靠 vpdf fallback 局部渲染 OCR 补回
+///      （方案 §1.8；感知层已排除与 span 交叠的区域，故不会重复识别文字层已有内容）
 ///
 /// 【可追溯】
 /// 每条 mark 都带 MarkSource（RuleId + SpanIds/ImageIds + Evidence 文本），
@@ -20,6 +27,11 @@ namespace Platform.Modules.DrawingsV2.Decision;
 /// </summary>
 public static class MarkBuilder
 {
+    private const double MaxViewAnchorDistanceSq = 0.1225; // 归一化距离 <= 0.35，超过即不强行贴部位
+    private static readonly Regex ModelCode = new(
+        @"(?<![A-Z0-9])[A-Z]{2,}(?:-[A-Z0-9]{2,})+(?![A-Z0-9])",
+        RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
     /// <summary>构造器输出：marks + 完整诊断信息。</summary>
     public sealed class Result
     {
@@ -34,11 +46,15 @@ public static class MarkBuilder
         public List<string> Warnings { get; } = new();
         public Dictionary<string, int> RuleHits { get; } = new();
         public bool VisionFallbackRequired { get; set; }
+        /// <summary>视觉兜底扫过的疑似转曲区数量（未跑兜底时为 0）。</summary>
+        public int VisionRegions { get; set; }
+        /// <summary>视觉兜底 OCR 读到的文本条数（进入 R5 判定的原始量）。</summary>
+        public int VisionTexts { get; set; }
         public string? Source { get; set; }
     }
 
     /// <summary>内部文本块（由同一 block_index 的 span 归并而来）。</summary>
-    private sealed class Block
+    private sealed class TextRun
     {
         public int Index;
         public string Text = "";
@@ -64,7 +80,11 @@ public static class MarkBuilder
     }
 
     /// <summary>从已解析的 vpdf 文档构造应打标对象清单。</summary>
-    public static Result Build(VpdfDocument doc, string drawingKey)
+    /// <param name="vision">
+    /// 视觉兜底（vpdf fallback）读到的文本；为空表示未跑兜底。
+    /// 由调用方（V2Service）注入 —— 决策层保持纯函数，不自己起进程。
+    /// </param>
+    public static Result Build(VpdfDocument doc, string drawingKey, IReadOnlyList<VisionText>? vision = null, bool excludePollution = true)
     {
         var r = new Result { DrawingKey = drawingKey };
         var pages = doc.Pages ?? new List<VpdfPage>();
@@ -97,7 +117,7 @@ public static class MarkBuilder
             // ---- R1：条款声明项在图上定位 ----
             // 同一文本块可能同时承载多个打标项（实测："地暖阀LOW VOLTAGE禁止强电AB" 同时含
             // 「地暖阀」与「禁止强电」），此时合并为 Group，避免产出多个坐标完全相同的 mark。
-            var byBlock = new Dictionary<Block, List<(string Item, string Key, TextMatch M)>>();
+            var byBlock = new Dictionary<TextRun, List<(string Item, string Key, TextMatch M)>>();
 
             // "spanId|spanId" 作为块的稳定签名，用于 R1/R2 交叉去重
             static string Sig(IEnumerable<string> ids) => string.Join("|", ids);
@@ -186,7 +206,7 @@ public static class MarkBuilder
             // 与 R1 共用「同块合并」逻辑：实测同一块常同时含多个已知内容词
             //（"LOW VOLTAGE禁止强电地暖阀DC15/24V" 会同时命中 3 项），
             // 逐条建 mark 只会产出多个坐标完全相同的重复项。
-            var byBlock2 = new Dictionary<Block, List<(string Item, string Key, TextMatch M)>>();
+            var byBlock2 = new Dictionary<TextRun, List<(string Item, string Key, TextMatch M)>>();
             foreach (var b in candidates)
             {
                 foreach (var (name, forms) in MarkRules.KnownContent)
@@ -210,6 +230,41 @@ public static class MarkBuilder
                     (name, key, m) => $"图上命中已知打标内容词表「{name}」的写法「{key}」（{m}）");
             }
 
+            // 型号只从已由 R1/R2 确认的实际打标块中提取，避免把标题栏中的型号建成 mark。
+            // 型号是跨视图区分能力最强的文字之一，必须进入档案才能供 BlockMatcher 使用。
+            foreach (var blk in byBlock.Keys.Concat(byBlock2.Keys).Distinct())
+            {
+                foreach (Match match in ModelCode.Matches(blk.Text))
+                {
+                    var model = match.Value.ToUpperInvariant();
+                    var (modelView, modelViewBbox) = InferView(blocks, blk.Cx, blk.Cy, W, H);
+                    var modelMark = new DrawingMark
+                    {
+                        Id = $"{drawingKey}#{seq++:D3}",
+                        Type = MarkType.Text,
+                        Text = model,
+                        Required = true,
+                        NormBbox = NormOf(blk, W, H),
+                        Bbox = new[] { blk.X0, blk.Y0, blk.X1, blk.Y1 },
+                        Direction = blk.Angle,
+                        Confidence = 0.85,
+                        View = modelView,
+                        ViewBbox = modelViewBbox,
+                        Source = new MarkSource
+                        {
+                            Kind = "pdf_vector",
+                            PageIndex = page.Index,
+                            RuleId = "R2-model",
+                            SpanIds = new List<string>(blk.SpanIds),
+                            Evidence = $"已确认打标块中提取型号「{model}」；块文本「{Trunc(blk.Text, 40)}」"
+                        }
+                    };
+                    ApplyCondition(blocks, modelMark);
+                    r.Marks.Add(modelMark);
+                    Hit(r, "R2-model");
+                }
+            }
+
             // ---- R4：图面候选（无条款声明图纸的兜底） ----
             // 背景：实测语料里有一类图纸（10寸屏约克/日立/海信）条款中不写打标内容，
             // 但图面确实印着打标内容（"POWER LINE IS FORBIDDEN禁止接入强电"、端子标识 "RS485-1"/"H-LINK"、
@@ -218,10 +273,11 @@ public static class MarkBuilder
             // Required=false、置信度低，由人工复核页确认后转为正式项 —— 不猜"合格与否"，只提供候选。
             if (declared.Count == 0)
             {
-                var byBlock4 = new Dictionary<Block, List<(string Item, string Key, TextMatch M)>>();
+                var byBlock4 = new Dictionary<TextRun, List<(string Item, string Key, TextMatch M)>>();
                 foreach (var b in candidates)
                 {
                     if (MarkRules.IsNoiseBlock(b.Text)) continue;
+                    if (!MarkRules.IsMarkingLike(b.Text)) continue;   // R4 只候选像打标内容的文本，过滤说明性长句/批注
                     if (byBlock2.ContainsKey(b)) continue;   // 已被 R2 认领的块不再作为候选
                     if (b.IsQrDecl) continue;                // "…二维码格式：" 是 R3 的证据来源，不是打标内容
                     if (b.IsNote || MarkRules.IsConditionalNote(b.Text)) continue;   // 注释/条件说明
@@ -250,7 +306,7 @@ public static class MarkBuilder
                 var icy = (b[1] + b[3]) / 2;
 
                 // 关联证据：最近的、含「二维码」字样的文字块（距离以图像自身尺寸为单位，非页面常量）
-                Block? near = null;
+                TextRun? near = null;
                 var bestD = double.MaxValue;
                 foreach (var tb in blocks)
                 {
@@ -260,25 +316,43 @@ public static class MarkBuilder
                 }
                 var scale = Math.Max(iw, ih);
                 var hasQrEvidence = near is not null && scale > 0 && bestD <= scale * 2.5;
+                var isQrReference = hasQrEvidence && near!.Text.Contains("格式", StringComparison.Ordinal);
+                if (isQrReference)
+                {
+                    r.Warnings.Add($"已排除二维码格式说明区中的参考图像 {img.Id}");
+                    Hit(r, "R3-reference-skip");
+                    continue;
+                }
+
+                // CAD 图中产品上的二维码常以较小的方形栅格图落位，附近没有“二维码”文字；
+                // 仅依赖说明文字会反而把放大示例识别成 QR、把真实落位识别成 Icon。
+                var pixelAspect = (img.Width, img.Height) is (> 0, > 0)
+                    ? (double)img.Width!.Value / img.Height!.Value
+                    : 0;
+                var isQrLikeRaster = pixelAspect is >= 0.75 and <= 1.33
+                                     && Math.Min(img.Width ?? 0, img.Height ?? 0) >= 48;
+                var isQr = hasQrEvidence || isQrLikeRaster;
 
                 var mark = new DrawingMark
                 {
                     Id = $"{drawingKey}#{seq++:D3}",
-                    Type = hasQrEvidence ? MarkType.Qr : MarkType.Icon,
+                    Type = isQr ? MarkType.Qr : MarkType.Icon,
                     Text = null,                      // 方案：二维码/图标只验存在性与位置，不记录解码文本
                     Required = true,
                     NormBbox = nb,
                     Bbox = b,
                     Direction = 0,
-                    Confidence = hasQrEvidence ? 0.90 : 0.50,
+                    Confidence = hasQrEvidence ? 0.90 : (isQrLikeRaster ? 0.65 : 0.50),
                     Source = new MarkSource
                     {
                         Kind = "pdf_vector",
                         PageIndex = page.Index,
-                        RuleId = hasQrEvidence ? "R3-qr" : "R3-icon",
+                        RuleId = isQr ? "R3-qr" : "R3-icon",
                         ImageIds = new List<string> { img.Id ?? "" },
                         Evidence = hasQrEvidence
                             ? $"图像对象 {img.Id} 邻近含「二维码」的文字块「{Trunc(near!.Text, 24)}」（距离 {bestD:F1}pt ≤ 2.5×图像尺寸 {scale:F1}pt）"
+                            : isQrLikeRaster
+                                ? $"图像对象 {img.Id} 为近方形栅格（{img.Width}×{img.Height}px），按产品二维码候选处理，需在图纸复核页确认"
                             : $"图像对象 {img.Id}（{img.Width}×{img.Height}px）无二维码文字证据，按图标候选处理"
                     }
                 };
@@ -287,11 +361,76 @@ public static class MarkBuilder
                 mark.ViewBbox = r3ViewBbox;
                 ApplyCondition(blocks, mark);
                 r.Marks.Add(mark);
-                Hit(r, hasQrEvidence ? "R3-qr" : "R3-icon");
+                Hit(r, isQr ? "R3-qr" : "R3-icon");
+            }
+
+            // ---- R5：视觉兜底（方案 §1.8）—— 转曲内容的局部 OCR 结果 ----
+            // 感知层已保证这些区域「无文字层 span 覆盖」（与 span 交叠的簇在聚簇阶段就被丢弃），
+            // 因此 R5 与 R1/R2/R4 结构上不会重复 —— 2026-09-22 实测同位重复 0 条。
+            //
+            // Required=true：这些是图纸上确实印着的内容，与 R2「图上出现已知内容」性质相同；
+            // 若置为候选（false）则比对时不参与强制判定，等于白补 —— 那不是 §1.8 的目的。
+            // 置信度取 min(OCR 置信度, 0.80)：低于 R1(0.95)/R2(0.75)，如实体现 OCR 的不确定性。
+            if (vision is not null)
+            {
+                foreach (var t in vision)
+                {
+                    if (t.PageIndex != page.Index) continue;
+                    var text = (t.Text ?? "").Trim();
+                    if (text.Length == 0) continue;
+                    var nb = t.NormBbox;
+                    if (nb is null || nb.Length < 4) continue;
+
+                    var conf = Math.Min(t.Conf > 0 ? t.Conf : 0.5, 0.80);
+                    var (r5View, r5ViewBbox) = InferView(blocks, (nb[0] + nb[2] / 2) * W, (nb[1] + nb[3] / 2) * H, W, H);
+                    var r5 = new DrawingMark
+                    {
+                        Id = $"{drawingKey}#{seq++:D3}",
+                        Type = MarkType.Text,
+                        Text = text,
+                        Required = true,
+                        NormBbox = nb,
+                        Bbox = new[] { nb[0] * W, nb[1] * H, (nb[0] + nb[2]) * W, (nb[1] + nb[3]) * H },
+                        Direction = 0,
+                        Confidence = conf,
+                        View = r5View,
+                        ViewBbox = r5ViewBbox,
+                        Source = new MarkSource
+                        {
+                            Kind = "vision_fallback",
+                            PageIndex = page.Index,
+                            RuleId = "R5-vision",
+                            Evidence = $"疑似转曲区 {t.RegionId} 局部渲染 OCR 读到「{text}」" +
+                                       $"（{t.Dpi}dpi，OCR 置信度 {t.Conf:F2}）；该区域无文字层覆盖"
+                        }
+                    };
+                    ApplyCondition(blocks, r5);
+                    r.Marks.Add(r5);
+                    Hit(r, "R5-vision");
+                }
             }
         }
 
         Dedupe(r);
+
+        // A（#37）：图纸侧清单净化 —— 仅针对低置信兜底链 R4/R5，
+        // 正向证据链 R1/R2/R3（条款/已知内容/图像）不受影响（设计原则：正向证据驱动）。
+        if (excludePollution)
+        {
+            foreach (var m in r.Marks)
+            {
+                if (m.Excluded) continue;
+                var rid = m.Source.RuleId ?? "";
+                if (!rid.StartsWith("R4") && rid != "R5-vision") continue;
+                var reason = MarkRules.PollutionReason(m.Text ?? "");
+                if (reason is not null)
+                {
+                    m.Excluded = true;
+                    m.ExcludeReason = reason;
+                    m.Required = false;   // 排除项不参与强制判定，避免驱动 Missing/NotDetected
+                }
+            }
+        }
 
         // 「没有任何应打标对象」必须与「解析失败」区分开：
         // 实测 02-4K3GR 的技术要求里通篇没有打标声明（只有喷漆/公差/装配），
@@ -308,7 +447,7 @@ public static class MarkBuilder
 
     // ---------------- 归并 / 分类 ----------------
 
-    private static List<Block> GroupBlocks(VpdfPage page)
+    private static List<TextRun> GroupBlocks(VpdfPage page)
     {
         var groups = new Dictionary<int, List<VpdfSpan>>();
         foreach (var s in page.TextSpans ?? new List<VpdfSpan>())
@@ -317,7 +456,7 @@ public static class MarkBuilder
             l.Add(s);
         }
 
-        var blocks = new List<Block>();
+        var blocks = new List<TextRun>();
         foreach (var (bi, spans) in groups)
         {
             spans.Sort((a, b) =>
@@ -351,7 +490,7 @@ public static class MarkBuilder
 
             if (x0 == double.MaxValue) { x0 = y0 = x1 = y1 = 0; }
 
-            blocks.Add(new Block
+            blocks.Add(new TextRun
             {
                 Index = bi,
                 Text = sb.ToString().Trim(),
@@ -370,7 +509,7 @@ public static class MarkBuilder
         return blocks;
     }
 
-    private static void Classify(List<Block> blocks)
+    private static void Classify(List<TextRun> blocks)
     {
         foreach (var b in blocks)
         {
@@ -386,7 +525,7 @@ public static class MarkBuilder
 
     // ---------------- 证据链 1：条款声明解析 ----------------
 
-    private static List<string> ExtractDeclared(List<Block> blocks, Result r)
+    private static List<string> ExtractDeclared(List<TextRun> blocks, Result r)
     {
         var items = new List<string>();
         foreach (var b in blocks)
@@ -427,7 +566,7 @@ public static class MarkBuilder
     /// 因此：单命中 → 直接建 mark；多命中 → 合并为一个 Group，子项放 Children 保留可追溯。
     /// </summary>
     private static void EmitGrouped(Result r, string drawingKey, Func<int> nextId, VpdfPage page,
-        List<Block> blocks, double W, double H, Block blk,
+        List<TextRun> blocks, double W, double H, TextRun blk,
         List<(string Item, string Key, TextMatch M)> list, string ruleBase,
         Func<string, string, TextMatch, string> evidenceOf)
     {
@@ -442,6 +581,7 @@ public static class MarkBuilder
 
         // 视图推断在 Select 外完成（InferView 现在返回 (view, viewBbox) 元组）
         var (emitView, emitViewBbox) = InferView(blocks, blk.Cx, blk.Cy, W, H);
+        var markNorm = NormOf(blk, W, H);
 
         var kids = list.Select(x => new DrawingMark
         {
@@ -449,7 +589,7 @@ public static class MarkBuilder
             Type = MarkType.Text,
             Text = x.Item,
             Required = required,
-            NormBbox = NormOf(blk, W, H),
+            NormBbox = markNorm,
             Bbox = new[] { blk.X0, blk.Y0, blk.X1, blk.Y1 },
             Direction = blk.Angle,
             Confidence = x.M == TextMatch.Ambiguous ? ambConf : conf,
@@ -478,7 +618,7 @@ public static class MarkBuilder
                 Type = MarkType.Group,
                 Text = string.Join("+", kids.Select(k => k.Text)),
                 Required = required,
-                NormBbox = NormOf(blk, W, H),
+                NormBbox = markNorm,
                 Bbox = new[] { blk.X0, blk.Y0, blk.X1, blk.Y1 },
                 Direction = blk.Angle,
                 Confidence = kids.Min(k => k.Confidence),
@@ -500,7 +640,7 @@ public static class MarkBuilder
     }
 
     /// <summary>归一化 [x, y, w, h] ∈ [0,1]（相对页面标准坐标系）。</summary>
-    private static double[] NormOf(Block b, double W, double H)
+    private static double[] NormOf(TextRun b, double W, double H)
     {
         if (W <= 0 || H <= 0) return new[] { 0.0, 0.0, 0.0, 0.0 };
         double Clamp(double v) => v < 0 ? 0 : (v > 1 ? 1 : v);
@@ -535,7 +675,7 @@ public static class MarkBuilder
     /// 同时返回视图标签块的 NormBbox（viewBbox），供视图级配准替代 marks UnionBbox 使用。
     /// 距离在**归一化坐标**下计算（除以页面宽高），使横/竖版图纸行为一致。
     /// </summary>
-    private static (MarkView view, double[]? viewBbox) InferView(List<Block> blocks, double cx, double cy, double W, double H)
+    private static (MarkView view, double[]? viewBbox) InferView(List<TextRun> blocks, double cx, double cy, double W, double H)
     {
         if (W <= 0 || H <= 0) return (MarkView.Unspecified, null);
 
@@ -551,7 +691,7 @@ public static class MarkBuilder
         }
 
         // 2) 最近邻视图标签块（仅排除 clause/revision）
-        Block? best = null;
+        TextRun? best = null;
         var bestD = double.MaxValue;
         string? bestWord = null;
         foreach (var b in blocks)
@@ -566,18 +706,20 @@ public static class MarkBuilder
             var d = dx * dx + dy * dy;
             if (d < bestD) { bestD = d; best = b; bestWord = w; }
         }
-        return best is null ? (MarkView.Unspecified, null) : (MarkRules.ViewOf(bestWord), best.Norm);
+        return best is null || bestD > MaxViewAnchorDistanceSq
+            ? (MarkView.Unspecified, null)
+            : (MarkRules.ViewOf(bestWord), best.Norm);
     }
 
     /// <summary>把「以实际生产为准 / 按实际…打印」这类条件挂到 mark 上。</summary>
-    private static void ApplyCondition(List<Block> blocks, DrawingMark mark)
+    private static void ApplyCondition(List<TextRun> blocks, DrawingMark mark)
     {
         var cond = FindCondition(blocks);
         if (cond is not null) mark.Condition = cond;
     }
 
     /// <summary>批量版本：同一组条件下发给多个 mark（R1 同块多声明项场景）。</summary>
-    private static void ApplyCondition(List<Block> blocks, List<DrawingMark> marks)
+    private static void ApplyCondition(List<TextRun> blocks, List<DrawingMark> marks)
     {
         if (marks.Count == 0) return;
         var cond = FindCondition(blocks);
@@ -585,7 +727,7 @@ public static class MarkBuilder
         foreach (var m in marks) m.Condition = cond;
     }
 
-    private static string? FindCondition(List<Block> blocks)
+    private static string? FindCondition(List<TextRun> blocks)
     {
         foreach (var b in blocks)
         {
@@ -611,14 +753,35 @@ public static class MarkBuilder
                 k.Type == m.Type
                 && string.Equals(k.Text, m.Text, StringComparison.Ordinal)
                 && k.Source.PageIndex == m.Source.PageIndex
-                && (k.Source.SpanIds.Count > 0
+                && ((k.Source.SpanIds.Count > 0
                         ? k.Source.SpanIds.SequenceEqual(m.Source.SpanIds)
-                        : k.Source.ImageIds.SequenceEqual(m.Source.ImageIds)));
+                        : k.Source.ImageIds.SequenceEqual(m.Source.ImageIds))
+                    // 【文档 §5 一对一】同一视图、同类型、坐标高度重合 = 同一个物理对象。
+                    // 实测 p49 的 i000 与 i005 是同一位置重复绘制的两个 QR 图像对象
+                    // （坐标完全相同），ID 不同使原判据失效，导致一个对象对应多条候选。
+                    // 仍要求 Text 相同，故同坐标不同文本的对象（如 p63 禁止强电/地暖阀/DC15/24V）不受影响。
+                    || (k.View == m.View && SameSpot(k.NormBbox, m.NormBbox))));
             if (dup is null) keep.Add(m);
         }
         keep.Sort((a, b) => string.CompareOrdinal(a.Id, b.Id));
         r.Marks.Clear();
         r.Marks.AddRange(keep);
+    }
+
+    /// <summary>
+    /// 两个归一化框是否指向同一处（IoU ≥ 0.9）。
+    /// 用于识别「同一位置重复绘制」的图像对象（文档 §5 一对一）。
+    /// </summary>
+    private static bool SameSpot(double[]? a, double[]? b)
+    {
+        if (a is not { Length: >= 4 } || b is not { Length: >= 4 }) return false;
+        if (a[2] <= 0 || a[3] <= 0 || b[2] <= 0 || b[3] <= 0) return false;
+        double ix = Math.Max(0.0, Math.Min(a[0] + a[2], b[0] + b[2]) - Math.Max(a[0], b[0]));
+        double iy = Math.Max(0.0, Math.Min(a[1] + a[3], b[1] + b[3]) - Math.Max(a[1], b[1]));
+        double inter = ix * iy;
+        if (inter <= 0) return false;
+        double uni = a[2] * a[3] + b[2] * b[3] - inter;
+        return uni > 0 && inter / uni >= 0.9;
     }
 
     private static string Trunc(string s, int n)

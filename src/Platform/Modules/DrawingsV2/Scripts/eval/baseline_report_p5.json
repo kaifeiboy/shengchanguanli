@@ -1,0 +1,2217 @@
+{
+  "generatedAt": "2026-09-17 12:01:46",
+  "endpoint": "http://127.0.0.1:5000",
+  "metrics": {
+    "casesTotal": 42,
+    "casesOk": 42,
+    "photoUsableRate": 100.0,
+    "viewInferRate": 100.0,
+    "anchorApplyRate": 54.8,
+    "judgedTotal": 173,
+    "decisiveRate": 37.0,
+    "notDetectedRate": 33.5,
+    "verdictDistribution": {
+      "Matched": 64,
+      "NotApplicable": 60,
+      "NotDetected": 58,
+      "LowConfidence": 51
+    },
+    "latencyP50Ms": 11494,
+    "latencyP95Ms": 13495,
+    "truthCoverage": {
+      "viewLabeled": 0,
+      "marksLabeled": 0,
+      "humanReviews": 43
+    },
+    "viewAccuracy": null,
+    "recall": 77.1,
+    "falseRedRate": null,
+    "falseGreenRate": 0.0
+  },
+  "results": [
+    {
+      "id": "p61-f403feb6",
+      "profileId": 61,
+      "photoName": "real_25.jpg",
+      "ok": true,
+      "ms": 12751,
+      "usable": true,
+      "inferredView": "TopCover",
+      "selectedView": "TopCover",
+      "anchorApplied": true,
+      "counts": {
+        "Matched": 2,
+        "NotDetected": 1,
+        "NotApplicable": 3,
+        "LowConfidence": 1
+      },
+      "verdicts": [
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#000",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": "服务热线"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#001",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "禁止强电"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#002",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "NFC"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#003",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "QHRW5"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#004",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "QHRW5"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#005",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": null
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#006",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": null
+        }
+      ],
+      "recordId": 596
+    },
+    {
+      "id": "p61-ed96d26e",
+      "profileId": 61,
+      "photoName": "wxwork_edge.jpg",
+      "ok": true,
+      "ms": 9458,
+      "usable": true,
+      "inferredView": "TopCover",
+      "selectedView": "TopCover",
+      "anchorApplied": true,
+      "counts": {
+        "Matched": 2,
+        "NotDetected": 1,
+        "NotApplicable": 3,
+        "LowConfidence": 1
+      },
+      "verdicts": [
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#000",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": "服务热线"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#001",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "禁止强电"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#002",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "NFC"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#003",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "QHRW5"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#004",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "QHRW5"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#005",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": null
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#006",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": null
+        }
+      ],
+      "recordId": 597
+    },
+    {
+      "id": "p61-89ec3ab0",
+      "profileId": 61,
+      "photoName": "1789200167904.jpg",
+      "ok": true,
+      "ms": 12109,
+      "usable": true,
+      "inferredView": "TopCover",
+      "selectedView": "TopCover",
+      "anchorApplied": true,
+      "counts": {
+        "Matched": 2,
+        "NotDetected": 1,
+        "NotApplicable": 3,
+        "LowConfidence": 1
+      },
+      "verdicts": [
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#000",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": "服务热线"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#001",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "禁止强电"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#002",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "NFC"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#003",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "QHRW5"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#004",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "QHRW5"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#005",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": null
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#006",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": null
+        }
+      ],
+      "recordId": 598
+    },
+    {
+      "id": "p61-1550cee2",
+      "profileId": 61,
+      "photoName": "1789200213940.jpg",
+      "ok": true,
+      "ms": 11593,
+      "usable": true,
+      "inferredView": "TopCover",
+      "selectedView": "TopCover",
+      "anchorApplied": true,
+      "counts": {
+        "Matched": 2,
+        "NotDetected": 1,
+        "NotApplicable": 3,
+        "LowConfidence": 1
+      },
+      "verdicts": [
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#000",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": "服务热线"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#001",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "禁止强电"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#002",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "NFC"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#003",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "QHRW5"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#004",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "QHRW5"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#005",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": null
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#006",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": null
+        }
+      ],
+      "recordId": 599
+    },
+    {
+      "id": "p61-c91b6258",
+      "profileId": 61,
+      "photoName": "1789201684745.jpg",
+      "ok": true,
+      "ms": 12592,
+      "usable": true,
+      "inferredView": "TopCover",
+      "selectedView": "TopCover",
+      "anchorApplied": true,
+      "counts": {
+        "NotDetected": 2,
+        "NotApplicable": 3,
+        "Matched": 2
+      },
+      "verdicts": [
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#000",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "服务热线"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#001",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "禁止强电"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#002",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "NFC"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#003",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "QHRW5"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#004",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "QHRW5"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#005",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": null
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#006",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": null
+        }
+      ],
+      "recordId": 600
+    },
+    {
+      "id": "p61-b8f7be02",
+      "profileId": 61,
+      "photoName": "1789202649896.jpg",
+      "ok": true,
+      "ms": 12150,
+      "usable": true,
+      "inferredView": "TopCover",
+      "selectedView": "TopCover",
+      "anchorApplied": true,
+      "counts": {
+        "Matched": 2,
+        "NotDetected": 1,
+        "NotApplicable": 3,
+        "LowConfidence": 1
+      },
+      "verdicts": [
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#000",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": "服务热线"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#001",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "禁止强电"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#002",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "NFC"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#003",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "QHRW5"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#004",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "QHRW5"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#005",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": null
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#006",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": null
+        }
+      ],
+      "recordId": 601
+    },
+    {
+      "id": "p61-77534c34",
+      "profileId": 61,
+      "photoName": "1789202671051.jpg",
+      "ok": true,
+      "ms": 11508,
+      "usable": true,
+      "inferredView": "TopCover",
+      "selectedView": "TopCover",
+      "anchorApplied": true,
+      "counts": {
+        "Matched": 2,
+        "NotDetected": 1,
+        "NotApplicable": 3,
+        "LowConfidence": 1
+      },
+      "verdicts": [
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#000",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": "服务热线"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#001",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "禁止强电"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#002",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "NFC"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#003",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "QHRW5"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#004",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "QHRW5"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#005",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": null
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#006",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": null
+        }
+      ],
+      "recordId": 602
+    },
+    {
+      "id": "p61-e783f363",
+      "profileId": 61,
+      "photoName": "P1HVQ_closeup_01.jpg",
+      "ok": true,
+      "ms": 8707,
+      "usable": true,
+      "inferredView": "TopCover",
+      "selectedView": "TopCover",
+      "anchorApplied": true,
+      "counts": {
+        "Matched": 2,
+        "NotDetected": 1,
+        "NotApplicable": 3,
+        "LowConfidence": 1
+      },
+      "verdicts": [
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#000",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": "服务热线"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#001",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "禁止强电"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#002",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "NFC"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#003",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "QHRW5"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#004",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "QHRW5"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#005",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": null
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#006",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": null
+        }
+      ],
+      "recordId": 603
+    },
+    {
+      "id": "p61-150010ad",
+      "profileId": 61,
+      "photoName": "1789209940251.jpg",
+      "ok": true,
+      "ms": 11682,
+      "usable": true,
+      "inferredView": "TopCover",
+      "selectedView": "TopCover",
+      "anchorApplied": true,
+      "counts": {
+        "Matched": 2,
+        "NotDetected": 1,
+        "NotApplicable": 3,
+        "LowConfidence": 1
+      },
+      "verdicts": [
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#000",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": "服务热线"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#001",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "禁止强电"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#002",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "NFC"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#003",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "QHRW5"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#004",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "QHRW5"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#005",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": null
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#006",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": null
+        }
+      ],
+      "recordId": 604
+    },
+    {
+      "id": "p61-6f206d21",
+      "profileId": 61,
+      "photoName": "1789210017026.jpg",
+      "ok": true,
+      "ms": 12416,
+      "usable": true,
+      "inferredView": "TopCover",
+      "selectedView": "TopCover",
+      "anchorApplied": true,
+      "counts": {
+        "NotDetected": 2,
+        "NotApplicable": 3,
+        "Matched": 2
+      },
+      "verdicts": [
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#000",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "服务热线"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#001",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "禁止强电"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#002",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "NFC"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#003",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "QHRW5"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#004",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "QHRW5"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#005",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": null
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#006",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": null
+        }
+      ],
+      "recordId": 605
+    },
+    {
+      "id": "p61-0253298c",
+      "profileId": 61,
+      "photoName": "1789210052660.jpg",
+      "ok": true,
+      "ms": 12797,
+      "usable": true,
+      "inferredView": "TopCover",
+      "selectedView": "TopCover",
+      "anchorApplied": true,
+      "counts": {
+        "NotDetected": 2,
+        "NotApplicable": 3,
+        "Matched": 2
+      },
+      "verdicts": [
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#000",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "服务热线"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#001",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "禁止强电"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#002",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "NFC"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#003",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "QHRW5"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#004",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "QHRW5"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#005",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": null
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#006",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": null
+        }
+      ],
+      "recordId": 606
+    },
+    {
+      "id": "p61-ab54f291",
+      "profileId": 61,
+      "photoName": "1789211225703.jpg",
+      "ok": true,
+      "ms": 10550,
+      "usable": true,
+      "inferredView": "TopCover",
+      "selectedView": "TopCover",
+      "anchorApplied": true,
+      "counts": {
+        "NotDetected": 2,
+        "NotApplicable": 3,
+        "Matched": 2
+      },
+      "verdicts": [
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#000",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "服务热线"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#001",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "禁止强电"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#002",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "NFC"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#003",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "QHRW5"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#004",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "QHRW5"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#005",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": null
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#006",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": null
+        }
+      ],
+      "recordId": 607
+    },
+    {
+      "id": "p61-64d97161",
+      "profileId": 61,
+      "photoName": "1789215267593.jpg",
+      "ok": true,
+      "ms": 11480,
+      "usable": true,
+      "inferredView": "TopCover",
+      "selectedView": "TopCover",
+      "anchorApplied": true,
+      "counts": {
+        "Matched": 2,
+        "NotDetected": 1,
+        "NotApplicable": 3,
+        "LowConfidence": 1
+      },
+      "verdicts": [
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#000",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": "服务热线"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#001",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "禁止强电"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#002",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "NFC"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#003",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "QHRW5"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#004",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "QHRW5"
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#005",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": null
+        },
+        {
+          "markKey": "02-PC-P1HVQ效果图25.6.20-Model#006",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": null
+        }
+      ],
+      "recordId": 608
+    },
+    {
+      "id": "p62-7b3bf646",
+      "profileId": 62,
+      "photoName": "P1HJQ_closeup_01.jpg",
+      "ok": true,
+      "ms": 8871,
+      "usable": true,
+      "inferredView": "Side",
+      "selectedView": "Side",
+      "anchorApplied": true,
+      "counts": {
+        "Matched": 1,
+        "NotDetected": 3
+      },
+      "verdicts": [
+        {
+          "markKey": "02-PC-P1HJQ效果图25.7.15dwg-Model#001",
+          "state": "Matched",
+          "view": "Side",
+          "text": "服务热线"
+        },
+        {
+          "markKey": "02-PC-P1HJQ效果图25.7.15dwg-Model#002",
+          "state": "NotDetected",
+          "view": "Side",
+          "text": "禁止强电"
+        },
+        {
+          "markKey": "02-PC-P1HJQ效果图25.7.15dwg-Model#003",
+          "state": "NotDetected",
+          "view": "Side",
+          "text": "DC15/24V"
+        },
+        {
+          "markKey": "02-PC-P1HJQ效果图25.7.15dwg-Model#004",
+          "state": "NotDetected",
+          "view": "Side",
+          "text": "禁止强电+DC15/24V"
+        }
+      ],
+      "recordId": 609
+    },
+    {
+      "id": "p62-3452fef2",
+      "profileId": 62,
+      "photoName": "P1HJQ_real_01.jpg",
+      "ok": true,
+      "ms": 9471,
+      "usable": true,
+      "inferredView": "Side",
+      "selectedView": "Side",
+      "anchorApplied": true,
+      "counts": {
+        "Matched": 1,
+        "NotDetected": 3
+      },
+      "verdicts": [
+        {
+          "markKey": "02-PC-P1HJQ效果图25.7.15dwg-Model#001",
+          "state": "Matched",
+          "view": "Side",
+          "text": "服务热线"
+        },
+        {
+          "markKey": "02-PC-P1HJQ效果图25.7.15dwg-Model#002",
+          "state": "NotDetected",
+          "view": "Side",
+          "text": "禁止强电"
+        },
+        {
+          "markKey": "02-PC-P1HJQ效果图25.7.15dwg-Model#003",
+          "state": "NotDetected",
+          "view": "Side",
+          "text": "DC15/24V"
+        },
+        {
+          "markKey": "02-PC-P1HJQ效果图25.7.15dwg-Model#004",
+          "state": "NotDetected",
+          "view": "Side",
+          "text": "禁止强电+DC15/24V"
+        }
+      ],
+      "recordId": 610
+    },
+    {
+      "id": "p63-3ca0bfd4",
+      "profileId": 63,
+      "photoName": "1789215884947.jpg",
+      "ok": true,
+      "ms": 8242,
+      "usable": true,
+      "inferredView": "Nameplate",
+      "selectedView": "Nameplate",
+      "anchorApplied": false,
+      "counts": {
+        "NotApplicable": 1
+      },
+      "verdicts": [
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#model-YCWA15NCWQ",
+          "state": "NotApplicable",
+          "view": "Nameplate",
+          "text": "YCWA15NCWQ"
+        }
+      ],
+      "recordId": 611
+    },
+    {
+      "id": "p63-c8509be1",
+      "profileId": 63,
+      "photoName": "1789345962398.jpg",
+      "ok": true,
+      "ms": 7470,
+      "usable": true,
+      "inferredView": "Nameplate",
+      "selectedView": "Nameplate",
+      "anchorApplied": false,
+      "counts": {
+        "NotApplicable": 1
+      },
+      "verdicts": [
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#model-YCWA15NCWQ",
+          "state": "NotApplicable",
+          "view": "Nameplate",
+          "text": "YCWA15NCWQ"
+        }
+      ],
+      "recordId": 612
+    },
+    {
+      "id": "p63-5a64e4d2",
+      "profileId": 63,
+      "photoName": "1789348480046.jpg",
+      "ok": true,
+      "ms": 7310,
+      "usable": true,
+      "inferredView": "Nameplate",
+      "selectedView": "Nameplate",
+      "anchorApplied": false,
+      "counts": {
+        "NotApplicable": 1
+      },
+      "verdicts": [
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#model-YCWA15NCWQ",
+          "state": "NotApplicable",
+          "view": "Nameplate",
+          "text": "YCWA15NCWQ"
+        }
+      ],
+      "recordId": 613
+    },
+    {
+      "id": "p63-05617ef6",
+      "profileId": 63,
+      "photoName": "1789350595323.jpg",
+      "ok": true,
+      "ms": 11671,
+      "usable": true,
+      "inferredView": "TopCover",
+      "selectedView": "TopCover",
+      "anchorApplied": false,
+      "counts": {
+        "NotApplicable": 1,
+        "NotDetected": 4,
+        "Matched": 2,
+        "LowConfidence": 1
+      },
+      "verdicts": [
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#000",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "上盖顶部"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#003",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "禁止强电"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#004",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "地暖阀"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#005",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "DC15/24V"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#006",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "禁止强电+地暖阀+DC15/24V"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#007",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": null
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#008",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": null
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#009",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": null
+        }
+      ],
+      "recordId": 614
+    },
+    {
+      "id": "p63-75c033fc",
+      "profileId": 63,
+      "photoName": "1789357500320.jpg",
+      "ok": true,
+      "ms": 7275,
+      "usable": true,
+      "inferredView": "Nameplate",
+      "selectedView": "Nameplate",
+      "anchorApplied": false,
+      "counts": {
+        "NotApplicable": 1
+      },
+      "verdicts": [
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#model-YCWA15NCWQ",
+          "state": "NotApplicable",
+          "view": "Nameplate",
+          "text": "YCWA15NCWQ"
+        }
+      ],
+      "recordId": 615
+    },
+    {
+      "id": "p63-ade5622b",
+      "profileId": 63,
+      "photoName": "1789366686909.jpg",
+      "ok": true,
+      "ms": 10979,
+      "usable": true,
+      "inferredView": "TopCover",
+      "selectedView": "TopCover",
+      "anchorApplied": false,
+      "counts": {
+        "NotApplicable": 1,
+        "LowConfidence": 5,
+        "Matched": 2
+      },
+      "verdicts": [
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#000",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "上盖顶部"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#003",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": "禁止强电"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#004",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": "地暖阀"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#005",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": "DC15/24V"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#006",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": "禁止强电+地暖阀+DC15/24V"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#007",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": null
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#008",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": null
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#009",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": null
+        }
+      ],
+      "recordId": 616
+    },
+    {
+      "id": "p63-b977114e",
+      "profileId": 63,
+      "photoName": "1789366773972.jpg",
+      "ok": true,
+      "ms": 12665,
+      "usable": true,
+      "inferredView": "TopCover",
+      "selectedView": "TopCover",
+      "anchorApplied": false,
+      "counts": {
+        "NotApplicable": 1,
+        "LowConfidence": 5,
+        "Matched": 2
+      },
+      "verdicts": [
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#000",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "上盖顶部"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#003",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": "禁止强电"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#004",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": "地暖阀"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#005",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": "DC15/24V"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#006",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": "禁止强电+地暖阀+DC15/24V"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#007",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": null
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#008",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": null
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#009",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": null
+        }
+      ],
+      "recordId": 617
+    },
+    {
+      "id": "p63-7d6f7bf5",
+      "profileId": 63,
+      "photoName": "1789368229296.jpg",
+      "ok": true,
+      "ms": 7799,
+      "usable": true,
+      "inferredView": "Nameplate",
+      "selectedView": "Nameplate",
+      "anchorApplied": false,
+      "counts": {
+        "NotApplicable": 1
+      },
+      "verdicts": [
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#model-YCWA15NCWQ",
+          "state": "NotApplicable",
+          "view": "Nameplate",
+          "text": "YCWA15NCWQ"
+        }
+      ],
+      "recordId": 618
+    },
+    {
+      "id": "p63-57987cb4",
+      "profileId": 63,
+      "photoName": "1789370550973.jpg",
+      "ok": true,
+      "ms": 11171,
+      "usable": true,
+      "inferredView": "TopCover",
+      "selectedView": "TopCover",
+      "anchorApplied": false,
+      "counts": {
+        "NotApplicable": 1,
+        "LowConfidence": 5,
+        "Matched": 2
+      },
+      "verdicts": [
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#000",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "上盖顶部"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#003",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": "禁止强电"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#004",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": "地暖阀"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#005",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": "DC15/24V"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#006",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": "禁止强电+地暖阀+DC15/24V"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#007",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": null
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#008",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": null
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#009",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": null
+        }
+      ],
+      "recordId": 619
+    },
+    {
+      "id": "p63-08a0d038",
+      "profileId": 63,
+      "photoName": "1789370683865.jpg",
+      "ok": true,
+      "ms": 6683,
+      "usable": true,
+      "inferredView": "Nameplate",
+      "selectedView": "Nameplate",
+      "anchorApplied": false,
+      "counts": {
+        "NotApplicable": 1
+      },
+      "verdicts": [
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#model-YCWA15NCWQ",
+          "state": "NotApplicable",
+          "view": "Nameplate",
+          "text": "YCWA15NCWQ"
+        }
+      ],
+      "recordId": 620
+    },
+    {
+      "id": "p63-6a15dd8d",
+      "profileId": 63,
+      "photoName": "1789379288171.jpg",
+      "ok": true,
+      "ms": 12022,
+      "usable": true,
+      "inferredView": "TopCover",
+      "selectedView": "TopCover",
+      "anchorApplied": false,
+      "counts": {
+        "NotApplicable": 1,
+        "LowConfidence": 5,
+        "Matched": 2
+      },
+      "verdicts": [
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#000",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "上盖顶部"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#003",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": "禁止强电"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#004",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": "地暖阀"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#005",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": "DC15/24V"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#006",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": "禁止强电+地暖阀+DC15/24V"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#007",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": null
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#008",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": null
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#009",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": null
+        }
+      ],
+      "recordId": 621
+    },
+    {
+      "id": "p63-5cd95a01",
+      "profileId": 63,
+      "photoName": "1789379322041.jpg",
+      "ok": true,
+      "ms": 11275,
+      "usable": true,
+      "inferredView": "TopCover",
+      "selectedView": "TopCover",
+      "anchorApplied": false,
+      "counts": {
+        "NotApplicable": 1,
+        "NotDetected": 4,
+        "Matched": 2,
+        "LowConfidence": 1
+      },
+      "verdicts": [
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#000",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "上盖顶部"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#003",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "禁止强电"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#004",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "地暖阀"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#005",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "DC15/24V"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#006",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "禁止强电+地暖阀+DC15/24V"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#007",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": null
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#008",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": null
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#009",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": null
+        }
+      ],
+      "recordId": 622
+    },
+    {
+      "id": "p63-7cec2f7d",
+      "profileId": 63,
+      "photoName": "1789432258916.jpg",
+      "ok": true,
+      "ms": 8005,
+      "usable": true,
+      "inferredView": "Nameplate",
+      "selectedView": "Nameplate",
+      "anchorApplied": false,
+      "counts": {
+        "NotApplicable": 1
+      },
+      "verdicts": [
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#model-YCWA15NCWQ",
+          "state": "NotApplicable",
+          "view": "Nameplate",
+          "text": "YCWA15NCWQ"
+        }
+      ],
+      "recordId": 623
+    },
+    {
+      "id": "p63-da122f48",
+      "profileId": 63,
+      "photoName": "1789432413274.jpg",
+      "ok": true,
+      "ms": 13558,
+      "usable": true,
+      "inferredView": "TopCover",
+      "selectedView": "TopCover",
+      "anchorApplied": true,
+      "counts": {
+        "NotApplicable": 1,
+        "NotDetected": 4,
+        "Matched": 3
+      },
+      "verdicts": [
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#000",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "上盖顶部"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#003",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "禁止强电"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#004",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "地暖阀"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#005",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "DC15/24V"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#006",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "禁止强电+地暖阀+DC15/24V"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#007",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": null
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#008",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": null
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#009",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": null
+        }
+      ],
+      "recordId": 624
+    },
+    {
+      "id": "p63-12bbbddf",
+      "profileId": 63,
+      "photoName": "1789432472905.jpg",
+      "ok": true,
+      "ms": 11278,
+      "usable": true,
+      "inferredView": "TopCover",
+      "selectedView": "TopCover",
+      "anchorApplied": false,
+      "counts": {
+        "NotApplicable": 1,
+        "LowConfidence": 5,
+        "Matched": 2
+      },
+      "verdicts": [
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#000",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "上盖顶部"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#003",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": "禁止强电"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#004",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": "地暖阀"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#005",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": "DC15/24V"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#006",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": "禁止强电+地暖阀+DC15/24V"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#007",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": null
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#008",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": null
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#009",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": null
+        }
+      ],
+      "recordId": 625
+    },
+    {
+      "id": "p63-12221415",
+      "profileId": 63,
+      "photoName": "1789432533556.jpg",
+      "ok": true,
+      "ms": 11198,
+      "usable": true,
+      "inferredView": "TopCover",
+      "selectedView": "TopCover",
+      "anchorApplied": false,
+      "counts": {
+        "NotApplicable": 1,
+        "LowConfidence": 5,
+        "Matched": 2
+      },
+      "verdicts": [
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#000",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "上盖顶部"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#003",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": "禁止强电"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#004",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": "地暖阀"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#005",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": "DC15/24V"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#006",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": "禁止强电+地暖阀+DC15/24V"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#007",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": null
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#008",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": null
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#009",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": null
+        }
+      ],
+      "recordId": 626
+    },
+    {
+      "id": "p63-1c6f32f0",
+      "profileId": 63,
+      "photoName": "1789432566759.jpg",
+      "ok": true,
+      "ms": 12587,
+      "usable": true,
+      "inferredView": "TopCover",
+      "selectedView": "TopCover",
+      "anchorApplied": false,
+      "counts": {
+        "NotApplicable": 1,
+        "LowConfidence": 5,
+        "Matched": 2
+      },
+      "verdicts": [
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#000",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "上盖顶部"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#003",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": "禁止强电"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#004",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": "地暖阀"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#005",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": "DC15/24V"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#006",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": "禁止强电+地暖阀+DC15/24V"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#007",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": null
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#008",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": null
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#009",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": null
+        }
+      ],
+      "recordId": 627
+    },
+    {
+      "id": "p63-0635f4ff",
+      "profileId": 63,
+      "photoName": "1789437368887.jpg",
+      "ok": true,
+      "ms": 14654,
+      "usable": true,
+      "inferredView": "TopCover",
+      "selectedView": "TopCover",
+      "anchorApplied": true,
+      "counts": {
+        "NotApplicable": 1,
+        "NotDetected": 4,
+        "Matched": 3
+      },
+      "verdicts": [
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#000",
+          "state": "NotApplicable",
+          "view": "TopCover",
+          "text": "上盖顶部"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#003",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "禁止强电"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#004",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "地暖阀"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#005",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "DC15/24V"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#006",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "禁止强电+地暖阀+DC15/24V"
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#007",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": null
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#008",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": null
+        },
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#009",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": null
+        }
+      ],
+      "recordId": 628
+    },
+    {
+      "id": "p63-0704699d",
+      "profileId": 63,
+      "photoName": "1789442626468.jpg",
+      "ok": true,
+      "ms": 7592,
+      "usable": true,
+      "inferredView": "Nameplate",
+      "selectedView": "Nameplate",
+      "anchorApplied": false,
+      "counts": {
+        "NotApplicable": 1
+      },
+      "verdicts": [
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#model-YCWA15NCWQ",
+          "state": "NotApplicable",
+          "view": "Nameplate",
+          "text": "YCWA15NCWQ"
+        }
+      ],
+      "recordId": 629
+    },
+    {
+      "id": "p63-ec883a33",
+      "profileId": 63,
+      "photoName": "1789452790665.jpg",
+      "ok": true,
+      "ms": 7491,
+      "usable": true,
+      "inferredView": "Nameplate",
+      "selectedView": "Nameplate",
+      "anchorApplied": false,
+      "counts": {
+        "NotApplicable": 1
+      },
+      "verdicts": [
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#model-YCWA15NCWQ",
+          "state": "NotApplicable",
+          "view": "Nameplate",
+          "text": "YCWA15NCWQ"
+        }
+      ],
+      "recordId": 630
+    },
+    {
+      "id": "p63-4798e3d5",
+      "profileId": 63,
+      "photoName": "1789452838851.jpg",
+      "ok": true,
+      "ms": 7018,
+      "usable": true,
+      "inferredView": "Nameplate",
+      "selectedView": "Nameplate",
+      "anchorApplied": false,
+      "counts": {
+        "NotApplicable": 1
+      },
+      "verdicts": [
+        {
+          "markKey": "02-新约克86线控器效果图-25.7.15-Model#model-YCWA15NCWQ",
+          "state": "NotApplicable",
+          "view": "Nameplate",
+          "text": "YCWA15NCWQ"
+        }
+      ],
+      "recordId": 631
+    },
+    {
+      "id": "p64-d470809b",
+      "profileId": 64,
+      "photoName": "1789215976510.jpg",
+      "ok": true,
+      "ms": 12471,
+      "usable": true,
+      "inferredView": "TopCover",
+      "selectedView": "TopCover",
+      "anchorApplied": true,
+      "counts": {
+        "Matched": 2,
+        "NotDetected": 3,
+        "LowConfidence": 1
+      },
+      "verdicts": [
+        {
+          "markKey": "PC-P1HEQ-效果图25.7.15-Model#000",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": "服务热线"
+        },
+        {
+          "markKey": "PC-P1HEQ-效果图25.7.15-Model#001",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "禁止强电"
+        },
+        {
+          "markKey": "PC-P1HEQ-效果图25.7.15-Model#002",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "DC15/24V"
+        },
+        {
+          "markKey": "PC-P1HEQ-效果图25.7.15-Model#003",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "禁止强电+DC15/24V"
+        },
+        {
+          "markKey": "PC-P1HEQ-效果图25.7.15-Model#004",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": null
+        },
+        {
+          "markKey": "PC-P1HEQ-效果图25.7.15-Model#005",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": null
+        }
+      ],
+      "recordId": 632
+    },
+    {
+      "id": "p64-bed894ce",
+      "profileId": 64,
+      "photoName": "1789352461408.jpg",
+      "ok": true,
+      "ms": 11987,
+      "usable": true,
+      "inferredView": "TopCover",
+      "selectedView": "TopCover",
+      "anchorApplied": true,
+      "counts": {
+        "Matched": 2,
+        "NotDetected": 3,
+        "LowConfidence": 1
+      },
+      "verdicts": [
+        {
+          "markKey": "PC-P1HEQ-效果图25.7.15-Model#000",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": "服务热线"
+        },
+        {
+          "markKey": "PC-P1HEQ-效果图25.7.15-Model#001",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "禁止强电"
+        },
+        {
+          "markKey": "PC-P1HEQ-效果图25.7.15-Model#002",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "DC15/24V"
+        },
+        {
+          "markKey": "PC-P1HEQ-效果图25.7.15-Model#003",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "禁止强电+DC15/24V"
+        },
+        {
+          "markKey": "PC-P1HEQ-效果图25.7.15-Model#004",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": null
+        },
+        {
+          "markKey": "PC-P1HEQ-效果图25.7.15-Model#005",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": null
+        }
+      ],
+      "recordId": 633
+    },
+    {
+      "id": "p64-29537114",
+      "profileId": 64,
+      "photoName": "1789352516925.jpg",
+      "ok": true,
+      "ms": 15314,
+      "usable": true,
+      "inferredView": "TopCover",
+      "selectedView": "TopCover",
+      "anchorApplied": true,
+      "counts": {
+        "Matched": 2,
+        "NotDetected": 3,
+        "LowConfidence": 1
+      },
+      "verdicts": [
+        {
+          "markKey": "PC-P1HEQ-效果图25.7.15-Model#000",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": "服务热线"
+        },
+        {
+          "markKey": "PC-P1HEQ-效果图25.7.15-Model#001",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "禁止强电"
+        },
+        {
+          "markKey": "PC-P1HEQ-效果图25.7.15-Model#002",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "DC15/24V"
+        },
+        {
+          "markKey": "PC-P1HEQ-效果图25.7.15-Model#003",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "禁止强电+DC15/24V"
+        },
+        {
+          "markKey": "PC-P1HEQ-效果图25.7.15-Model#004",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": null
+        },
+        {
+          "markKey": "PC-P1HEQ-效果图25.7.15-Model#005",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": null
+        }
+      ],
+      "recordId": 634
+    },
+    {
+      "id": "p64-69716771",
+      "profileId": 64,
+      "photoName": "1789386331395.jpg",
+      "ok": true,
+      "ms": 12362,
+      "usable": true,
+      "inferredView": "TopCover",
+      "selectedView": "TopCover",
+      "anchorApplied": true,
+      "counts": {
+        "Matched": 2,
+        "NotDetected": 3,
+        "LowConfidence": 1
+      },
+      "verdicts": [
+        {
+          "markKey": "PC-P1HEQ-效果图25.7.15-Model#000",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": "服务热线"
+        },
+        {
+          "markKey": "PC-P1HEQ-效果图25.7.15-Model#001",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "禁止强电"
+        },
+        {
+          "markKey": "PC-P1HEQ-效果图25.7.15-Model#002",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "DC15/24V"
+        },
+        {
+          "markKey": "PC-P1HEQ-效果图25.7.15-Model#003",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "禁止强电+DC15/24V"
+        },
+        {
+          "markKey": "PC-P1HEQ-效果图25.7.15-Model#004",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": null
+        },
+        {
+          "markKey": "PC-P1HEQ-效果图25.7.15-Model#005",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": null
+        }
+      ],
+      "recordId": 635
+    },
+    {
+      "id": "p64-543710f9",
+      "profileId": 64,
+      "photoName": "1789432067259.jpg",
+      "ok": true,
+      "ms": 13495,
+      "usable": true,
+      "inferredView": "TopCover",
+      "selectedView": "TopCover",
+      "anchorApplied": true,
+      "counts": {
+        "Matched": 2,
+        "NotDetected": 3,
+        "LowConfidence": 1
+      },
+      "verdicts": [
+        {
+          "markKey": "PC-P1HEQ-效果图25.7.15-Model#000",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": "服务热线"
+        },
+        {
+          "markKey": "PC-P1HEQ-效果图25.7.15-Model#001",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "禁止强电"
+        },
+        {
+          "markKey": "PC-P1HEQ-效果图25.7.15-Model#002",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "DC15/24V"
+        },
+        {
+          "markKey": "PC-P1HEQ-效果图25.7.15-Model#003",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "禁止强电+DC15/24V"
+        },
+        {
+          "markKey": "PC-P1HEQ-效果图25.7.15-Model#004",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": null
+        },
+        {
+          "markKey": "PC-P1HEQ-效果图25.7.15-Model#005",
+          "state": "LowConfidence",
+          "view": "TopCover",
+          "text": null
+        }
+      ],
+      "recordId": 636
+    },
+    {
+      "id": "p64-ae4973b4",
+      "profileId": 64,
+      "photoName": "1789432129234.jpg",
+      "ok": true,
+      "ms": 12088,
+      "usable": true,
+      "inferredView": "TopCover",
+      "selectedView": "TopCover",
+      "anchorApplied": true,
+      "counts": {
+        "NotDetected": 4,
+        "Matched": 2
+      },
+      "verdicts": [
+        {
+          "markKey": "PC-P1HEQ-效果图25.7.15-Model#000",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "服务热线"
+        },
+        {
+          "markKey": "PC-P1HEQ-效果图25.7.15-Model#001",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "禁止强电"
+        },
+        {
+          "markKey": "PC-P1HEQ-效果图25.7.15-Model#002",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "DC15/24V"
+        },
+        {
+          "markKey": "PC-P1HEQ-效果图25.7.15-Model#003",
+          "state": "NotDetected",
+          "view": "TopCover",
+          "text": "禁止强电+DC15/24V"
+        },
+        {
+          "markKey": "PC-P1HEQ-效果图25.7.15-Model#004",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": null
+        },
+        {
+          "markKey": "PC-P1HEQ-效果图25.7.15-Model#005",
+          "state": "Matched",
+          "view": "TopCover",
+          "text": null
+        }
+      ],
+      "recordId": 637
+    }
+  ]
+}

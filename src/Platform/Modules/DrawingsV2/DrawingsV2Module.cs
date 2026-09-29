@@ -142,6 +142,77 @@ public class DrawingsV2Module : IModule
                 }
             }));
 
+        // P2 · 逻辑图块：读取某档案的块（docs/逻辑图块方案_2026-09-26.md §4）
+        //   ?hasMarkingOnly=true → 只返回参与匹配的块（= P3 命中检索候选集，空块被天然隔离）
+        //   ?withElements=false  → 不返回块内元素（只取块级摘要，响应更小）
+        g.MapGet("/profiles/{id:long}/blocks", (long id, V2Service s,
+                 [FromQuery] bool? hasMarkingOnly, [FromQuery] bool? withElements) =>
+            Safe(() => Results.Ok(s.LogicalBlocks(id, hasMarkingOnly ?? false, withElements ?? true))));
+
+        // P2 · 逻辑图块：触发提取并落库（整体覆盖同一 profile+页）。
+        // 耗时较长（含块级局部 OCR，实测 20~60s/张），故不与 analyze 主链路耦合。
+        // body: { "ocr": false } 可只走文本层（判空会退化，仅供调试）
+        g.MapPost("/profiles/{id:long}/blocks", async (long id, JsonElement body, V2Service s, CancellationToken ct) =>
+            await Safe(async () =>
+            {
+                var ocrOn = !body.TryGetProperty("ocr", out var oc) || oc.ValueKind != JsonValueKind.False;
+                var res = await s.ExtractLogicalBlocksAsync(id, ocrOn, ct);
+                return Results.Ok(res);
+            }));
+
+        // P3 · 文本命中选块 + 四色标示（方案 §0.5.1 / §0.5.3）：
+        //   照片 OCR 文本 → 检索图块打标内容 → 命中绿 / 缺标红 / 相似·低置信·多出黄 / 图标·QR·d 类灰。
+        //   body: { photo: "绝对路径|虚拟路径" }
+        //   ⚠ P3 阶段为独立端点，**不改 compare 的 verdicts 口径**（零回归）；命中质量确认后再决定是否切换主判定。
+        g.MapPost("/profiles/{id:long}/blocks/match", async (long id, JsonElement body, V2Service s, CancellationToken ct) =>
+            await Safe(async () =>
+            {
+                var photo = ReadString(body, "photo") ?? ReadString(body, "image");
+                if (string.IsNullOrWhiteSpace(photo))
+                    return Results.BadRequest(new { error = "缺少 photo（照片绝对路径或平台虚拟路径）", code = "bad_request" });
+                return Results.Ok(await s.MatchBlocksAsync(id, photo!, ct));
+            }));
+
+        // M7（库管理）导入图纸：multipart 上传（单/批量，同名 file），逐张落盘→剖析登记→入队抽取
+        g.MapPost("/profiles/import", async (HttpContext ctx, V2Service s, CancellationToken ct) =>
+        {
+            if (!ctx.Request.HasFormContentType)
+                return Results.BadRequest(new { error = "请使用 multipart/form-data 上传图纸", code = "bad_request" });
+            var files = ctx.Request.Form.Files;
+            var model = ctx.Request.Form["model"].ToString();
+            var results = new List<object>();
+            foreach (var f in files)
+            {
+                if (f is null || f.Length == 0) { results.Add(new { profileId = (long?)null, fileName = f?.FileName, drawingKey = (string?)null, error = "空文件" }); continue; }
+                using var ms = f.OpenReadStream();
+                results.Add(await s.ImportOneAsync(ms, f.FileName,
+                    string.IsNullOrWhiteSpace(model) ? null : model, ct));
+            }
+            return Results.Ok(new { count = results.Count(r => r is V2Service.ImportResult ir && ir.Error is null), results });
+        });
+
+        // M7（库管理）扫描图纸根目录，自动登记并抽取库缺的 PDF
+        g.MapPost("/profiles/sync", async (V2Service s, CancellationToken ct) =>
+            await Safe(async () => Results.Ok(await s.SyncFolderAsync(ct))));
+
+        // M7（库管理）查询档案逻辑块抽取状态
+        g.MapGet("/profiles/{id:long}/blocks/status", (long id, V2Service s) => Safe(() =>
+        {
+            var st = s.GetBlockStatus(id);
+            return st is null ? Results.NotFound(new { error = $"档案不存在：{id}", code = "not_found" })
+                                : Results.Ok(st);
+        }));
+
+        // M7（库管理）档案原图下载（替代 V1 detail/virtualPath 链路，供 H5 详情页「下载原图」）
+        g.MapGet("/profiles/{id:long}/pdf", (long id, V2Service s) => Safe(() =>
+        {
+            var p = s.ProfilePdf(id);
+            return p is null
+                ? Results.NotFound(new { error = $"档案不存在或 PDF 缺失：{id}", code = "not_found" })
+                : Results.File(p.Value.PdfPath, "application/pdf", p.Value.DrawingKey + ".pdf");
+        }));
+
+
         // G1 人工复核：取档案复核页数据（基本信息 + 全部 marks 含 is_active/confirmed）
         g.MapGet("/profiles/{id:long}/review", (long id, V2Service s) => Safe(() =>
         {
@@ -171,6 +242,60 @@ public class DrawingsV2Module : IModule
                 return Results.Ok(new { ok = true, profileId = id, status = "reviewed" });
             }));
 
+        // 【P1b 设计§3】人工复核·增删改 mark
+        g.MapPost("/profiles/{id:long}/marks", async (long id, JsonElement body, V2Service s) =>
+            await Safe(async () =>
+            {
+                var type = ReadString(body, "type") ?? ReadString(body, "markType");
+                if (string.IsNullOrWhiteSpace(type) || type is not ("Text" or "Icon" or "Qr" or "Group"))
+                    return Results.BadRequest(new { error = "type 必须属于 Text/Icon/Qr/Group", code = "bad_request" });
+                var view = ReadString(body, "view") ?? "Unspecified";
+                var text = ReadString(body, "text");
+                var required = !body.TryGetProperty("required", out var rq) || rq.ValueKind != JsonValueKind.False;
+                var condition = ReadString(body, "condition") ?? ReadString(body, "conditionText");
+                var (nx, ny, nw, nh) = ParseNorm(body);
+                if (nx is null || ny is null || nw is null || nh is null)
+                    return Results.BadRequest(new { error = "缺少有效的 norm 坐标 (x,y,w,h)", code = "bad_request" });
+                var newId = s.AddMark(id, type, view, text, required, condition, nx, ny, nw, nh);
+                return Results.Ok(new { ok = true, profileId = id, markId = newId });
+            }));
+        g.MapPut("/profiles/{id:long}/marks/{markId:long}", async (long id, long markId, JsonElement body, V2Service s) =>
+            await Safe(async () =>
+            {
+                var type = ReadString(body, "type") ?? ReadString(body, "markType");
+                if (string.IsNullOrWhiteSpace(type) || type is not ("Text" or "Icon" or "Qr" or "Group"))
+                    return Results.BadRequest(new { error = "type 必须属于 Text/Icon/Qr/Group", code = "bad_request" });
+                var view = ReadString(body, "view") ?? "Unspecified";
+                var text = ReadString(body, "text");
+                var required = !body.TryGetProperty("required", out var rq) || rq.ValueKind != JsonValueKind.False;
+                var condition = ReadString(body, "condition") ?? ReadString(body, "conditionText");
+                var (nx, ny, nw, nh) = ParseNorm(body);
+                if (nx is null || ny is null || nw is null || nh is null)
+                    return Results.BadRequest(new { error = "缺少有效的 norm 坐标 (x,y,w,h)", code = "bad_request" });
+                var ok = s.UpdateMark(id, markId, type, view, text, required, condition, nx, ny, nw, nh);
+                return ok ? Results.Ok(new { ok = true, markId })
+                         : Results.NotFound(new { error = $"未找到 mark：{id}/{markId}", code = "not_found" });
+            }));
+        g.MapDelete("/profiles/{id:long}/marks/{markId:long}", async (long id, long markId, V2Service s) =>
+            await Safe(async () =>
+            {
+                var ok = s.DeleteMark(id, markId);
+                return ok ? Results.Ok(new { ok = true, markId })
+                         : Results.NotFound(new { error = $"未找到 mark：{id}/{markId}", code = "not_found" });
+            }));
+
+        // 【B 项·capture】为 QR mark 录入/清除预期解码内容（供 VerifyQr 内容身份比对）
+        g.MapPost("/profiles/{id:long}/marks/{markId:long}/expected-text",
+            async (long id, long markId, JsonElement body, V2Service s) =>
+            await Safe(async () =>
+            {
+                var text = ReadString(body, "text") ?? ReadString(body, "expectedText");
+                var ok = s.SetMarkExpectedText(id, markId, text);
+                return ok
+                    ? Results.Ok(new { ok = true, profileId = id, markId, text })
+                    : Results.NotFound(new { error = $"未找到 QR mark：{id}/{markId}", code = "not_found" });
+            }));
+
         // G2 会话合并：取一次多部位检验会话的聚合结果
         g.MapGet("/sessions/{id}", (string id, V2Service s) => Safe(() =>
         {
@@ -191,6 +316,35 @@ public class DrawingsV2Module : IModule
                              : Results.Ok(r);
         }));
 
+        // ② 判定级人工确认：取某条比对记录的人工判定
+        g.MapGet("/records/{id:long}/verdicts", (long id, V2Service s) => Safe(() =>
+            Results.Ok(s.VerdictReviews(id))));
+
+        // ② 判定级人工确认：保存人工判定（HumanPresent 实物有标 / HumanMissing 实物缺标 / HumanWrongPart 拍错部位）
+        // 会话聚合时人工判定优先于系统判定；系统原判定随记录留痕，不会被覆盖。
+        g.MapPost("/records/{id:long}/verdicts", (long id, JsonElement body, V2Service s) =>
+            Safe(() =>
+            {
+                var by = ReadString(body, "by") ?? ReadString(body, "reviewedBy");
+                if (!body.TryGetProperty("items", out var itemsEl) || itemsEl.ValueKind != JsonValueKind.Array)
+                    return Results.BadRequest(new { error = "缺少 items（人工判定数组）", code = "bad_request" });
+                var items = new List<(string MarkKey, string HumanState, string? Note)>();
+                foreach (var it in itemsEl.EnumerateArray())
+                {
+                    var mk = ReadString(it, "markKey");
+                    var st = ReadString(it, "humanState") ?? ReadString(it, "state");
+                    var note = ReadString(it, "note");
+                    if (string.IsNullOrWhiteSpace(mk) || string.IsNullOrWhiteSpace(st)) continue;
+                    if (st is not ("HumanPresent" or "HumanMissing" or "HumanWrongPart"))
+                        return Results.BadRequest(new { error = $"非法 humanState：{st}", code = "bad_request" });
+                    items.Add((mk!, st!, note));
+                }
+                if (items.Count == 0)
+                    return Results.BadRequest(new { error = "items 为空", code = "bad_request" });
+                var n = s.SaveVerdictReviews(id, items, by);
+                return Results.Ok(new { ok = true, recordId = id, saved = n });
+            }));
+
         // 图纸页面预览：渲染 PDF 指定页为 PNG（供 H5 可视化图纸回显）
         g.MapGet("/drawing-preview", async (HttpContext ctx, V2Service s, CancellationToken ct) =>
         {
@@ -205,6 +359,24 @@ public class DrawingsV2Module : IModule
                 return png is null
                     ? Results.NotFound(new { error = $"找不到图纸：{pdf}", code = "not_found" })
                     : Results.File(png, "image/png");
+            }
+            catch (V2Exception ex)
+            {
+                return Results.BadRequest(new { error = ex.Message, code = "render_failed" });
+            }
+        });
+
+        // 比对记录「已标示照片」：缩略图（mode=thumb）或原图（mode=full）。
+        // 四色结论由 Scripts/render_marked.py 从记录响应渲染，首次访问落盘缓存，之后直接回读。
+        g.MapGet("/records/{id:long}/photo", async (long id, HttpContext ctx, V2Service s, CancellationToken ct) =>
+        {
+            var mode = ctx.Request.Query["mode"].ToString();
+            try
+            {
+                var r = await s.GetRecordMarkedPhoto(id, mode, ct);
+                return r is null
+                    ? Results.NotFound(new { error = $"记录不存在或照片缺失：{id}", code = "not_found" })
+                    : Results.File(r.Value.Bytes, r.Value.ContentType);
             }
             catch (V2Exception ex)
             {
@@ -231,6 +403,23 @@ public class DrawingsV2Module : IModule
     /// <summary>
     /// 统一错误出口：业务异常转 400 且带机器可读 code，客户端永远看不到堆栈。
     /// </summary>
+    private static (double?, double?, double?, double?) ParseNorm(JsonElement body)
+    {
+        double? G(string n) => body.TryGetProperty(n, out var v) && v.ValueKind == JsonValueKind.Number ? v.GetDouble() : null;
+        double? x = G("normX") ?? G("x");
+        double? y = G("normY") ?? G("y");
+        double? w = G("normW") ?? G("w");
+        double? h = G("normH") ?? G("h");
+        if (x is null && body.TryGetProperty("norm", out var nm) && nm.ValueKind == JsonValueKind.Object)
+        {
+            x = nm.TryGetProperty("x", out var a) && a.ValueKind == JsonValueKind.Number ? a.GetDouble() : null;
+            y = nm.TryGetProperty("y", out var b) && b.ValueKind == JsonValueKind.Number ? b.GetDouble() : null;
+            w = nm.TryGetProperty("w", out var c) && c.ValueKind == JsonValueKind.Number ? c.GetDouble() : null;
+            h = nm.TryGetProperty("h", out var d) && d.ValueKind == JsonValueKind.Number ? d.GetDouble() : null;
+        }
+        return (x, y, w, h);
+    }
+
     private static async Task<IResult> Safe(Func<Task<IResult>> act)
     {
         try { return await act(); }

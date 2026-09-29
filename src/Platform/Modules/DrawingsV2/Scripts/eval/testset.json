@@ -1,0 +1,386 @@
+{
+  "version": "1.0",
+  "created": "2026-09-15 14:20:28",
+  "source": "从 v2_compare_records 去重的 (profile, photo) 对自动生成",
+  "metricsNote": "A 类零真值可算；B 类（viewAccuracy/recall/falseRedRate/falseGreenRate）需标注 truth",
+  "cases": [
+    {
+      "id": "p61-f403feb6",
+      "profileId": 61,
+      "drawingKey": "02-PC-P1HVQ效果图25.6.20-Model",
+      "photoSha256": "f403feb6d8d66021521a925fcde440d4c8490709cfeade40fd8b992572a5d8a8",
+      "photoName": "real_25.jpg",
+      "photoRel": "data/drawingsv2_photos/202609/f4_f403feb6d8d66021521a925fcde440d4c8490709cfeade40fd8b992572a5d8a8.jpg",
+      "truth": null
+    },
+    {
+      "id": "p61-ed96d26e",
+      "profileId": 61,
+      "drawingKey": "02-PC-P1HVQ效果图25.6.20-Model",
+      "photoSha256": "ed96d26e188cf3738a36648618fe42f88148bc3c170ecbc6350f831d369b25b6",
+      "photoName": "wxwork_edge.jpg",
+      "photoRel": "data/drawingsv2_photos/202609/ed_ed96d26e188cf3738a36648618fe42f88148bc3c170ecbc6350f831d369b25b6.jpg",
+      "truth": null
+    },
+    {
+      "id": "p61-89ec3ab0",
+      "profileId": 61,
+      "drawingKey": "02-PC-P1HVQ效果图25.6.20-Model",
+      "photoSha256": "89ec3ab0dcb473483673f09b2af11f1b1dddb9aed4d7cee457ada0baae9d542f",
+      "photoName": "1789200167904.jpg",
+      "photoRel": "data/drawingsv2_photos/202609/89_89ec3ab0dcb473483673f09b2af11f1b1dddb9aed4d7cee457ada0baae9d542f.jpg",
+      "truth": null
+    },
+    {
+      "id": "p61-1550cee2",
+      "profileId": 61,
+      "drawingKey": "02-PC-P1HVQ效果图25.6.20-Model",
+      "photoSha256": "1550cee2117b9be7b5460a96838a2686e11956e7878a6568cacad9cc171dee8b",
+      "photoName": "1789200213940.jpg",
+      "photoRel": "data/drawingsv2_photos/202609/15_1550cee2117b9be7b5460a96838a2686e11956e7878a6568cacad9cc171dee8b.jpg",
+      "truth": null
+    },
+    {
+      "id": "p61-c91b6258",
+      "profileId": 61,
+      "drawingKey": "02-PC-P1HVQ效果图25.6.20-Model",
+      "photoSha256": "c91b6258023f4fb30ea3663c617569cbfa15262bbac9e189aa0fc59a29f828db",
+      "photoName": "1789201684745.jpg",
+      "photoRel": "data/drawingsv2_photos/202609/c9_c91b6258023f4fb30ea3663c617569cbfa15262bbac9e189aa0fc59a29f828db.jpg",
+      "truth": null
+    },
+    {
+      "id": "p61-b8f7be02",
+      "profileId": 61,
+      "drawingKey": "02-PC-P1HVQ效果图25.6.20-Model",
+      "photoSha256": "b8f7be02d6e23ee4fb3f82b49a24918af2d3bc3c7be6ca435d9cc89d273f9b15",
+      "photoName": "1789202649896.jpg",
+      "photoRel": "data/drawingsv2_photos/202609/b8_b8f7be02d6e23ee4fb3f82b49a24918af2d3bc3c7be6ca435d9cc89d273f9b15.jpg",
+      "truth": null
+    },
+    {
+      "id": "p61-77534c34",
+      "profileId": 61,
+      "drawingKey": "02-PC-P1HVQ效果图25.6.20-Model",
+      "photoSha256": "77534c342b57765df29bb19ae82df3bcd68361fb514be7e90fad3ba56a9b6405",
+      "photoName": "1789202671051.jpg",
+      "photoRel": "data/drawingsv2_photos/202609/77_77534c342b57765df29bb19ae82df3bcd68361fb514be7e90fad3ba56a9b6405.jpg",
+      "truth": null
+    },
+    {
+      "id": "p61-e783f363",
+      "profileId": 61,
+      "drawingKey": "02-PC-P1HVQ效果图25.6.20-Model",
+      "photoSha256": "e783f363642990d03d3c01275c780f68a0ef42f564b3f9459322bea9227f7ceb",
+      "photoName": "P1HVQ_closeup_01.jpg",
+      "photoRel": "data/drawingsv2_photos/202609/e7_e783f363642990d03d3c01275c780f68a0ef42f564b3f9459322bea9227f7ceb.jpg",
+      "truth": null
+    },
+    {
+      "id": "p61-150010ad",
+      "profileId": 61,
+      "drawingKey": "02-PC-P1HVQ效果图25.6.20-Model",
+      "photoSha256": "150010ad4c6f482c644b238066e7cc3fcf04391cd6435ec4de40352ced2bf093",
+      "photoName": "1789209940251.jpg",
+      "photoRel": "data/drawingsv2_photos/202609/15_150010ad4c6f482c644b238066e7cc3fcf04391cd6435ec4de40352ced2bf093.jpg",
+      "truth": null
+    },
+    {
+      "id": "p61-6f206d21",
+      "profileId": 61,
+      "drawingKey": "02-PC-P1HVQ效果图25.6.20-Model",
+      "photoSha256": "6f206d216f128341f9d6c1b4c5d6f50a6d5d0f175d25618e1f7f2149e899b802",
+      "photoName": "1789210017026.jpg",
+      "photoRel": "data/drawingsv2_photos/202609/6f_6f206d216f128341f9d6c1b4c5d6f50a6d5d0f175d25618e1f7f2149e899b802.jpg",
+      "truth": null
+    },
+    {
+      "id": "p61-0253298c",
+      "profileId": 61,
+      "drawingKey": "02-PC-P1HVQ效果图25.6.20-Model",
+      "photoSha256": "0253298c428bf08245120e32540b630b650129dd6ea59a35108abf048324dcce",
+      "photoName": "1789210052660.jpg",
+      "photoRel": "data/drawingsv2_photos/202609/02_0253298c428bf08245120e32540b630b650129dd6ea59a35108abf048324dcce.jpg",
+      "truth": null
+    },
+    {
+      "id": "p61-ab54f291",
+      "profileId": 61,
+      "drawingKey": "02-PC-P1HVQ效果图25.6.20-Model",
+      "photoSha256": "ab54f2916c6948beb2b25f7306bf62bd21323ef211d2da2df6ae38395727c23c",
+      "photoName": "1789211225703.jpg",
+      "photoRel": "data/drawingsv2_photos/202609/ab_ab54f2916c6948beb2b25f7306bf62bd21323ef211d2da2df6ae38395727c23c.jpg",
+      "truth": null
+    },
+    {
+      "id": "p61-64d97161",
+      "profileId": 61,
+      "drawingKey": "02-PC-P1HVQ效果图25.6.20-Model",
+      "photoSha256": "64d971618edb64178292a85ccc6001529c3842e34b70e9655ef9a07369c4be9d",
+      "photoName": "1789215267593.jpg",
+      "photoRel": "data/drawingsv2_photos/202609/64_64d971618edb64178292a85ccc6001529c3842e34b70e9655ef9a07369c4be9d.jpg",
+      "truth": null
+    },
+    {
+      "id": "p62-7b3bf646",
+      "profileId": 62,
+      "drawingKey": "02-PC-P1HJQ效果图25.7.15dwg-Model",
+      "photoSha256": "7b3bf6465f99f2b54f0f9ab1123317238894c5ee2ed7a77f469c63c134548406",
+      "photoName": "P1HJQ_closeup_01.jpg",
+      "photoRel": "data/drawingsv2_photos/202609/7b_7b3bf6465f99f2b54f0f9ab1123317238894c5ee2ed7a77f469c63c134548406.jpg",
+      "truth": null
+    },
+    {
+      "id": "p62-3452fef2",
+      "profileId": 62,
+      "drawingKey": "02-PC-P1HJQ效果图25.7.15dwg-Model",
+      "photoSha256": "3452fef2bfe8ce95433efd999936f1557d237e159d35d5f7b32922aba754aa16",
+      "photoName": "P1HJQ_real_01.jpg",
+      "photoRel": "data/drawingsv2_photos/202609/34_3452fef2bfe8ce95433efd999936f1557d237e159d35d5f7b32922aba754aa16.jpg",
+      "truth": null
+    },
+    {
+      "id": "p63-3ca0bfd4",
+      "profileId": 63,
+      "drawingKey": "02-新约克86线控器效果图-25.7.15-Model",
+      "photoSha256": "3ca0bfd41326f0fafa0109ba99f7d16a87f732eb97f4b6f907dce6ef6d5a253d",
+      "photoName": "1789215884947.jpg",
+      "photoRel": "data/drawingsv2_photos/202609/3c_3ca0bfd41326f0fafa0109ba99f7d16a87f732eb97f4b6f907dce6ef6d5a253d.jpg",
+      "truth": null
+    },
+    {
+      "id": "p63-c8509be1",
+      "profileId": 63,
+      "drawingKey": "02-新约克86线控器效果图-25.7.15-Model",
+      "photoSha256": "c8509be1a4ab89780fde504d6c5101c6fc353321d8bafccaf9f2ea5558f9018b",
+      "photoName": "1789345962398.jpg",
+      "photoRel": "data/drawingsv2_photos/202609/c8_c8509be1a4ab89780fde504d6c5101c6fc353321d8bafccaf9f2ea5558f9018b.jpg",
+      "truth": null
+    },
+    {
+      "id": "p63-5a64e4d2",
+      "profileId": 63,
+      "drawingKey": "02-新约克86线控器效果图-25.7.15-Model",
+      "photoSha256": "5a64e4d2dbe52c605a9d0a92b576a225e6fd2ba71278fc891d6b95deedfb2fa1",
+      "photoName": "1789348480046.jpg",
+      "photoRel": "data/drawingsv2_photos/202609/5a_5a64e4d2dbe52c605a9d0a92b576a225e6fd2ba71278fc891d6b95deedfb2fa1.jpg",
+      "truth": null
+    },
+    {
+      "id": "p63-05617ef6",
+      "profileId": 63,
+      "drawingKey": "02-新约克86线控器效果图-25.7.15-Model",
+      "photoSha256": "05617ef68856374cc85b328bbf09457d967895b2f0f7d559f369c9c4cf1c00cb",
+      "photoName": "1789350595323.jpg",
+      "photoRel": "data/drawingsv2_photos/202609/05_05617ef68856374cc85b328bbf09457d967895b2f0f7d559f369c9c4cf1c00cb.jpg",
+      "truth": null
+    },
+    {
+      "id": "p63-75c033fc",
+      "profileId": 63,
+      "drawingKey": "02-新约克86线控器效果图-25.7.15-Model",
+      "photoSha256": "75c033fca8f50f5d5bcb988f1c77e015e55e65fcea2173527320eda2e49e277f",
+      "photoName": "1789357500320.jpg",
+      "photoRel": "data/drawingsv2_photos/202609/75_75c033fca8f50f5d5bcb988f1c77e015e55e65fcea2173527320eda2e49e277f.jpg",
+      "truth": null
+    },
+    {
+      "id": "p63-ade5622b",
+      "profileId": 63,
+      "drawingKey": "02-新约克86线控器效果图-25.7.15-Model",
+      "photoSha256": "ade5622b342b00da6ffdb317aba25c78df7fbef79d8cc65096ee7fd90d4b39a6",
+      "photoName": "1789366686909.jpg",
+      "photoRel": "data/drawingsv2_photos/202609/ad_ade5622b342b00da6ffdb317aba25c78df7fbef79d8cc65096ee7fd90d4b39a6.jpg",
+      "truth": null
+    },
+    {
+      "id": "p63-b977114e",
+      "profileId": 63,
+      "drawingKey": "02-新约克86线控器效果图-25.7.15-Model",
+      "photoSha256": "b977114e3a4d1bc3b574f15c3c0e1ca8978f474f5861913d3a4a30b4fa36039a",
+      "photoName": "1789366773972.jpg",
+      "photoRel": "data/drawingsv2_photos/202609/b9_b977114e3a4d1bc3b574f15c3c0e1ca8978f474f5861913d3a4a30b4fa36039a.jpg",
+      "truth": null
+    },
+    {
+      "id": "p63-7d6f7bf5",
+      "profileId": 63,
+      "drawingKey": "02-新约克86线控器效果图-25.7.15-Model",
+      "photoSha256": "7d6f7bf55d995dc1dc8e2601986c4bfcce02af424ea50b6fc6cc8b985b28c1d2",
+      "photoName": "1789368229296.jpg",
+      "photoRel": "data/drawingsv2_photos/202609/7d_7d6f7bf55d995dc1dc8e2601986c4bfcce02af424ea50b6fc6cc8b985b28c1d2.jpg",
+      "truth": null
+    },
+    {
+      "id": "p63-57987cb4",
+      "profileId": 63,
+      "drawingKey": "02-新约克86线控器效果图-25.7.15-Model",
+      "photoSha256": "57987cb4a41e2061c5e5e4fd4a944869bcb1a5ab2fd2c2a3c04d11c1bd433788",
+      "photoName": "1789370550973.jpg",
+      "photoRel": "data/drawingsv2_photos/202609/57_57987cb4a41e2061c5e5e4fd4a944869bcb1a5ab2fd2c2a3c04d11c1bd433788.jpg",
+      "truth": null
+    },
+    {
+      "id": "p63-08a0d038",
+      "profileId": 63,
+      "drawingKey": "02-新约克86线控器效果图-25.7.15-Model",
+      "photoSha256": "08a0d038f324074e88fe1b13cfc3bdf3e400d9172d6b3c0c2b9ec11449ba54b4",
+      "photoName": "1789370683865.jpg",
+      "photoRel": "data/drawingsv2_photos/202609/08_08a0d038f324074e88fe1b13cfc3bdf3e400d9172d6b3c0c2b9ec11449ba54b4.jpg",
+      "truth": null
+    },
+    {
+      "id": "p63-6a15dd8d",
+      "profileId": 63,
+      "drawingKey": "02-新约克86线控器效果图-25.7.15-Model",
+      "photoSha256": "6a15dd8da88ebbac6a43b5bd7fd4b189690860a780b528d8027f0cd6b070e6fc",
+      "photoName": "1789379288171.jpg",
+      "photoRel": "data/drawingsv2_photos/202609/6a_6a15dd8da88ebbac6a43b5bd7fd4b189690860a780b528d8027f0cd6b070e6fc.jpg",
+      "truth": null
+    },
+    {
+      "id": "p63-5cd95a01",
+      "profileId": 63,
+      "drawingKey": "02-新约克86线控器效果图-25.7.15-Model",
+      "photoSha256": "5cd95a012e8f6b4a80f4e3f2232cd233daeb3f8d79744dad81fe643ab3d406b8",
+      "photoName": "1789379322041.jpg",
+      "photoRel": "data/drawingsv2_photos/202609/5c_5cd95a012e8f6b4a80f4e3f2232cd233daeb3f8d79744dad81fe643ab3d406b8.jpg",
+      "truth": null
+    },
+    {
+      "id": "p63-7cec2f7d",
+      "profileId": 63,
+      "drawingKey": "02-新约克86线控器效果图-25.7.15-Model",
+      "photoSha256": "7cec2f7d648d5f27e4d4174cff44e0cfaa2cd49363afbfdb67b82a89956f2410",
+      "photoName": "1789432258916.jpg",
+      "photoRel": "data/drawingsv2_photos/202609/7c_7cec2f7d648d5f27e4d4174cff44e0cfaa2cd49363afbfdb67b82a89956f2410.jpg",
+      "truth": null
+    },
+    {
+      "id": "p63-da122f48",
+      "profileId": 63,
+      "drawingKey": "02-新约克86线控器效果图-25.7.15-Model",
+      "photoSha256": "da122f4822f0a448a96b2a7a8a226e9a3c5d1c72c63d366d76d6fb67d8f345a8",
+      "photoName": "1789432413274.jpg",
+      "photoRel": "data/drawingsv2_photos/202609/da_da122f4822f0a448a96b2a7a8a226e9a3c5d1c72c63d366d76d6fb67d8f345a8.jpg",
+      "truth": null
+    },
+    {
+      "id": "p63-12bbbddf",
+      "profileId": 63,
+      "drawingKey": "02-新约克86线控器效果图-25.7.15-Model",
+      "photoSha256": "12bbbddfc8cd22a9a8eed62ff4994944fa2a3c228f7f5912bc86993837e99f42",
+      "photoName": "1789432472905.jpg",
+      "photoRel": "data/drawingsv2_photos/202609/12_12bbbddfc8cd22a9a8eed62ff4994944fa2a3c228f7f5912bc86993837e99f42.jpg",
+      "truth": null
+    },
+    {
+      "id": "p63-12221415",
+      "profileId": 63,
+      "drawingKey": "02-新约克86线控器效果图-25.7.15-Model",
+      "photoSha256": "12221415cb552b1fc0b5771c760d6e171104dc369788cd8eb0dd8a2c279dc261",
+      "photoName": "1789432533556.jpg",
+      "photoRel": "data/drawingsv2_photos/202609/12_12221415cb552b1fc0b5771c760d6e171104dc369788cd8eb0dd8a2c279dc261.jpg",
+      "truth": null
+    },
+    {
+      "id": "p63-1c6f32f0",
+      "profileId": 63,
+      "drawingKey": "02-新约克86线控器效果图-25.7.15-Model",
+      "photoSha256": "1c6f32f0e3a2666e3fb00e148cfb624c6a2667cc4b2586a0fef6f68ef6070831",
+      "photoName": "1789432566759.jpg",
+      "photoRel": "data/drawingsv2_photos/202609/1c_1c6f32f0e3a2666e3fb00e148cfb624c6a2667cc4b2586a0fef6f68ef6070831.jpg",
+      "truth": null
+    },
+    {
+      "id": "p63-0635f4ff",
+      "profileId": 63,
+      "drawingKey": "02-新约克86线控器效果图-25.7.15-Model",
+      "photoSha256": "0635f4ff20e13b1e274d0b2a4b5e869d50b66b2f34a82cc025b6d88d46ccc687",
+      "photoName": "1789437368887.jpg",
+      "photoRel": "data/drawingsv2_photos/202609/06_0635f4ff20e13b1e274d0b2a4b5e869d50b66b2f34a82cc025b6d88d46ccc687.jpg",
+      "truth": null
+    },
+    {
+      "id": "p63-0704699d",
+      "profileId": 63,
+      "drawingKey": "02-新约克86线控器效果图-25.7.15-Model",
+      "photoSha256": "0704699dd9b7fe77eee529c2da3be35a3b18c64b1042336ef31e50aadfea4bcd",
+      "photoName": "1789442626468.jpg",
+      "photoRel": "data/drawingsv2_photos/202609/07_0704699dd9b7fe77eee529c2da3be35a3b18c64b1042336ef31e50aadfea4bcd.jpg",
+      "truth": null
+    },
+    {
+      "id": "p63-ec883a33",
+      "profileId": 63,
+      "drawingKey": "02-新约克86线控器效果图-25.7.15-Model",
+      "photoSha256": "ec883a338bb2411f6a4d436e7e67aad6a1948db412cdfa4ebb6474b9e3056a04",
+      "photoName": "1789452790665.jpg",
+      "photoRel": "data/drawingsv2_photos/202609/ec_ec883a338bb2411f6a4d436e7e67aad6a1948db412cdfa4ebb6474b9e3056a04.jpg",
+      "truth": null
+    },
+    {
+      "id": "p63-4798e3d5",
+      "profileId": 63,
+      "drawingKey": "02-新约克86线控器效果图-25.7.15-Model",
+      "photoSha256": "4798e3d5aca5d10aaba04ab80a80e851b2f719c58dc19c08c6bf09bfa11b37ed",
+      "photoName": "1789452838851.jpg",
+      "photoRel": "data/drawingsv2_photos/202609/47_4798e3d5aca5d10aaba04ab80a80e851b2f719c58dc19c08c6bf09bfa11b37ed.jpg",
+      "truth": null
+    },
+    {
+      "id": "p64-d470809b",
+      "profileId": 64,
+      "drawingKey": "PC-P1HEQ-效果图25.7.15-Model",
+      "photoSha256": "d470809b08b65865f0177e98d1d02e2e9370a7568a349dab355e2e5fa1a3105a",
+      "photoName": "1789215976510.jpg",
+      "photoRel": "data/drawingsv2_photos/202609/d4_d470809b08b65865f0177e98d1d02e2e9370a7568a349dab355e2e5fa1a3105a.jpg",
+      "truth": null
+    },
+    {
+      "id": "p64-bed894ce",
+      "profileId": 64,
+      "drawingKey": "PC-P1HEQ-效果图25.7.15-Model",
+      "photoSha256": "bed894ce76792a72740c1bf9be6c09f467a8333c1295f4d492ae2a973b16a249",
+      "photoName": "1789352461408.jpg",
+      "photoRel": "data/drawingsv2_photos/202609/be_bed894ce76792a72740c1bf9be6c09f467a8333c1295f4d492ae2a973b16a249.jpg",
+      "truth": null
+    },
+    {
+      "id": "p64-29537114",
+      "profileId": 64,
+      "drawingKey": "PC-P1HEQ-效果图25.7.15-Model",
+      "photoSha256": "295371141c01f30ce1ba2f7d779ab3d5c89a1d00c89ef5b088840e3829cbe313",
+      "photoName": "1789352516925.jpg",
+      "photoRel": "data/drawingsv2_photos/202609/29_295371141c01f30ce1ba2f7d779ab3d5c89a1d00c89ef5b088840e3829cbe313.jpg",
+      "truth": null
+    },
+    {
+      "id": "p64-69716771",
+      "profileId": 64,
+      "drawingKey": "PC-P1HEQ-效果图25.7.15-Model",
+      "photoSha256": "69716771c8e072de3025eb6b8d3cb1506f1e1bc915826499771b1a0baea0bcbe",
+      "photoName": "1789386331395.jpg",
+      "photoRel": "data/drawingsv2_photos/202609/69_69716771c8e072de3025eb6b8d3cb1506f1e1bc915826499771b1a0baea0bcbe.jpg",
+      "truth": null
+    },
+    {
+      "id": "p64-543710f9",
+      "profileId": 64,
+      "drawingKey": "PC-P1HEQ-效果图25.7.15-Model",
+      "photoSha256": "543710f9e6cbf440cdeba7015773b4fefe86bf51d86f2bb5ee589cd1223b0e9a",
+      "photoName": "1789432067259.jpg",
+      "photoRel": "data/drawingsv2_photos/202609/54_543710f9e6cbf440cdeba7015773b4fefe86bf51d86f2bb5ee589cd1223b0e9a.jpg",
+      "truth": null
+    },
+    {
+      "id": "p64-ae4973b4",
+      "profileId": 64,
+      "drawingKey": "PC-P1HEQ-效果图25.7.15-Model",
+      "photoSha256": "ae4973b4ad6a383e11aa7aaf7f525e364066102efd51bf0280f73069ec015368",
+      "photoName": "1789432129234.jpg",
+      "photoRel": "data/drawingsv2_photos/202609/ae_ae4973b4ad6a383e11aa7aaf7f525e364066102efd51bf0280f73069ec015368.jpg",
+      "truth": null
+    }
+  ]
+}

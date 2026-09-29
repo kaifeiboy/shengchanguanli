@@ -1,0 +1,456 @@
+{
+  "generatedAt": "2026-09-23 08:35:33",
+  "endpoint": "http://127.0.0.1:5000",
+  "metrics": {
+    "casesTotal": 42,
+    "casesOk": 19,
+    "photoUsableRate": 0.0,
+    "viewInferRate": null,
+    "anchorApplyRate": null,
+    "judgedTotal": 0,
+    "decisiveRate": null,
+    "notDetectedRate": null,
+    "verdictDistribution": {},
+    "latencyP50Ms": 3215,
+    "latencyP95Ms": 3428,
+    "truthCoverage": {
+      "viewLabeled": 0,
+      "marksLabeled": 0,
+      "humanReviews": 206
+    },
+    "viewAccuracy": null,
+    "recall": null,
+    "falseRedRate": null,
+    "falseGreenRate": null,
+    "acceptanceReady": false
+  },
+  "results": [
+    {
+      "id": "p61-f403feb6",
+      "profileId": 61,
+      "photoName": "real_25.jpg",
+      "ok": true,
+      "ms": 3757,
+      "usable": null,
+      "inferredView": null,
+      "selectedView": null,
+      "anchorApplied": false,
+      "counts": {},
+      "verdicts": [],
+      "recordId": null
+    },
+    {
+      "id": "p61-ed96d26e",
+      "profileId": 61,
+      "photoName": "wxwork_edge.jpg",
+      "ok": true,
+      "ms": 2522,
+      "usable": null,
+      "inferredView": null,
+      "selectedView": null,
+      "anchorApplied": false,
+      "counts": {},
+      "verdicts": [],
+      "recordId": null
+    },
+    {
+      "id": "p61-89ec3ab0",
+      "profileId": 61,
+      "photoName": "1789200167904.jpg",
+      "ok": true,
+      "ms": 3428,
+      "usable": null,
+      "inferredView": null,
+      "selectedView": null,
+      "anchorApplied": false,
+      "counts": {},
+      "verdicts": [],
+      "recordId": null
+    },
+    {
+      "id": "p61-1550cee2",
+      "profileId": 61,
+      "photoName": "1789200213940.jpg",
+      "ok": true,
+      "ms": 3215,
+      "usable": null,
+      "inferredView": null,
+      "selectedView": null,
+      "anchorApplied": false,
+      "counts": {},
+      "verdicts": [],
+      "recordId": null
+    },
+    {
+      "id": "p61-c91b6258",
+      "profileId": 61,
+      "photoName": "1789201684745.jpg",
+      "ok": true,
+      "ms": 3389,
+      "usable": null,
+      "inferredView": null,
+      "selectedView": null,
+      "anchorApplied": false,
+      "counts": {},
+      "verdicts": [],
+      "recordId": null
+    },
+    {
+      "id": "p61-b8f7be02",
+      "profileId": 61,
+      "photoName": "1789202649896.jpg",
+      "ok": true,
+      "ms": 3327,
+      "usable": null,
+      "inferredView": null,
+      "selectedView": null,
+      "anchorApplied": false,
+      "counts": {},
+      "verdicts": [],
+      "recordId": null
+    },
+    {
+      "id": "p61-77534c34",
+      "profileId": 61,
+      "photoName": "1789202671051.jpg",
+      "ok": true,
+      "ms": 3158,
+      "usable": null,
+      "inferredView": null,
+      "selectedView": null,
+      "anchorApplied": false,
+      "counts": {},
+      "verdicts": [],
+      "recordId": null
+    },
+    {
+      "id": "p61-e783f363",
+      "profileId": 61,
+      "photoName": "P1HVQ_closeup_01.jpg",
+      "ok": true,
+      "ms": 2455,
+      "usable": null,
+      "inferredView": null,
+      "selectedView": null,
+      "anchorApplied": false,
+      "counts": {},
+      "verdicts": [],
+      "recordId": null
+    },
+    {
+      "id": "p61-150010ad",
+      "profileId": 61,
+      "photoName": "1789209940251.jpg",
+      "ok": true,
+      "ms": 3206,
+      "usable": null,
+      "inferredView": null,
+      "selectedView": null,
+      "anchorApplied": false,
+      "counts": {},
+      "verdicts": [],
+      "recordId": null
+    },
+    {
+      "id": "p61-6f206d21",
+      "profileId": 61,
+      "photoName": "1789210017026.jpg",
+      "ok": true,
+      "ms": 3348,
+      "usable": null,
+      "inferredView": null,
+      "selectedView": null,
+      "anchorApplied": false,
+      "counts": {},
+      "verdicts": [],
+      "recordId": null
+    },
+    {
+      "id": "p61-0253298c",
+      "profileId": 61,
+      "photoName": "1789210052660.jpg",
+      "ok": true,
+      "ms": 3423,
+      "usable": null,
+      "inferredView": null,
+      "selectedView": null,
+      "anchorApplied": false,
+      "counts": {},
+      "verdicts": [],
+      "recordId": null
+    },
+    {
+      "id": "p61-ab54f291",
+      "profileId": 61,
+      "photoName": "1789211225703.jpg",
+      "ok": true,
+      "ms": 3297,
+      "usable": null,
+      "inferredView": null,
+      "selectedView": null,
+      "anchorApplied": false,
+      "counts": {},
+      "verdicts": [],
+      "recordId": null
+    },
+    {
+      "id": "p61-64d97161",
+      "profileId": 61,
+      "photoName": "1789215267593.jpg",
+      "ok": true,
+      "ms": 3249,
+      "usable": null,
+      "inferredView": null,
+      "selectedView": null,
+      "anchorApplied": false,
+      "counts": {},
+      "verdicts": [],
+      "recordId": null
+    },
+    {
+      "id": "p62-7b3bf646",
+      "profileId": 62,
+      "photoName": "P1HJQ_closeup_01.jpg",
+      "ok": false,
+      "error": "HTTPError: HTTP Error 400: Bad Request"
+    },
+    {
+      "id": "p62-3452fef2",
+      "profileId": 62,
+      "photoName": "P1HJQ_real_01.jpg",
+      "ok": false,
+      "error": "HTTPError: HTTP Error 400: Bad Request"
+    },
+    {
+      "id": "p63-3ca0bfd4",
+      "profileId": 63,
+      "photoName": "1789215884947.jpg",
+      "ok": false,
+      "error": "HTTPError: HTTP Error 400: Bad Request"
+    },
+    {
+      "id": "p63-c8509be1",
+      "profileId": 63,
+      "photoName": "1789345962398.jpg",
+      "ok": false,
+      "error": "HTTPError: HTTP Error 400: Bad Request"
+    },
+    {
+      "id": "p63-5a64e4d2",
+      "profileId": 63,
+      "photoName": "1789348480046.jpg",
+      "ok": false,
+      "error": "HTTPError: HTTP Error 400: Bad Request"
+    },
+    {
+      "id": "p63-05617ef6",
+      "profileId": 63,
+      "photoName": "1789350595323.jpg",
+      "ok": false,
+      "error": "HTTPError: HTTP Error 400: Bad Request"
+    },
+    {
+      "id": "p63-75c033fc",
+      "profileId": 63,
+      "photoName": "1789357500320.jpg",
+      "ok": false,
+      "error": "HTTPError: HTTP Error 400: Bad Request"
+    },
+    {
+      "id": "p63-ade5622b",
+      "profileId": 63,
+      "photoName": "1789366686909.jpg",
+      "ok": false,
+      "error": "HTTPError: HTTP Error 400: Bad Request"
+    },
+    {
+      "id": "p63-b977114e",
+      "profileId": 63,
+      "photoName": "1789366773972.jpg",
+      "ok": false,
+      "error": "HTTPError: HTTP Error 400: Bad Request"
+    },
+    {
+      "id": "p63-7d6f7bf5",
+      "profileId": 63,
+      "photoName": "1789368229296.jpg",
+      "ok": false,
+      "error": "HTTPError: HTTP Error 400: Bad Request"
+    },
+    {
+      "id": "p63-57987cb4",
+      "profileId": 63,
+      "photoName": "1789370550973.jpg",
+      "ok": false,
+      "error": "HTTPError: HTTP Error 400: Bad Request"
+    },
+    {
+      "id": "p63-08a0d038",
+      "profileId": 63,
+      "photoName": "1789370683865.jpg",
+      "ok": false,
+      "error": "HTTPError: HTTP Error 400: Bad Request"
+    },
+    {
+      "id": "p63-6a15dd8d",
+      "profileId": 63,
+      "photoName": "1789379288171.jpg",
+      "ok": false,
+      "error": "HTTPError: HTTP Error 400: Bad Request"
+    },
+    {
+      "id": "p63-5cd95a01",
+      "profileId": 63,
+      "photoName": "1789379322041.jpg",
+      "ok": false,
+      "error": "HTTPError: HTTP Error 400: Bad Request"
+    },
+    {
+      "id": "p63-7cec2f7d",
+      "profileId": 63,
+      "photoName": "1789432258916.jpg",
+      "ok": false,
+      "error": "HTTPError: HTTP Error 400: Bad Request"
+    },
+    {
+      "id": "p63-da122f48",
+      "profileId": 63,
+      "photoName": "1789432413274.jpg",
+      "ok": false,
+      "error": "HTTPError: HTTP Error 400: Bad Request"
+    },
+    {
+      "id": "p63-12bbbddf",
+      "profileId": 63,
+      "photoName": "1789432472905.jpg",
+      "ok": false,
+      "error": "HTTPError: HTTP Error 400: Bad Request"
+    },
+    {
+      "id": "p63-12221415",
+      "profileId": 63,
+      "photoName": "1789432533556.jpg",
+      "ok": false,
+      "error": "HTTPError: HTTP Error 400: Bad Request"
+    },
+    {
+      "id": "p63-1c6f32f0",
+      "profileId": 63,
+      "photoName": "1789432566759.jpg",
+      "ok": false,
+      "error": "HTTPError: HTTP Error 400: Bad Request"
+    },
+    {
+      "id": "p63-0635f4ff",
+      "profileId": 63,
+      "photoName": "1789437368887.jpg",
+      "ok": false,
+      "error": "HTTPError: HTTP Error 400: Bad Request"
+    },
+    {
+      "id": "p63-0704699d",
+      "profileId": 63,
+      "photoName": "1789442626468.jpg",
+      "ok": false,
+      "error": "HTTPError: HTTP Error 400: Bad Request"
+    },
+    {
+      "id": "p63-ec883a33",
+      "profileId": 63,
+      "photoName": "1789452790665.jpg",
+      "ok": false,
+      "error": "HTTPError: HTTP Error 400: Bad Request"
+    },
+    {
+      "id": "p63-4798e3d5",
+      "profileId": 63,
+      "photoName": "1789452838851.jpg",
+      "ok": false,
+      "error": "HTTPError: HTTP Error 400: Bad Request"
+    },
+    {
+      "id": "p64-d470809b",
+      "profileId": 64,
+      "photoName": "1789215976510.jpg",
+      "ok": true,
+      "ms": 3211,
+      "usable": null,
+      "inferredView": null,
+      "selectedView": null,
+      "anchorApplied": false,
+      "counts": {},
+      "verdicts": [],
+      "recordId": null
+    },
+    {
+      "id": "p64-bed894ce",
+      "profileId": 64,
+      "photoName": "1789352461408.jpg",
+      "ok": true,
+      "ms": 3133,
+      "usable": null,
+      "inferredView": null,
+      "selectedView": null,
+      "anchorApplied": false,
+      "counts": {},
+      "verdicts": [],
+      "recordId": null
+    },
+    {
+      "id": "p64-29537114",
+      "profileId": 64,
+      "photoName": "1789352516925.jpg",
+      "ok": true,
+      "ms": 3134,
+      "usable": null,
+      "inferredView": null,
+      "selectedView": null,
+      "anchorApplied": false,
+      "counts": {},
+      "verdicts": [],
+      "recordId": null
+    },
+    {
+      "id": "p64-69716771",
+      "profileId": 64,
+      "photoName": "1789386331395.jpg",
+      "ok": true,
+      "ms": 3170,
+      "usable": null,
+      "inferredView": null,
+      "selectedView": null,
+      "anchorApplied": false,
+      "counts": {},
+      "verdicts": [],
+      "recordId": null
+    },
+    {
+      "id": "p64-543710f9",
+      "profileId": 64,
+      "photoName": "1789432067259.jpg",
+      "ok": true,
+      "ms": 3151,
+      "usable": null,
+      "inferredView": null,
+      "selectedView": null,
+      "anchorApplied": false,
+      "counts": {},
+      "verdicts": [],
+      "recordId": null
+    },
+    {
+      "id": "p64-ae4973b4",
+      "profileId": 64,
+      "photoName": "1789432129234.jpg",
+      "ok": true,
+      "ms": 3338,
+      "usable": null,
+      "inferredView": null,
+      "selectedView": null,
+      "anchorApplied": false,
+      "counts": {},
+      "verdicts": [],
+      "recordId": null
+    }
+  ]
+}

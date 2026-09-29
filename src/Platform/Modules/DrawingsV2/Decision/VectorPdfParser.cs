@@ -15,6 +15,7 @@ namespace Platform.Modules.DrawingsV2.Decision;
 public static class VectorPdfParser
 {
     public const string SupportedSchema = "vpdf/1";
+    public const string SupportedFallbackSchema = "vpdf-fallback/1";
 
     private static readonly JsonSerializerOptions Opts = new()
     {
@@ -58,6 +59,39 @@ public static class VectorPdfParser
     {
         if (!File.Exists(path)) throw new V2Exception("vpdf 文件不存在：" + path);
         return Parse(File.ReadAllText(path));
+    }
+
+    /// <summary>
+    /// 解析 vpdf-fallback/1 视觉兜底输出。
+    ///
+    /// 与 <see cref="Parse"/> 同样的硬校验逻辑：感知层与决策层独立演进，
+    /// schema 不匹配必须显式报错，不允许静默按旧字段解析出「看起来正常但语义已错」的结果。
+    /// </summary>
+    /// <exception cref="V2Exception">schema 不匹配或结构不完整。</exception>
+    public static VisionFallbackResult ParseFallback(string json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+            throw new V2Exception("视觉兜底输出为空");
+
+        VisionFallbackResult? r;
+        try
+        {
+            r = JsonSerializer.Deserialize<VisionFallbackResult>(json, Opts);
+        }
+        catch (JsonException e)
+        {
+            throw new V2Exception("视觉兜底输出不是合法 JSON：" + e.Message);
+        }
+
+        if (r is null) throw new V2Exception("视觉兜底输出解析为空对象");
+
+        var schema = r.Schema ?? "";
+        if (!string.Equals(schema, SupportedFallbackSchema, StringComparison.Ordinal))
+            throw new V2Exception($"视觉兜底 schema 不匹配：期望 {SupportedFallbackSchema}，实际 {schema}");
+
+        if (r.Page is null) throw new V2Exception("视觉兜底输出不含 page 段");
+
+        return r;
     }
 
     /// <summary>取页面标准坐标系宽高（pt）。缺失或非法时抛异常 —— 坐标是所有下游判定的基础。</summary>

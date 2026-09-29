@@ -3,6 +3,7 @@
 
     python -m vpdf.cli parse  <file.pdf> [-o out.json] [--with-graphics] [--max-graphics-items N]
     python -m vpdf.cli sweep  <dir> -o <outdir> [--with-graphics]
+    python -m vpdf.cli fallback <file.pdf> [--page N] [--json-only] [-o out.json]
     python -m vpdf.cli selfcheck
 """
 from __future__ import annotations
@@ -253,6 +254,52 @@ def cmd_render(a: argparse.Namespace) -> int:
         doc.close()
 
 
+def cmd_fallback(a: argparse.Namespace) -> int:
+    """区域触发式局部视觉兜底（方案 §1.8）。
+
+    只 OCR「疑似转曲」的小区域：与文字层 span 有交叠的候选一律丢弃，
+    因此不会把文字层已有的内容重复识别一遍。
+    """
+    from .fallback import DEFAULT_DPIS, run_fallback
+
+    doc_obj = None
+    if a.vpdf_json:
+        with open(a.vpdf_json, "r", encoding="utf-8") as f:
+            doc_obj = json.load(f)
+
+    obj = run_fallback(
+        a.pdf,
+        doc_obj=doc_obj,
+        page_index=a.page,
+        dpis=tuple(a.dpi) if a.dpi else DEFAULT_DPIS,
+        with_ocr=not a.no_ocr,
+        drop_span_overlap=not a.keep_duplicates,
+    )
+    text = _dump(obj, a.out, a.indent)
+
+    if a.json_only:
+        print(text)
+        return 0
+
+    pg = obj["page"]
+    geo = obj["diagnostics"]["geometry"]
+    print(
+        f"{os.path.basename(a.pdf or '')}: page{pg['index']} "
+        f"paths={geo['paths_total']} chars={geo['char_like_paths']} "
+        f"clusters={geo['clusters']} regions={geo['regions']} "
+        f"(rejected_overlap={geo['rejected_by_span_overlap']}) "
+        f"texts={len(pg['texts'])} {obj['diagnostics']['total_ms']}ms"
+    )
+    for r in pg["regions"]:
+        nb = r["norm_bbox"]
+        hits = [t for t in pg["texts"] if t["region_id"] == r["id"]]
+        head = " | ".join(f"{t['text']}({t['conf']:.2f})" for t in hits[:6])
+        print(f"  {r['id']} ({nb[0]:.3f},{nb[1]:.3f}) chars={r['n_chars']:>3d}  {head}")
+    if a.out:
+        print(f"-> {a.out}")
+    return 0
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="vpdf", description="矢量 PDF 原生解析（v2 perception 层）")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -286,6 +333,18 @@ def main(argv=None) -> int:
     p5.add_argument("--page", type=int, default=0)
     p5.add_argument("--dpi", type=int, default=150)
     p5.set_defaults(func=cmd_render)
+
+    p6 = sub.add_parser("fallback", help="区域触发式局部视觉兜底 OCR（仅疑似转曲区）")
+    p6.add_argument("pdf")
+    p6.add_argument("--page", type=int, default=0)
+    p6.add_argument("--vpdf-json", default=None, help="复用已解析的 vpdf/1 JSON，跳过重复解析")
+    p6.add_argument("--dpi", type=int, nargs="+", default=None, help="渲染 dpi 列表，默认 200 300")
+    p6.add_argument("--no-ocr", action="store_true", help="只算区域，不做 OCR（验证触发闸门）")
+    p6.add_argument("--keep-duplicates", action="store_true", help="保留与文字层重复的文本（实验用）")
+    p6.add_argument("-o", "--out", default=None)
+    p6.add_argument("--indent", type=int, default=2)
+    p6.add_argument("--json-only", action="store_true", help="stdout 只输出纯 JSON（供 C# 消费）")
+    p6.set_defaults(func=cmd_fallback)
 
     a = ap.parse_args(argv)
     return a.func(a)

@@ -112,8 +112,8 @@ public sealed class VpdfPath
     [JsonPropertyName("norm_bbox")] public double[]? NormBbox { get; set; }
     [JsonPropertyName("type")] public string? Type { get; set; }
     [JsonPropertyName("n_items")] public int NItems { get; set; }
-    [JsonPropertyName("color")] public string? Color { get; set; }
-    [JsonPropertyName("fill")] public string? Fill { get; set; }
+    [JsonPropertyName("color")] public double[]? Color { get; set; }
+    [JsonPropertyName("fill")] public double[]? Fill { get; set; }
     [JsonPropertyName("width")] public double? Width { get; set; }
     [JsonPropertyName("closed")] public bool Closed { get; set; }
 }
@@ -137,7 +137,7 @@ public sealed class VpdfDocDiagnostics
 public enum MarkType
 {
     Text,   // 文字内容：型号 / MAC / 服务热线 / 警示语 / 编码
-    Qr,     // 二维码：只验存在性与位置，不解码内容
+    Qr,     // 二维码：只验存在性/外接矩形/中心位置（设计 §7）；录入预期内容仅作提示性人工标注，不影响结论（P4 回正）
     Icon,   // 图标：只验存在性与位置
     Group   // 组合：多个子 mark 构成的整体（如「编码块」）
 }
@@ -178,7 +178,7 @@ public sealed class DrawingMark
     public MarkType Type { get; set; }
     public MarkView View { get; set; } = MarkView.Unspecified;
 
-    /// <summary>标称文本。Qr/Icon 为 null（方案：二维码与图标只验存在性与位置）。</summary>
+    /// <summary>标称文本。Text/Icon 一般为 null（只验存在性与位置）；QR 可录入预期解码内容以做身份比对（B 项）。</summary>
     public string? Text { get; set; }
 
     /// <summary>是否必须打标（由条款或标注强制性决定）。</summary>
@@ -194,12 +194,8 @@ public sealed class DrawingMark
     public double[]? Bbox { get; set; }
 
     /// <summary>
-    /// 视图标签文字的 NormBbox（M6 修正·视图词范围）。
-    /// <para>InferView 在页面上找到的、标注此 mark 所属视图的**视图标签文字块**
-    /// （如「上盖视图」「下盖」）的 NormBbox。用于视图级配准时替代 marks 的 UnionBbox
-    /// 作为 viewBbox —— 视图标签是页面上的固定锚点，比散乱 marks 的并集更稳定。</para>
-    /// <para>null 表示该 mark 无视图标签（View == Unspecified 或 InferView 未找到视图标签块）。
-    /// 向后兼容：老档案反序列化时无此字段 → null → 走 marks UnionBbox 回退。</para>
+    /// 视图标签文字的 NormBbox，用于在同一视图内建立局部坐标范围。
+    /// <para>null 表示没有可用视图范围。老档案无此字段时按 marks 并集回退。</para>
     /// </summary>
     public double[]? ViewBbox { get; set; }
 
@@ -213,7 +209,15 @@ public sealed class DrawingMark
 
     /// <summary>子对象（Type=Group 时有值）。</summary>
     public List<DrawingMark>? Children { get; set; }
-}
+
+    /// <summary>A（#37）：是否被排除出比对。仅针对低置信兜底链 R4/R5 的疑似污染
+    /// （屏显文案 / 页脚碎片 / 二维码格式说明），正向证据链 R1/R2/R3 永不被排除。</summary>
+    public bool Excluded { get; set; }
+
+    /// <summary>A（#37）：排除原因（审计用）。</summary>
+    public string? ExcludeReason { get; set; }
+
+    }
 
 /// <summary>打标对象的来源证据 —— 可追溯性硬要求。</summary>
 public sealed class MarkSource
@@ -234,6 +238,78 @@ public sealed class MarkSource
 
     /// <summary>人类可读的判定依据（审计用）。</summary>
     public string? Evidence { get; set; }
+}
+
+/// <summary>
+/// 视觉兜底（方案 §1.8）感知结果 —— vpdf-fallback/1 契约。
+///
+/// 只承载「感知」：疑似转曲区域 + 局部 OCR 文本 + 坐标 + 置信度。
+/// 哪些算打标对象是 MarkBuilder（决策层）的职责，本结构不做判定。
+/// </summary>
+public sealed class VisionFallbackResult
+{
+    [JsonPropertyName("schema")] public string? Schema { get; set; }
+    [JsonPropertyName("page")] public VisionFallbackPage? Page { get; set; }
+    [JsonPropertyName("diagnostics")] public VisionFallbackDiagnostics? Diagnostics { get; set; }
+}
+
+public sealed class VisionFallbackPage
+{
+    [JsonPropertyName("index")] public int Index { get; set; }
+    [JsonPropertyName("regions")] public List<VisionRegion> Regions { get; set; } = new();
+    [JsonPropertyName("texts")] public List<VisionText> Texts { get; set; } = new();
+}
+
+/// <summary>疑似转曲区（已排除与文字层 span 交叠的簇 —— 零误触发的结构性保证）。</summary>
+public sealed class VisionRegion
+{
+    [JsonPropertyName("id")] public string Id { get; set; } = "";
+    [JsonPropertyName("norm_bbox")] public double[]? NormBbox { get; set; }
+    [JsonPropertyName("n_chars")] public int NChars { get; set; }
+    [JsonPropertyName("n_lines")] public int NLines { get; set; }
+}
+
+/// <summary>局部 OCR 读到的一条文本，坐标已是页面归一化 [x,y,w,h]。</summary>
+public sealed class VisionText
+{
+    /// <summary>
+    /// 所属页下标 —— 不在 vpdf-fallback/1 契约里（感知层一次只处理一页），
+    /// 由 C# 调用方按结果的 page.index 注入，供 MarkBuilder 按页分派。
+    /// </summary>
+    [JsonIgnore] public int PageIndex { get; set; }
+
+    [JsonPropertyName("id")] public string Id { get; set; } = "";
+    [JsonPropertyName("region_id")] public string? RegionId { get; set; }
+    [JsonPropertyName("text")] public string Text { get; set; } = "";
+    [JsonPropertyName("conf")] public double Conf { get; set; }
+    [JsonPropertyName("dpi")] public int? Dpi { get; set; }
+    [JsonPropertyName("norm_bbox")] public double[]? NormBbox { get; set; }
+}
+
+public sealed class VisionFallbackDiagnostics
+{
+    [JsonPropertyName("total_ms")] public double TotalMs { get; set; }
+    [JsonPropertyName("geometry")] public VisionGeometryStats? Geometry { get; set; }
+    [JsonPropertyName("ocr")] public VisionOcrStats? Ocr { get; set; }
+}
+
+public sealed class VisionGeometryStats
+{
+    [JsonPropertyName("paths_total")] public int PathsTotal { get; set; }
+    [JsonPropertyName("char_like_paths")] public int CharLikePaths { get; set; }
+    [JsonPropertyName("clusters")] public int Clusters { get; set; }
+    [JsonPropertyName("cluster_candidates")] public int ClusterCandidates { get; set; }
+    [JsonPropertyName("rejected_by_span_overlap")] public int RejectedBySpanOverlap { get; set; }
+    [JsonPropertyName("regions")] public int Regions { get; set; }
+}
+
+public sealed class VisionOcrStats
+{
+    [JsonPropertyName("ocr_calls")] public int OcrCalls { get; set; }
+    [JsonPropertyName("texts")] public int Texts { get; set; }
+    [JsonPropertyName("dropped_as_span_duplicate")] public int DroppedAsSpanDuplicate { get; set; }
+    [JsonPropertyName("render_total_ms")] public double RenderTotalMs { get; set; }
+    [JsonPropertyName("ocr_total_ms")] public double OcrTotalMs { get; set; }
 }
 
 /// <summary>决策层异常。与业务数据无关，用于让调用方区分「解析失败」与「正常无结果」。</summary>

@@ -1,0 +1,450 @@
+[
+ {
+  "id": "p61-f403feb6",
+  "pid": 61,
+  "stage1": "needsView",
+  "nCands": 1,
+  "topScore": 2,
+  "pick": "TopCover",
+  "stage2": "ok",
+  "verdicts": 3,
+  "states": {
+   "Matched": 2,
+   "LowConfidence": 1
+  },
+  "needsReview": 0,
+  "ms2": 11721
+ },
+ {
+  "id": "p61-ed96d26e",
+  "pid": 61,
+  "stage1": "needsView",
+  "nCands": 1,
+  "topScore": 2,
+  "pick": "TopCover",
+  "stage2": "ok",
+  "verdicts": 3,
+  "states": {
+   "Matched": 2,
+   "LowConfidence": 1
+  },
+  "needsReview": 0,
+  "ms2": 8085
+ },
+ {
+  "id": "p61-89ec3ab0",
+  "pid": 61,
+  "stage1": "needsView",
+  "nCands": 1,
+  "topScore": 2,
+  "pick": "TopCover",
+  "stage2": "ok",
+  "verdicts": 3,
+  "states": {
+   "Matched": 2,
+   "LowConfidence": 1
+  },
+  "needsReview": 0,
+  "ms2": 10962
+ },
+ {
+  "id": "p61-1550cee2",
+  "pid": 61,
+  "stage1": "needsView",
+  "nCands": 1,
+  "topScore": 2,
+  "pick": "TopCover",
+  "stage2": "ok",
+  "verdicts": 3,
+  "states": {
+   "Matched": 2,
+   "LowConfidence": 1
+  },
+  "needsReview": 0,
+  "ms2": 9764
+ },
+ {
+  "id": "p61-c91b6258",
+  "pid": 61,
+  "stage1": "needsView",
+  "nCands": 1,
+  "topScore": 1.5,
+  "pick": "TopCover",
+  "stage2": "ok",
+  "verdicts": 3,
+  "states": {
+   "NotDetected": 1,
+   "Matched": 2
+  },
+  "needsReview": 0,
+  "ms2": 7797
+ },
+ {
+  "id": "p61-b8f7be02",
+  "pid": 61,
+  "stage1": "needsView",
+  "nCands": 1,
+  "topScore": 2,
+  "pick": "TopCover",
+  "stage2": "ok",
+  "verdicts": 3,
+  "states": {
+   "Matched": 2,
+   "LowConfidence": 1
+  },
+  "needsReview": 0,
+  "ms2": 9544
+ },
+ {
+  "id": "p61-77534c34",
+  "pid": 61,
+  "stage1": "needsView",
+  "nCands": 1,
+  "topScore": 2,
+  "pick": "TopCover",
+  "stage2": "ok",
+  "verdicts": 3,
+  "states": {
+   "Matched": 2,
+   "LowConfidence": 1
+  },
+  "needsReview": 0,
+  "ms2": 10627
+ },
+ {
+  "id": "p61-e783f363",
+  "pid": 61,
+  "stage1": "needsView",
+  "nCands": 1,
+  "topScore": 2,
+  "pick": "TopCover",
+  "stage2": "ok",
+  "verdicts": 3,
+  "states": {
+   "Matched": 2,
+   "LowConfidence": 1
+  },
+  "needsReview": 0,
+  "ms2": 6968
+ },
+ {
+  "id": "p61-150010ad",
+  "pid": 61,
+  "stage1": "needsView",
+  "nCands": 1,
+  "topScore": 2,
+  "pick": "TopCover",
+  "stage2": "ok",
+  "verdicts": 3,
+  "states": {
+   "Matched": 2,
+   "LowConfidence": 1
+  },
+  "needsReview": 0,
+  "ms2": 9467
+ },
+ {
+  "id": "p61-6f206d21",
+  "pid": 61,
+  "stage1": "needsView",
+  "nCands": 1,
+  "topScore": 1.5,
+  "pick": "TopCover",
+  "stage2": "ok",
+  "verdicts": 3,
+  "states": {
+   "NotDetected": 1,
+   "Matched": 2
+  },
+  "needsReview": 0,
+  "ms2": 7704
+ },
+ {
+  "id": "p61-0253298c",
+  "pid": 61,
+  "stage1": "needsView",
+  "nCands": 1,
+  "topScore": 1.5,
+  "pick": "TopCover",
+  "stage2": "ok",
+  "verdicts": 3,
+  "states": {
+   "NotDetected": 1,
+   "Matched": 2
+  },
+  "needsReview": 0,
+  "ms2": 7688
+ },
+ {
+  "id": "p61-ab54f291",
+  "pid": 61,
+  "stage1": "needsView",
+  "nCands": 1,
+  "topScore": 1.5,
+  "pick": "TopCover",
+  "stage2": "ok",
+  "verdicts": 3,
+  "states": {
+   "NotDetected": 1,
+   "Matched": 2
+  },
+  "needsReview": 0,
+  "ms2": 7761
+ },
+ {
+  "id": "p61-64d97161",
+  "pid": 61,
+  "stage1": "needsView",
+  "nCands": 1,
+  "topScore": 2,
+  "pick": "TopCover",
+  "stage2": "ok",
+  "verdicts": 3,
+  "states": {
+   "Matched": 2,
+   "LowConfidence": 1
+  },
+  "needsReview": 0,
+  "ms2": 10465
+ },
+ {
+  "id": "p62-7b3bf646",
+  "pid": 62,
+  "stage1": "needsView",
+  "nCands": 0,
+  "topScore": null,
+  "pick": null
+ },
+ {
+  "id": "p62-3452fef2",
+  "pid": 62,
+  "stage1": "needsView",
+  "nCands": 0,
+  "topScore": null,
+  "pick": null
+ },
+ {
+  "id": "p63-3ca0bfd4",
+  "pid": 63,
+  "stage1": "needsView",
+  "nCands": 0,
+  "topScore": null,
+  "pick": null
+ },
+ {
+  "id": "p63-c8509be1",
+  "pid": 63,
+  "stage1": "needsView",
+  "nCands": 0,
+  "topScore": null,
+  "pick": null
+ },
+ {
+  "id": "p63-5a64e4d2",
+  "pid": 63,
+  "stage1": "needsView",
+  "nCands": 0,
+  "topScore": null,
+  "pick": null
+ },
+ {
+  "id": "p63-05617ef6",
+  "pid": 63,
+  "stage1": "needsView",
+  "nCands": 0,
+  "topScore": null,
+  "pick": null
+ },
+ {
+  "id": "p63-75c033fc",
+  "pid": 63,
+  "stage1": "needsView",
+  "nCands": 0,
+  "topScore": null,
+  "pick": null
+ },
+ {
+  "id": "p63-ade5622b",
+  "pid": 63,
+  "stage1": "needsView",
+  "nCands": 0,
+  "topScore": null,
+  "pick": null
+ },
+ {
+  "id": "p63-b977114e",
+  "pid": 63,
+  "stage1": "needsView",
+  "nCands": 0,
+  "topScore": null,
+  "pick": null
+ },
+ {
+  "id": "p63-7d6f7bf5",
+  "pid": 63,
+  "stage1": "needsView",
+  "nCands": 0,
+  "topScore": null,
+  "pick": null
+ },
+ {
+  "id": "p63-57987cb4",
+  "pid": 63,
+  "stage1": "needsView",
+  "nCands": 0,
+  "topScore": null,
+  "pick": null
+ },
+ {
+  "id": "p63-08a0d038",
+  "pid": 63,
+  "stage1": "needsView",
+  "nCands": 0,
+  "topScore": null,
+  "pick": null
+ },
+ {
+  "id": "p63-6a15dd8d",
+  "pid": 63,
+  "stage1": "needsView",
+  "nCands": 0,
+  "topScore": null,
+  "pick": null
+ },
+ {
+  "id": "p63-5cd95a01",
+  "pid": 63,
+  "stage1": "needsView",
+  "nCands": 0,
+  "topScore": null,
+  "pick": null
+ },
+ {
+  "id": "p63-7cec2f7d",
+  "pid": 63,
+  "stage1": "needsView",
+  "nCands": 0,
+  "topScore": null,
+  "pick": null
+ },
+ {
+  "id": "p63-da122f48",
+  "pid": 63,
+  "stage1": "needsView",
+  "nCands": 0,
+  "topScore": null,
+  "pick": null
+ },
+ {
+  "id": "p63-12bbbddf",
+  "pid": 63,
+  "stage1": "needsView",
+  "nCands": 0,
+  "topScore": null,
+  "pick": null
+ },
+ {
+  "id": "p63-12221415",
+  "pid": 63,
+  "stage1": "needsView",
+  "nCands": 0,
+  "topScore": null,
+  "pick": null
+ },
+ {
+  "id": "p63-1c6f32f0",
+  "pid": 63,
+  "stage1": "needsView",
+  "nCands": 0,
+  "topScore": null,
+  "pick": null
+ },
+ {
+  "id": "p63-0635f4ff",
+  "pid": 63,
+  "stage1": "needsView",
+  "nCands": 0,
+  "topScore": null,
+  "pick": null
+ },
+ {
+  "id": "p63-0704699d",
+  "pid": 63,
+  "stage1": "needsView",
+  "nCands": 0,
+  "topScore": null,
+  "pick": null
+ },
+ {
+  "id": "p63-ec883a33",
+  "pid": 63,
+  "stage1": "needsView",
+  "nCands": 0,
+  "topScore": null,
+  "pick": null
+ },
+ {
+  "id": "p63-4798e3d5",
+  "pid": 63,
+  "stage1": "needsView",
+  "nCands": 0,
+  "topScore": null,
+  "pick": null
+ },
+ {
+  "id": "p64-d470809b",
+  "pid": 64,
+  "stage1": "needsView",
+  "nCands": 0,
+  "topScore": null,
+  "pick": null
+ },
+ {
+  "id": "p64-bed894ce",
+  "pid": 64,
+  "stage1": "needsView",
+  "nCands": 0,
+  "topScore": null,
+  "pick": null
+ },
+ {
+  "id": "p64-29537114",
+  "pid": 64,
+  "stage1": "needsView",
+  "nCands": 0,
+  "topScore": null,
+  "pick": null
+ },
+ {
+  "id": "p64-69716771",
+  "pid": 64,
+  "stage1": "needsView",
+  "nCands": 0,
+  "topScore": null,
+  "pick": null
+ },
+ {
+  "id": "p64-543710f9",
+  "pid": 64,
+  "stage1": "needsView",
+  "nCands": 0,
+  "topScore": null,
+  "pick": null
+ },
+ {
+  "id": "p64-ae4973b4",
+  "pid": 64,
+  "stage1": "needsView",
+  "nCands": 1,
+  "topScore": 1.5,
+  "pick": "TopCover",
+  "stage2": "ok",
+  "verdicts": 2,
+  "states": {
+   "NotApplicable": 1,
+   "Matched": 1
+  },
+  "needsReview": 0,
+  "ms2": 5770
+ }
+]

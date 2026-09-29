@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
 
@@ -23,9 +24,36 @@ namespace Platform.Modules.DrawingsV2.Decision;
 /// </summary>
 public sealed class V2Store
 {
+    /// <summary>
+    /// M1 缓存的**响应结构**版本号（#36 引入）。
+    /// <para>只要 compare 响应的字段结构发生变化就 +1：旧快照会因版本不匹配自动失效，
+    /// 避免缓存把「上一次代码版本的响应」原样返回，从而掩盖新改动
+    /// （典型症状：新字段永远看不到，还以为是没生效）。</para>
+    /// <para>注意它和 <c>DecisionVersion</c> 不同：DecisionVersion 描述**判定规则**，
+    /// 本值描述**响应格式**。只加字段不动规则时，前者不变、后者必须 +1。</para>
+    /// </summary>
+    public const string ResponseSchemaVersion = "2";
+
+    /// <summary>
+    /// 代码指纹（本程序集 MVID 前 8 位）：**每次重新编译都会变**。
+    /// <para>纳入缓存校验后，代码一变更旧缓存自动失效 —— 否则缓存会把「旧代码算出的结论」
+    /// 当成新代码的结论返回，既掩盖新改动，也掩盖修复（本次就是这么发现的：
+    /// 改了配置、改了空组置信度，端点却一直返回旧值）。</para>
+    /// <para>代价：每次部署后第一批请求会重新计算一次（之后照常命中），
+    /// 这正是「代码变了就不该复用旧结论」应有的代价。</para>
+    /// </summary>
+    public static string CodeFingerprint =>
+        typeof(V2Store).Assembly.ManifestModule.ModuleVersionId.ToString("N").Substring(0, 8);
+
     private readonly string _connStr;
     private static readonly object InitLock = new();
     private static bool _initialized;
+
+    /// <summary>
+    /// X1（#36）重剖析时若「应打标对象集合逐字未变」则保留人工复核状态（默认开）。
+    /// 关闭即回到旧行为：任何一次重剖析都无条件打回 draft。
+    /// </summary>
+    private readonly bool _keepReviewedOnUnchanged;
 
     public string DbPath { get; }
 
@@ -54,6 +82,7 @@ public sealed class V2Store
             Mode = SqliteOpenMode.ReadWriteCreate,
             Cache = SqliteCacheMode.Shared
         }.ToString();
+        _keepReviewedOnUnchanged = !bool.TryParse(config["DrawingsV2:KeepReviewedOnUnchanged"], out var krc) || krc;
         Initialize();
     }
 
@@ -72,6 +101,7 @@ public sealed class V2Store
             Mode = SqliteOpenMode.ReadWriteCreate,
             Cache = SqliteCacheMode.Shared
         }.ToString();
+        _keepReviewedOnUnchanged = true;   // 离线验证台无配置：与生产默认一致（开）
         Initialize();
     }
 
@@ -179,11 +209,67 @@ CREATE TABLE IF NOT EXISTS v2_compare_records (
 );
 CREATE INDEX IF NOT EXISTS ix_v2_records_profile ON v2_compare_records(profile_id);
 CREATE INDEX IF NOT EXISTS ix_v2_records_time    ON v2_compare_records(created_at DESC);
+
+-- === P2 · 逻辑图块（docs/逻辑图块方案_2026-09-26.md §4）===
+-- 【与旧 v2_drawing_blocks 的区别】旧表是「物理切图矩形 + 块级过滤」，已被实测证伪
+-- （p62 聚出 8 块全是标题栏、产品部位 0 个）并于 2026-09-26 删除。
+-- 新表是「元素逻辑集合 + 包围盒」：元素保留全局归一化坐标，只多一个 block_id，不切 PDF。
+CREATE TABLE IF NOT EXISTS v2_logical_blocks (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    profile_id     INTEGER NOT NULL REFERENCES v2_drawing_profiles(id) ON DELETE CASCADE,
+    page_index     INTEGER NOT NULL DEFAULT 0,
+    block_key      TEXT    NOT NULL,        -- 稳定键（含算法版本 + 几何指纹，防 markKey 式漂移）
+    block_index    INTEGER NOT NULL,        -- 面积序（沿用 v8.4 部位分离输出顺序）
+    name           TEXT    NOT NULL DEFAULT '',   -- §0.5.2：以块内打标内容命名（排除 d 类）
+    name_fp        TEXT    NOT NULL DEFAULT '',   -- 归一化指纹（去空格/全半角/大小写）→ 命中检索键
+    norm_x         REAL    NULL,
+    norm_y         REAL    NULL,
+    norm_w         REAL    NULL,
+    norm_h         REAL    NULL,
+    bbox_json      TEXT    NULL,            -- 原始 [x0,y0,x1,y1]（pt）
+    area_pct       REAL    NOT NULL DEFAULT 0,
+    view_hint      TEXT    NOT NULL DEFAULT 'Unspecified',
+    has_marking    INTEGER NOT NULL DEFAULT 1,    -- §2.1：0=空块，不参与命中检索、不产生四色判定
+    empty_reason   TEXT    NULL,            -- §2.2：no_text_layer/ocr_empty/all_dim_note/ocr_noise_only
+    low_conf       INTEGER NOT NULL DEFAULT 0,    -- 内容来自低置信 OCR → 命中走【黄】，不算空
+    algo_version   TEXT    NOT NULL DEFAULT '',
+    geom_fp        TEXT    NULL,            -- 几何指纹（bbox+元素数），漂移检测
+    n_elements     INTEGER NOT NULL DEFAULT 0,
+    n_participate  INTEGER NOT NULL DEFAULT 0,
+    n_image        INTEGER NOT NULL DEFAULT 0,
+    created_at     TEXT    NOT NULL
+);
+-- 按「位置 + 算法版本」唯一：同一 profile 重跑即覆盖，不产生重复行
+CREATE UNIQUE INDEX IF NOT EXISTS ux_v2_lblock_pos
+    ON v2_logical_blocks(profile_id, page_index, block_index, algo_version);
+CREATE INDEX IF NOT EXISTS ix_v2_lblock_profile  ON v2_logical_blocks(profile_id, page_index);
+-- 命中检索恒带 has_marking=1 条件，该索引直接缩小候选集
+CREATE INDEX IF NOT EXISTS ix_v2_lblock_marking  ON v2_logical_blocks(has_marking, name_fp);
+
+-- 块内元素（逻辑集合成员）：坐标仍是【全局归一化】，只多一个 block_id
+CREATE TABLE IF NOT EXISTS v2_block_elements (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    block_id     INTEGER NOT NULL REFERENCES v2_logical_blocks(id) ON DELETE CASCADE,
+    kind         TEXT    NOT NULL,          -- text/curve_text/raster_text/icon/qr/dim/note
+    text         TEXT    NULL,
+    ocr_conf     REAL    NULL,
+    norm_x       REAL    NULL,
+    norm_y       REAL    NULL,
+    norm_w       REAL    NULL,
+    norm_h       REAL    NULL,
+    bbox_json    TEXT    NULL,
+    participate  INTEGER NOT NULL DEFAULT 0,  -- 是否参与匹配（d 类=0）
+    is_anchor    INTEGER NOT NULL DEFAULT 0,  -- 是否选为锚点（P4 配准用，当前恒 0）
+    source       TEXT    NOT NULL DEFAULT ''  -- text_layer/outline_ocr/outline_ocr_quad/image/vector
+);
+CREATE INDEX IF NOT EXISTS ix_v2_lelem_block ON v2_block_elements(block_id);
+CREATE INDEX IF NOT EXISTS ix_v2_lelem_part  ON v2_block_elements(participate, kind);
 ";
             cmd.ExecuteNonQuery();
             MigrateMarkColumns(c);
             MigrateProfileColumns(c);
             MigrateRecordColumns(c);
+            MigrateVerdictReviewTable(c);
             _initialized = true;
         }
     }
@@ -221,6 +307,18 @@ CREATE INDEX IF NOT EXISTS ix_v2_records_time    ON v2_compare_records(created_a
             alter.CommandText = "ALTER TABLE v2_drawing_marks ADD COLUMN confirmed INTEGER NOT NULL DEFAULT 0";
             alter.ExecuteNonQuery();
         }
+        if (!cols.Contains("excluded"))
+        {
+            using var alter = c.CreateCommand();
+            alter.CommandText = "ALTER TABLE v2_drawing_marks ADD COLUMN excluded INTEGER NOT NULL DEFAULT 0";
+            alter.ExecuteNonQuery();
+        }
+        if (!cols.Contains("exclude_reason"))
+        {
+            using var alter = c.CreateCommand();
+            alter.CommandText = "ALTER TABLE v2_drawing_marks ADD COLUMN exclude_reason TEXT NULL";
+            alter.ExecuteNonQuery();
+        }
     }
 
     /// <summary>
@@ -247,6 +345,57 @@ CREATE INDEX IF NOT EXISTS ix_v2_records_time    ON v2_compare_records(created_a
         Add("reviewed_at", "TEXT NULL");
         Add("reviewed_by", "TEXT NULL");
         Add("review_note", "TEXT NULL");
+        // M7（库管理）逻辑块抽取状态机：pending(待抽取)/extracting(抽取中)/ready(就绪)/failed(失败)
+        Add("blocks_status", "TEXT NOT NULL DEFAULT 'pending'");
+        Add("blocks_error", "TEXT NULL");
+        Add("blocks_updated_at", "TEXT NULL");
+    }
+
+    /// <summary>设置档案的逻辑块抽取状态（异步抽取队列回调）。</summary>
+    public void SetBlockStatus(long profileId, string status, string? error)
+    {
+        using var c = Open();
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = "UPDATE v2_drawing_profiles SET blocks_status=$s, blocks_error=$e, blocks_updated_at=$t WHERE id=$id";
+        cmd.Parameters.AddWithValue("$s", status);
+        cmd.Parameters.AddWithValue("$e", (object?)error ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("$t", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+        cmd.Parameters.AddWithValue("$id", profileId);
+        cmd.ExecuteNonQuery();
+    }
+
+    /// <summary>查询档案的逻辑块抽取状态与块数。</summary>
+    public object? GetBlockStatus(long profileId)
+    {
+        using var c = Open();
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = @"
+SELECT blocks_status, blocks_error, blocks_updated_at,
+       (SELECT COUNT(*) FROM v2_logical_blocks WHERE profile_id=$id) AS block_count
+FROM v2_drawing_profiles WHERE id=$id";
+        cmd.Parameters.AddWithValue("$id", profileId);
+        using var rd = cmd.ExecuteReader();
+        if (!rd.Read()) return null;
+        return new
+        {
+            profileId,
+            status = rd.IsDBNull(0) ? "pending" : rd.GetString(0),
+            error = rd.IsDBNull(1) ? null : rd.GetString(1),
+            updatedAt = rd.IsDBNull(2) ? null : rd.GetString(2),
+            blockCount = rd.GetInt64(3)
+        };
+    }
+
+    /// <summary>已登记档案的 drawing_key 集合（供目录扫描去重）。</summary>
+    public HashSet<string> AllDrawingKeys()
+    {
+        var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        using var c = Open();
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = "SELECT drawing_key FROM v2_drawing_profiles";
+        using var rd = cmd.ExecuteReader();
+        while (rd.Read()) set.Add(rd.GetString(0));
+        return set;
     }
 
     /// <summary>
@@ -272,13 +421,257 @@ CREATE INDEX IF NOT EXISTS ix_v2_records_time    ON v2_compare_records(created_a
         Add("session_id", "TEXT NULL");
         Add("marks_snapshot_json", "TEXT NULL");
         Add("params_snapshot_json", "TEXT NULL");
+        // M1（#35）照片指纹缓存：完整响应快照，供「完全相同的输入」直接复用，保证逐字一致。
+        Add("response_json", "TEXT NULL");
+    }
+
+    /// <summary>
+    /// ② 判定级人工确认（幂等建表）：人工对「单条判定」的确认结果独立审计表。
+    /// 不修改 verdicts_json 原始快照 —— 系统判定永久留痕，人工判定叠加在上层，可随时对照/撤销。
+    /// </summary>
+    private static void MigrateVerdictReviewTable(SqliteConnection c)
+    {
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = @"
+CREATE TABLE IF NOT EXISTS v2_verdict_reviews (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    record_id    INTEGER NOT NULL REFERENCES v2_compare_records(id) ON DELETE CASCADE,
+    session_id   TEXT    NULL,
+    profile_id   INTEGER NOT NULL DEFAULT 0,
+    mark_key     TEXT    NOT NULL,
+    system_state TEXT    NOT NULL DEFAULT '',
+    human_state  TEXT    NOT NULL,
+    human_by     TEXT    NULL,
+    human_note   TEXT    NULL,
+    created_at   TEXT    NOT NULL,
+    updated_at   TEXT    NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS ux_v2_vreview      ON v2_verdict_reviews(record_id, mark_key);
+CREATE INDEX        IF NOT EXISTS ix_v2_vreview_sess ON v2_verdict_reviews(session_id);
+CREATE INDEX        IF NOT EXISTS ix_v2_vreview_prof ON v2_verdict_reviews(profile_id);
+";
+        cmd.ExecuteNonQuery();
+
+        // M2（#35）对象级确认记忆所需的三个维度（幂等）。
+        // ver        = 判据版本 + 图纸内容版本 —— 任一变化，历史记忆全部失效（防「记忆串台」）
+        // photo_sha  = 来源照片指纹（追溯用）
+        // geom_norm  = 该对象的几何指纹 —— markKey 因剖析顺序可能漂移，坐标指纹用于二次校验
+        var cols = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        using (var q2 = c.CreateCommand())
+        {
+            q2.CommandText = "PRAGMA table_info(v2_verdict_reviews)";
+            using var rd2 = q2.ExecuteReader();
+            while (rd2.Read()) cols.Add(rd2.GetString(1));
+        }
+        void Add(string n, string def)
+        {
+            if (cols.Contains(n)) return;
+            using var alt = c.CreateCommand();
+            alt.CommandText = $"ALTER TABLE v2_verdict_reviews ADD COLUMN {n} {def}";
+            alt.ExecuteNonQuery();
+        }
+        Add("ver", "TEXT NULL");
+        Add("photo_sha", "TEXT NULL");
+        Add("geom_norm", "TEXT NULL");
+    }
+
+    /// <summary>一条人工判定（人工确认动作的最小落库单元）。</summary>
+    public sealed class VerdictReview
+    {
+        public string HumanState = "";
+        public string SystemState = "";
+        public string? By;
+        public string? Note;
+        public string At = "";
+    }
+
+    /// <summary>
+    /// ② 保存人工判定（upsert：同一 record+markKey 以最新一次为准）。
+    /// system_state 从该记录的 verdicts_json 里回填，保证「系统当时怎么判的」永久留痕。
+    /// </summary>
+    public int SaveVerdictReviews(long recordId,
+        IEnumerable<(string MarkKey, string HumanState, string? Note)> items, string? by)
+    {
+        long profileId = 0;
+        string? sessionId = null;
+        string pdfSha = "", photoSha = "";
+        var sysStates = new Dictionary<string, string>(StringComparer.Ordinal);
+        var geomByMark = new Dictionary<string, string>(StringComparer.Ordinal);
+        using (var c0 = Open())
+        {
+            using var q = c0.CreateCommand();
+            q.CommandText = @"
+SELECT r.profile_id, r.session_id, r.verdicts_json, IFNULL(p.pdf_sha256,''), IFNULL(r.photo_sha256,'')
+FROM v2_compare_records r LEFT JOIN v2_drawing_profiles p ON p.id = r.profile_id
+WHERE r.id=$id";
+            q.Parameters.AddWithValue("$id", recordId);
+            using var rd0 = q.ExecuteReader();
+            if (!rd0.Read()) return 0;
+            profileId = rd0.GetInt64(0);
+            sessionId = rd0.IsDBNull(1) ? null : rd0.GetString(1);
+            var vj = rd0.GetString(2);
+            pdfSha = rd0.IsDBNull(3) ? "" : rd0.GetString(3);
+            photoSha = rd0.IsDBNull(4) ? "" : rd0.GetString(4);
+            try
+            {
+                if (JsonNode.Parse(vj) is JsonArray arr)
+                    foreach (var jn in arr)
+                        if (jn is JsonObject jo)
+                        {
+                            var mk = jo["markKey"]?.GetValue<string>() ?? "";
+                            var stt = jo["state"]?.GetValue<string>() ?? "";
+                            if (mk.Length > 0) sysStates[mk] = stt;
+                            // 几何指纹：优先期望位置（预期该在哪），其次图纸页面位置
+                            var gb = jo["expectedBbox"] ?? jo["drawingBbox"];
+                            if (gb is JsonArray ga)
+                            {
+                                var nums = ga.Where(x => x is JsonValue)
+                                             .Select(x => x.GetValue<double>().ToString("F4")).ToArray();
+                                if (nums.Length >= 4) geomByMark[mk] = string.Join(",", nums);
+                            }
+                        }
+            }
+            catch { }
+        }
+
+        // M2（#35）版本指纹 = 判定规则版本 + 图纸内容版本。
+        // 任一变化 → 全部历史记忆失效：防止剖析重排后「同一 markKey 指向不同对象」导致的串台。
+        var ver = DecisionVersion + ":" + (pdfSha.Length >= 16 ? pdfSha.Substring(0, 16) : pdfSha);
+
+        var now = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+        int n = 0;
+        using var c = Open();
+        using var tx = c.BeginTransaction();
+        foreach (var (mk, st, note) in items)
+        {
+            if (string.IsNullOrWhiteSpace(mk) || string.IsNullOrWhiteSpace(st)) continue;
+            using var del = c.CreateCommand();
+            del.Transaction = tx;
+            del.CommandText = "DELETE FROM v2_verdict_reviews WHERE record_id=$rid AND mark_key=$mk";
+            del.Parameters.AddWithValue("$rid", recordId);
+            del.Parameters.AddWithValue("$mk", mk);
+            del.ExecuteNonQuery();
+
+            using var ins = c.CreateCommand();
+            ins.Transaction = tx;
+            ins.CommandText = @"
+INSERT INTO v2_verdict_reviews
+ (record_id, session_id, profile_id, mark_key, system_state, human_state, human_by, human_note,
+  created_at, updated_at, ver, photo_sha, geom_norm)
+VALUES ($rid,$sid,$pid,$mk,$ss,$hs,$by,$nt,$ts,$ts,$ver,$psh,$geo)";
+            ins.Parameters.AddWithValue("$rid", recordId);
+            ins.Parameters.AddWithValue("$sid", (object?)sessionId ?? DBNull.Value);
+            ins.Parameters.AddWithValue("$pid", profileId);
+            ins.Parameters.AddWithValue("$mk", mk);
+            ins.Parameters.AddWithValue("$ss", sysStates.TryGetValue(mk, out var ss) ? ss : "");
+            ins.Parameters.AddWithValue("$hs", st);
+            ins.Parameters.AddWithValue("$by", (object?)by ?? DBNull.Value);
+            ins.Parameters.AddWithValue("$nt", (object?)note ?? DBNull.Value);
+            ins.Parameters.AddWithValue("$ts", now);
+            ins.Parameters.AddWithValue("$ver", ver);
+            ins.Parameters.AddWithValue("$psh", photoSha);
+            ins.Parameters.AddWithValue("$geo", (object?)(geomByMark.TryGetValue(mk, out var gm) ? gm : null) ?? DBNull.Value);
+            n += ins.ExecuteNonQuery();
+        }
+        tx.Commit();
+        return n;
+    }
+
+    /// <summary>
+    /// M2（#35）对象级确认记忆：同一「档案版本 + 判据版本」下，每个 markKey 最近一次人工结论。
+    /// 只取 ver 完全匹配的行 —— 换版 / 规则升级前的记忆一律不复用。
+    /// **只读**：不改写任何系统判定，也不参与 state 的产生。
+    /// </summary>
+    /// <summary>
+    /// M2/M3 共用的「人工三态 ↔ 系统八态」一致性映射 —— **单一真相源**。
+    /// <para>两者枚举空间不同（HumanPresent/HumanMissing/HumanWrongPart vs 八态），
+    /// 直接字符串相等恒为 false。映射沿用既有会话聚合语义（<c>SessionAgg.Rollup</c>）：
+    /// HumanPresent→Matched/Extra、HumanMissing→Missing、
+    /// HumanWrongPart→「没拍到或不可比」。此处不引入任何新规则。</para>
+    /// </summary>
+    public static bool MemoryAgrees(string human, string sys) => human switch
+    {
+        "HumanPresent"   => sys is "Matched" or "Extra",
+        "HumanMissing"   => sys is "Missing",
+        "HumanWrongPart" => sys is "NotDetected" or "NotComparable",
+        _ => false
+    };
+
+
+    public Dictionary<string, (string Human, string? By, string At)> ListMarkMemory(long profileId, string ver)
+    {
+        var d = new Dictionary<string, (string, string?, string)>(StringComparer.Ordinal);
+        if (string.IsNullOrWhiteSpace(ver)) return d;
+        using var c = Open();
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = @"
+SELECT mark_key, human_state, human_by, updated_at
+FROM v2_verdict_reviews
+WHERE profile_id=$pid AND ver=$ver
+ORDER BY id DESC";
+        cmd.Parameters.AddWithValue("$pid", profileId);
+        cmd.Parameters.AddWithValue("$ver", ver);
+        using var rd = cmd.ExecuteReader();
+        while (rd.Read())
+        {
+            var k = rd.GetString(0);
+            if (d.ContainsKey(k)) continue;   // id DESC：首次出现即最新
+            d[k] = (rd.GetString(1), rd.IsDBNull(2) ? null : rd.GetString(2), rd.GetString(3));
+        }
+        return d;
+    }
+
+    /// <summary>取某条记录的全部人工判定（markKey → 判定）。</summary>
+    public Dictionary<string, VerdictReview> ListVerdictReviews(long recordId)
+    {
+        var r = new Dictionary<string, VerdictReview>(StringComparer.Ordinal);
+        using var c = Open();
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = @"
+SELECT mark_key, system_state, human_state, human_by, human_note, updated_at
+FROM v2_verdict_reviews WHERE record_id=$rid";
+        cmd.Parameters.AddWithValue("$rid", recordId);
+        using var rd = cmd.ExecuteReader();
+        while (rd.Read())
+            r[rd.GetString(0)] = new VerdictReview
+            {
+                SystemState = rd.GetString(1),
+                HumanState = rd.GetString(2),
+                By = rd.IsDBNull(3) ? null : rd.GetString(3),
+                Note = rd.IsDBNull(4) ? null : rd.GetString(4),
+                At = rd.GetString(5)
+            };
+        return r;
+    }
+
+    /// <summary>② 会话级人工判定汇总（markKey → 跨照片的判定列表），供会话聚合「人工优先」使用。</summary>
+    private static Dictionary<string, List<(string State, string? By, string? Note, string At)>>
+        LoadVerdictReviewsOfSession(SqliteConnection c, string sessionId)
+    {
+        var d = new Dictionary<string, List<(string, string?, string?, string)>>(StringComparer.Ordinal);
+        if (string.IsNullOrWhiteSpace(sessionId)) return d;
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = @"
+SELECT mark_key, human_state, human_by, human_note, updated_at
+FROM v2_verdict_reviews WHERE session_id=$sid ORDER BY id";
+        cmd.Parameters.AddWithValue("$sid", sessionId);
+        using var rd = cmd.ExecuteReader();
+        while (rd.Read())
+        {
+            var mk = rd.GetString(0);
+            if (!d.TryGetValue(mk, out var l)) { l = new(); d[mk] = l; }
+            l.Add((rd.GetString(1), rd.IsDBNull(2) ? null : rd.GetString(2),
+                   rd.IsDBNull(3) ? null : rd.GetString(3), rd.GetString(4)));
+        }
+        return d;
     }
 
     // ---------------- 写入 ----------------
 
     /// <summary>
     /// 保存一次剖析结果（profile + views + marks + group 子项）。
-    /// 同一 (drawing_key, pdf_sha256) 重复保存时覆盖旧结果，保证"同一份图纸只有一份权威剖析"。
+    /// 同一 (drawing_key, pdf_sha256) 重复保存时复用原 profile id，只替换 views/marks，
+    /// 保留已关联的历史比对记录；对象变化后状态重置为 draft，必须重新人工复核。
     /// </summary>
     public long SaveProfile(VpdfDocument doc, MarkBuilder.Result res, string pdfPath, string parserVersion)
     {
@@ -288,19 +681,69 @@ CREATE INDEX IF NOT EXISTS ix_v2_records_time    ON v2_compare_records(created_a
         using var c = Open();
         using var tx = c.BeginTransaction();
 
-        // 同 key + 同 sha → 先清旧结果（外键 ON DELETE CASCADE 会连带清 views/marks）
-        using (var del = c.CreateCommand())
+        long? existingId = null;
+        using (var find = c.CreateCommand())
         {
-            del.Transaction = tx;
-            del.CommandText = "DELETE FROM v2_drawing_profiles WHERE drawing_key=$k AND pdf_sha256=$s";
-            del.Parameters.AddWithValue("$k", res.DrawingKey);
-            del.Parameters.AddWithValue("$s", doc.Source?.Sha256 ?? "");
-            del.ExecuteNonQuery();
+            find.Transaction = tx;
+            find.CommandText = "SELECT id FROM v2_drawing_profiles WHERE drawing_key=$k AND pdf_sha256=$s";
+            find.Parameters.AddWithValue("$k", res.DrawingKey);
+            find.Parameters.AddWithValue("$s", doc.Source?.Sha256 ?? "");
+            var value = find.ExecuteScalar();
+            if (value is not null and not DBNull) existingId = Convert.ToInt64(value);
         }
 
         long pid;
-        using (var ins = c.CreateCommand())
+        if (existingId is { } id)
         {
+            pid = id;
+
+            // X1（#36）：先算「旧对象集合」的内容指纹 —— 必须在 DELETE 之前读。
+            // 重剖析若产出的应打标对象集合逐字未变，则此前的人工复核结论依然成立，
+            // 不应被打回 draft（现状无条件打回，是「每次都要重新人工确认」的 L1 根因，见方案评估 §4）。
+            // 对象集合有任何变化 → 结论不再成立，照旧打回 draft：不放宽任何一条质量要求。
+            var oldFp = ContentFingerprintDb(c, tx, pid);
+            var newFp = ContentFingerprint(res.Marks);
+            var keepReviewed = _keepReviewedOnUnchanged
+                               && oldFp.Length > 0
+                               && string.Equals(oldFp, newFp, StringComparison.Ordinal);
+
+            foreach (var table in new[] { "v2_drawing_views", "v2_drawing_marks" })
+            {
+                using var del = c.CreateCommand();
+                del.Transaction = tx;
+                del.CommandText = $"DELETE FROM {table} WHERE profile_id=$id";
+                del.Parameters.AddWithValue("$id", pid);
+                del.ExecuteNonQuery();
+            }
+
+            using var update = c.CreateCommand();
+            update.Transaction = tx;
+            update.CommandText = @"
+UPDATE v2_drawing_profiles SET
+ pdf_path=$p, vpdf_schema=$sch, parser_version=$pv, decision_version=$dv,
+ page_count=$pc, vision_fallback=$fb, declared_items=$di, scopes=$sc,
+ warnings_json=$wn, rule_hits=$rh, created_at=$ts"
+ + (keepReviewed ? "" : @",
+ status='draft', reviewed_at=NULL, reviewed_by=NULL, review_note=NULL")
+ + @"
+WHERE id=$id";
+            update.Parameters.AddWithValue("$id", pid);
+            update.Parameters.AddWithValue("$p", pdfPath ?? "");
+            update.Parameters.AddWithValue("$sch", doc.Schema ?? "");
+            update.Parameters.AddWithValue("$pv", parserVersion ?? "");
+            update.Parameters.AddWithValue("$dv", DecisionVersion);
+            update.Parameters.AddWithValue("$pc", doc.Pages?.Count ?? 0);
+            update.Parameters.AddWithValue("$fb", res.VisionFallbackRequired ? 1 : 0);
+            update.Parameters.AddWithValue("$di", Json.Str(res.DeclaredItems));
+            update.Parameters.AddWithValue("$sc", Json.Str(res.Scopes));
+            update.Parameters.AddWithValue("$wn", Json.Str(res.Warnings));
+            update.Parameters.AddWithValue("$rh", Json.Obj(res.RuleHits));
+            update.Parameters.AddWithValue("$ts", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+            update.ExecuteNonQuery();
+        }
+        else
+        {
+            using var ins = c.CreateCommand();
             ins.Transaction = tx;
             ins.CommandText = @"
 INSERT INTO v2_drawing_profiles
@@ -367,9 +810,10 @@ VALUES ($pid,$i,$w,$h,$o,$r,$tl,$sc,$ic,$src,$fb)";
 INSERT INTO v2_drawing_marks
  (profile_id, mark_key, mark_type, view, text, required, condition_text,
   norm_x, norm_y, norm_w, norm_h, bbox_json, view_bbox, direction, confidence,
-  rule_id, page_index, span_ids, image_ids, evidence, parent_id, is_active, confirmed)
+  rule_id, page_index, span_ids, image_ids, evidence, parent_id, is_active, confirmed,
+  excluded, exclude_reason)
 VALUES
- ($pid,$mk,$ty,$vw,$tx,$rq,$cd,$nx,$ny,$nw,$nh,$bb,$vb,$dr,$cf,$rl,$pi,$si,$ii,$ev,$par,$ia,$cn);
+ ($pid,$mk,$ty,$vw,$tx,$rq,$cd,$nx,$ny,$nw,$nh,$bb,$vb,$dr,$cf,$rl,$pi,$si,$ii,$ev,$par,$ia,$cn,$ex,$er);
 SELECT last_insert_rowid();";
             var nb = m.NormBbox;
             ins.Parameters.AddWithValue("$pid", pid);
@@ -395,11 +839,92 @@ SELECT last_insert_rowid();";
             ins.Parameters.AddWithValue("$par", (object?)parentId ?? DBNull.Value);
             ins.Parameters.AddWithValue("$ia", 1);
             ins.Parameters.AddWithValue("$cn", 0);
+            ins.Parameters.AddWithValue("$ex", m.Excluded ? 1 : 0);
+            ins.Parameters.AddWithValue("$er", (object?)m.ExcludeReason ?? DBNull.Value);
             id = Convert.ToInt64(ins.ExecuteScalar());
         }
 
         foreach (var kid in m.Children ?? new List<DrawingMark>())
             InsertMark(c, tx, pid, kid, id);
+    }
+
+    // ---------------- X1（#36）剖析内容指纹 ----------------
+
+    /// <summary>
+    /// 应打标对象集合的内容指纹（sha256）。只描述「对象集合本身」：
+    /// 不含复核产物（is_active / confirmed）、不含时间戳、不含数据库自增 id。
+    /// <para>用途：判断重剖析后对象集合是否**逐字未变**，未变则保留人工复核状态。</para>
+    /// <para>⚠️ mark_key 含剖析顺序编号（<c>{drawingKey}#{seq:D3}</c>），
+    /// 剖析顺序变化会让同一对象的 key 改变 → 指纹随之改变 → 打回 draft。
+    /// 这是刻意的保守行为：key 漂移意味着历史沉淀可能串台，宁可重新复核。</para>
+    /// </summary>
+    public static string ContentFingerprint(IReadOnlyList<DrawingMark> marks)
+    {
+        var lines = new List<string>();
+        void Walk(DrawingMark m)
+        {
+            var nb = m.NormBbox is { Length: >= 4 } b
+                ? string.Join(",", b.Select(x => x.ToString("F4", System.Globalization.CultureInfo.InvariantCulture)))
+                : "-";
+            lines.Add(FpRow(m.Id, m.Type.ToString(), m.View.ToString(), m.Text ?? "",
+                            m.Required ? "1" : "0", m.Condition ?? "", nb,
+                            m.Source.RuleId ?? "", m.Source.Evidence ?? "",
+                            m.Source.PageIndex.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                            m.Source.SpanIds.Count.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                            m.Source.ImageIds.Count.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+            foreach (var kid in m.Children ?? new List<DrawingMark>()) Walk(kid);
+        }
+        foreach (var m in marks) Walk(m);
+        if (lines.Count == 0) return "";
+        lines.Sort(StringComparer.Ordinal);   // 遍历顺序变化不应导致指纹变化
+        return Sha256Hex(string.Join("\n", lines));
+    }
+
+    /// <summary>库内对象集合的内容指纹（字段与 <see cref="ContentFingerprint"/> 逐项对齐）。</summary>
+    private static string ContentFingerprintDb(SqliteConnection c, SqliteTransaction tx, long pid)
+    {
+        var lines = new List<string>();
+        using var cmd = c.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = @"
+SELECT mark_key, mark_type, IFNULL(view,''), IFNULL(text,''), required, IFNULL(condition_text,''),
+       norm_x, norm_y, norm_w, norm_h,
+       IFNULL(rule_id,''), IFNULL(evidence,''), page_index,
+       IFNULL(span_ids,''), IFNULL(image_ids,'')
+FROM v2_drawing_marks WHERE profile_id=$pid";
+        cmd.Parameters.AddWithValue("$pid", pid);
+        using var rd = cmd.ExecuteReader();
+        while (rd.Read())
+        {
+            var norm = rd.IsDBNull(6)
+                ? "-"
+                : string.Join(",", new[] { rd.GetDouble(6), rd.GetDouble(7), rd.GetDouble(8), rd.GetDouble(9) }
+                                   .Select(x => x.ToString("F4", System.Globalization.CultureInfo.InvariantCulture)));
+            lines.Add(FpRow(rd.GetString(0), rd.GetString(1), rd.GetString(2), rd.GetString(3),
+                            rd.GetInt32(4) != 0 ? "1" : "0", rd.GetString(5), norm,
+                            rd.GetString(10), rd.GetString(11),
+                            rd.GetInt32(12).ToString(System.Globalization.CultureInfo.InvariantCulture),
+                            JsonArrayCount(rd.GetString(13)).ToString(System.Globalization.CultureInfo.InvariantCulture),
+                            JsonArrayCount(rd.GetString(14)).ToString(System.Globalization.CultureInfo.InvariantCulture)));
+        }
+        if (lines.Count == 0) return "";
+        lines.Sort(StringComparer.Ordinal);
+        return Sha256Hex(string.Join("\n", lines));
+    }
+
+    private static string FpRow(params string[] cells) => string.Join('|', cells);
+
+    private static int JsonArrayCount(string json)
+    {
+        if (string.IsNullOrWhiteSpace(json)) return 0;
+        try { return JsonNode.Parse(json) is JsonArray a ? a.Count : 0; }
+        catch { return 0; }
+    }
+
+    private static string Sha256Hex(string s)
+    {
+        using var sha = System.Security.Cryptography.SHA256.Create();
+        return Convert.ToHexString(sha.ComputeHash(System.Text.Encoding.UTF8.GetBytes(s)));
     }
 
     // ---------------- 读取 ----------------
@@ -443,7 +968,11 @@ SELECT last_insert_rowid();";
         using var cmd = c.CreateCommand();
         cmd.CommandText = @"
 SELECT id, drawing_key, pdf_path, pdf_sha256, vpdf_schema, parser_version, decision_version,
-       page_count, vision_fallback, created_at
+       page_count, vision_fallback, created_at,
+       COALESCE(status,'draft') AS status,
+       COALESCE(blocks_status,'pending') AS blocks_status,
+       blocks_error,
+       (SELECT COUNT(*) FROM v2_logical_blocks WHERE profile_id=v2_drawing_profiles.id) AS block_count
 FROM v2_drawing_profiles ORDER BY id DESC";
         using var rd = cmd.ExecuteReader();
         var list = new List<object>();
@@ -462,6 +991,10 @@ FROM v2_drawing_profiles ORDER BY id DESC";
                 pageCount = rd.GetInt32(7),
                 visionFallback = rd.GetInt32(8) != 0,
                 createdAt = rd.GetString(9),
+                status = rd.GetString(10),
+                blocksStatus = rd.GetString(11),
+                blocksError = rd.IsDBNull(12) ? null : rd.GetString(12),
+                blockCount = rd.GetInt64(13),
                 markCount = CountMarks(c, id)
             });
         }
@@ -561,7 +1094,8 @@ FROM v2_drawing_views WHERE profile_id=$id ORDER BY page_index";
                             double verifyMs, IReadOnlyDictionary<string, int> counts,
                             IReadOnlyList<string> qualityReasons, string verdictsJson,
                             string? selectedView = null, string? sessionId = null,
-                            string? marksSnapshotJson = null, string? paramsSnapshotJson = null)
+                            string? marksSnapshotJson = null, string? paramsSnapshotJson = null,
+                            string? responseJson = null)
     {
         using var c = Open();
         using var cmd = c.CreateCommand();
@@ -569,9 +1103,9 @@ FROM v2_drawing_views WHERE profile_id=$id ORDER BY page_index";
 INSERT INTO v2_compare_records
  (profile_id, drawing_key, photo_path, photo_sha256, photo_name, usable,
   code_detector, code_degraded, verify_ms, counts_json, quality_json, verdicts_json, created_at,
-  session_id, marks_snapshot_json, params_snapshot_json)
+  session_id, marks_snapshot_json, params_snapshot_json, response_json)
 VALUES
- ($pid,$dk,$pp,$sh,$pn,$us,$cd,$dg,$ms,$ct,$qj,$vj,$ts,$sid,$msj,$psj);
+ ($pid,$dk,$pp,$sh,$pn,$us,$cd,$dg,$ms,$ct,$qj,$vj,$ts,$sid,$msj,$psj,$rj);
 SELECT last_insert_rowid();";
         cmd.Parameters.AddWithValue("$pid", profileId);
         cmd.Parameters.AddWithValue("$dk", drawingKey ?? "");
@@ -593,7 +1127,109 @@ SELECT last_insert_rowid();";
         cmd.Parameters.AddWithValue("$sid", (object?)sessionId ?? DBNull.Value);
         cmd.Parameters.AddWithValue("$msj", (object?)marksSnapshotJson ?? DBNull.Value);
         cmd.Parameters.AddWithValue("$psj", (object?)paramsSnapshotJson ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("$rj", (object?)responseJson ?? DBNull.Value);
         return Convert.ToInt64(cmd.ExecuteScalar());
+    }
+
+    /// <summary>M1（#35）：回填本次比对的完整响应 JSON（照片指纹缓存的复用源，recordId 已校正）。</summary>
+    public void UpdateCompareResponse(long id, string responseJson)
+    {
+        using var c = Open();
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = "UPDATE v2_compare_records SET response_json=$rj WHERE id=$id";
+        cmd.Parameters.AddWithValue("$rj", (object?)responseJson ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("$id", id);
+        cmd.ExecuteNonQuery();
+    }
+
+    /// <summary>档案图纸文件的 sha256（前 16 位作为「档案版本指纹」，图纸换版即变化）。</summary>
+    public string ProfilePdfSha(long profileId)
+    {
+        using var c = Open();
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = "SELECT pdf_sha256 FROM v2_drawing_profiles WHERE id=$id";
+        cmd.Parameters.AddWithValue("$id", profileId);
+        var v = cmd.ExecuteScalar();
+        return v is null || v is DBNull ? "" : Convert.ToString(v) ?? "";
+    }
+
+    /// <summary>M1（#35）照片指纹缓存命中的历史记录。</summary>
+    public sealed class CachedRecord
+    {
+        public long Id;
+        public string ResponseJson = "";
+        public string VerdictsJson = "[]";
+        public string CountsJson = "{}";
+        public string QualityJson = "[]";
+        public bool Usable;
+        public string CodeDetector = "";
+        public bool CodeDegraded;
+        public string MarksSnapshotJson = "";
+        public string ParamsSnapshotJson = "";
+    }
+
+    /// <summary>
+    /// M1（#35）按「照片指纹」查找可复用记录。
+    /// 键 = profileId + 档案版本(pdf_sha256 前16位) + 判定版本(DecisionVersion) + photo_sha256 + view。
+    /// 任一维度变化都视为不同输入 → 不复用（图纸换版 / 规则升级 / 换照片 / 换部位 必须失效）。
+    /// </summary>
+    public CachedRecord? FindCachedCompare(long profileId, string photoSha, string pdfSha16,
+                                           string verifierVersion, string? view)
+    {
+        if (string.IsNullOrWhiteSpace(photoSha)) return null;
+        using var c = Open();
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = @"
+SELECT r.id, r.verdicts_json, r.counts_json, r.quality_json, r.usable, r.code_detector,
+       r.code_degraded, r.marks_snapshot_json, r.params_snapshot_json, r.response_json,
+       IFNULL(p.pdf_sha256,'')
+FROM v2_compare_records r LEFT JOIN v2_drawing_profiles p ON p.id = r.profile_id
+WHERE r.profile_id=$pid AND r.photo_sha256=$sha
+ORDER BY r.id DESC LIMIT 20";
+        cmd.Parameters.AddWithValue("$pid", profileId);
+        cmd.Parameters.AddWithValue("$sha", photoSha);
+        string Str(JsonObject jo, string key)
+        {
+            try { return jo[key]?.GetValue<string>() ?? ""; } catch { return ""; }
+        }
+        using var rd = cmd.ExecuteReader();
+        while (rd.Read())
+        {
+            var pdfSha = rd.IsDBNull(10) ? "" : rd.GetString(10);
+            if (pdfSha.Length >= 16 && pdfSha16.Length >= 16
+                && !string.Equals(pdfSha.Substring(0, 16), pdfSha16.Substring(0, 16), StringComparison.OrdinalIgnoreCase))
+                continue;   // 图纸换版 → 历史结论失效
+            var psj = rd.IsDBNull(8) ? "" : rd.GetString(8);
+            JsonObject? jo0 = null;
+            try { jo0 = JsonNode.Parse(string.IsNullOrWhiteSpace(psj) ? "{}" : psj) as JsonObject; } catch { }
+            if (jo0 is null) continue;
+            if (!string.Equals(Str(jo0, "verifierVersion"), verifierVersion, StringComparison.Ordinal))
+                continue;   // 判定规则升级 → 历史结论失效
+            if (!string.Equals(Str(jo0, "selectedView"), view ?? "", StringComparison.OrdinalIgnoreCase))
+                continue;   // 拍摄部位不同 → 不是同一输入
+            var resp = rd.IsDBNull(9) ? "" : rd.GetString(9);
+            if (string.IsNullOrWhiteSpace(resp)) continue;   // 老记录无响应快照 → 不可复用
+            // M1 加固（#36）：响应结构升级后旧快照必须失效，否则缓存会掩盖新字段。
+            if (resp.IndexOf($"\"schemaVersion\":\"{ResponseSchemaVersion}\"", StringComparison.Ordinal) < 0)
+                continue;
+            // 代码指纹不同 → 判定逻辑可能已变，旧结论不可复用
+            if (resp.IndexOf($"\"code\":\"{CodeFingerprint}\"", StringComparison.Ordinal) < 0)
+                continue;
+            return new CachedRecord
+            {
+                Id = rd.GetInt64(0),
+                VerdictsJson = rd.IsDBNull(1) ? "[]" : rd.GetString(1),
+                CountsJson = rd.IsDBNull(2) ? "{}" : rd.GetString(2),
+                QualityJson = rd.IsDBNull(3) ? "[]" : rd.GetString(3),
+                Usable = !rd.IsDBNull(4) && rd.GetInt32(4) != 0,
+                CodeDetector = rd.IsDBNull(5) ? "" : rd.GetString(5),
+                CodeDegraded = !rd.IsDBNull(6) && rd.GetInt32(6) != 0,
+                MarksSnapshotJson = rd.IsDBNull(7) ? "" : rd.GetString(7),
+                ParamsSnapshotJson = psj,
+                ResponseJson = resp
+            };
+        }
+        return null;
     }
 
     /// <summary>比对记录列表（最近的在前）。</summary>
@@ -628,6 +1264,20 @@ FROM v2_compare_records ORDER BY id DESC LIMIT $n";
         return list;
     }
 
+    /// <summary>取某条比对记录的「原始照片路径 + 完整响应 JSON」，供已标示照片渲染（缩略图/原图）。</summary>
+    public (string PhotoPath, string ResponseJson)? GetRecordMedia(long id)
+    {
+        using var c = Open();
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = "SELECT photo_path, response_json FROM v2_compare_records WHERE id=$id";
+        cmd.Parameters.AddWithValue("$id", id);
+        using var rd = cmd.ExecuteReader();
+        if (!rd.Read()) return null;
+        var pp = rd.IsDBNull(0) ? "" : rd.GetString(0);
+        var rj = rd.IsDBNull(1) ? "" : rd.GetString(1);
+        return (pp, rj);
+    }
+
     /// <summary>比对记录详情（含完整 verdicts）。</summary>
     public object? GetCompareRecord(long id)
     {
@@ -641,11 +1291,31 @@ FROM v2_compare_records WHERE id=$id";
         using var rd = cmd.ExecuteReader();
         if (!rd.Read()) return null;
         var vj = rd.GetString(12);
+        // ② 人工判定叠加：原始 verdicts 不动，仅在输出层挂 human 字段
+        var reviews = ListVerdictReviews(id);
         object verdicts;
         try
         {
-            using var doc = JsonDocument.Parse(vj);
-            verdicts = doc.RootElement.Clone();
+            var node = JsonNode.Parse(vj);
+            if (node is JsonArray arr)
+            {
+                foreach (var n in arr)
+                {
+                    if (n is not JsonObject o) continue;
+                    var mk = o["markKey"]?.GetValue<string>() ?? "";
+                    if (mk.Length > 0 && reviews.TryGetValue(mk, out var rv))
+                        o["human"] = new JsonObject
+                        {
+                            ["state"] = rv.HumanState,
+                            ["systemState"] = rv.SystemState,
+                            ["by"] = rv.By,
+                            ["note"] = rv.Note,
+                            ["at"] = rv.At
+                        };
+                }
+                verdicts = node;
+            }
+            else verdicts = node ?? (object)new JsonArray();
         }
         catch { verdicts = new List<object>(); }
         return new
@@ -663,6 +1333,7 @@ FROM v2_compare_records WHERE id=$id";
             counts = JsonDict(rd.GetString(10)),
             qualityReasons = JsonArr(rd.GetString(11)),
             verdicts,
+            humanApplied = reviews.Count > 0,
             createdAt = rd.GetString(13)
         };
     }
@@ -689,6 +1360,8 @@ FROM v2_compare_records WHERE id=$id";
         public string? Evidence;
         public bool IsActive = true;
         public bool Confirmed;
+        public bool Excluded;
+        public string? ExcludeReason;
         public List<MarkRow> Children = new();
     }
 
@@ -698,7 +1371,8 @@ FROM v2_compare_records WHERE id=$id";
         cmd.CommandText = @"
 SELECT id, parent_id, mark_key, mark_type, view, text, required, condition_text,
        norm_x, norm_y, norm_w, norm_h, bbox_json, direction, confidence,
-       rule_id, page_index, span_ids, image_ids, evidence, view_bbox, is_active, confirmed
+       rule_id, page_index, span_ids, image_ids, evidence, view_bbox, is_active, confirmed,
+       excluded, exclude_reason
 FROM v2_drawing_marks WHERE profile_id=$id ORDER BY id";
         cmd.Parameters.AddWithValue("$id", profileId);
         using var rd = cmd.ExecuteReader();
@@ -728,7 +1402,9 @@ FROM v2_drawing_marks WHERE profile_id=$id ORDER BY id";
                 Evidence = S(rd, 19),
                 ViewBboxJson = S(rd, 20),
                 IsActive = rd.GetInt32(21) != 0,
-                Confirmed = rd.GetInt32(22) != 0
+                Confirmed = rd.GetInt32(22) != 0,
+                Excluded = rd.GetInt32(23) != 0,
+                ExcludeReason = S(rd, 24)
             });
         }
         return list;
@@ -825,7 +1501,8 @@ FROM v2_drawing_marks WHERE profile_id=$id ORDER BY id";
         using var cmd = c.CreateCommand();
         cmd.CommandText = @"
 SELECT view, COUNT(*) FROM v2_drawing_marks
-WHERE profile_id=$pid AND parent_id IS NULL AND view IS NOT NULL AND view != 'Unspecified'
+WHERE profile_id=$pid AND parent_id IS NULL AND is_active=1
+  AND view IS NOT NULL AND view != 'Unspecified'
 GROUP BY view ORDER BY COUNT(*) DESC";
         cmd.Parameters.AddWithValue("$pid", pid);
         var list = new List<object>();
@@ -841,7 +1518,7 @@ GROUP BY view ORDER BY COUNT(*) DESC";
         return list;
     }
 
-    /// <summary>载入某档案的全部 mark（含 Group 子项树，类型化）。</summary>
+    /// <summary>载入某档案的生效 mark（含 Group 子项树，类型化）。</summary>
     public List<DrawingMark>? LoadMarks(long profileId)
     {
         using var c = Open();
@@ -850,7 +1527,20 @@ GROUP BY view ORDER BY COUNT(*) DESC";
         cmd.Parameters.AddWithValue("$id", profileId);
         if (Convert.ToInt64(cmd.ExecuteScalar()) == 0) return null;
 
-        var rows = ReadMarkRows(c, profileId);
+        var allRows = ReadMarkRows(c, profileId);
+        var byRowId = allRows.ToDictionary(r => r.Id);
+        bool EffectivelyActive(MarkRow row)
+        {
+            if (!row.IsActive) return false;
+            var parentId = row.ParentId;
+            while (parentId is { } id)
+            {
+                if (!byRowId.TryGetValue(id, out var parent) || !parent.IsActive) return false;
+                parentId = parent.ParentId;
+            }
+            return true;
+        }
+        var rows = allRows.Where(EffectivelyActive).ToList();
         var marks = rows.ToDictionary(r => r.Id, ToMark);
         var roots = new List<DrawingMark>();
         foreach (var r in rows)
@@ -888,8 +1578,107 @@ GROUP BY view ORDER BY COUNT(*) DESC";
                 ImageIds = JsonArr(r.ImageIds),
                 Evidence = r.Evidence
             },
+            Excluded = r.Excluded,
+            ExcludeReason = r.ExcludeReason,
             Children = new List<DrawingMark>()
         };
+    }
+
+    /// <summary>
+    /// 【B 项·capture】为 QR mark 录入/清除预期解码内容（m.Text）。
+    /// 仅对 mark_type='Qr' 生效，其余类型忽略（返回 false）。清空传 null/空串。
+    /// </summary>
+    public bool SetMarkExpectedText(long profileId, long markId, string? text)
+    {
+        using var c = Open();
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = @"
+UPDATE v2_drawing_marks SET text=$t
+WHERE profile_id=$pid AND id=$mid AND mark_type='Qr'";
+        cmd.Parameters.AddWithValue("$t", (object?)text ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("$pid", profileId);
+        cmd.Parameters.AddWithValue("$mid", markId);
+        return cmd.ExecuteNonQuery() > 0;
+    }
+
+    // ---------------- 人工复核·增删改 mark（设计§3） ----------------
+    public long AddMark(long profileId, string markType, string view, string? text,
+                         bool required, string? conditionText,
+                         double? nx, double? ny, double? nw, double? nh)
+    {
+        using var c = Open();
+        long seq;
+        using (var sc = c.CreateCommand())
+        {
+            sc.CommandText = "SELECT COALESCE(MAX(id),0)+1 FROM v2_drawing_marks WHERE profile_id=$pid";
+            sc.Parameters.AddWithValue("$pid", profileId);
+            seq = Convert.ToInt64(sc.ExecuteScalar());
+        }
+        var key = $"manual_{markType}_{seq}";
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = @"
+INSERT INTO v2_drawing_marks
+ (profile_id, mark_key, mark_type, view, text, required, condition_text,
+  norm_x, norm_y, norm_w, norm_h, rule_id, page_index, span_ids, image_ids, evidence, parent_id, is_active, confirmed)
+VALUES
+ ($pid,$mk,$ty,$vw,$tx,$rq,$cd,$nx,$ny,$nw,$nh,'manual',0,'[]','[]',$ev,NULL,1,0);
+SELECT last_insert_rowid();";
+        cmd.Parameters.AddWithValue("$pid", profileId);
+        cmd.Parameters.AddWithValue("$mk", key);
+        cmd.Parameters.AddWithValue("$ty", markType);
+        cmd.Parameters.AddWithValue("$vw", string.IsNullOrWhiteSpace(view) ? "Unspecified" : view);
+        cmd.Parameters.AddWithValue("$tx", (object?)text ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("$rq", required ? 1 : 0);
+        cmd.Parameters.AddWithValue("$cd", (object?)conditionText ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("$nx", nx.HasValue ? (object)nx.Value : DBNull.Value);
+        cmd.Parameters.AddWithValue("$ny", ny.HasValue ? (object)ny.Value : DBNull.Value);
+        cmd.Parameters.AddWithValue("$nw", nw.HasValue ? (object)nw.Value : DBNull.Value);
+        cmd.Parameters.AddWithValue("$nh", nh.HasValue ? (object)nh.Value : DBNull.Value);
+        cmd.Parameters.AddWithValue("$ev", "manual-add");
+        var id = Convert.ToInt64(cmd.ExecuteScalar());
+        using (var up = c.CreateCommand())
+        {
+            up.CommandText = "UPDATE v2_drawing_marks SET mark_key=$k WHERE id=$id";
+            up.Parameters.AddWithValue("$k", $"manual_{id}");
+            up.Parameters.AddWithValue("$id", id);
+            up.ExecuteNonQuery();
+        }
+        return id;
+    }
+
+    public bool UpdateMark(long profileId, long markId, string markType, string view, string? text,
+                           bool required, string? conditionText,
+                           double? nx, double? ny, double? nw, double? nh)
+    {
+        using var c = Open();
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = @"
+UPDATE v2_drawing_marks
+SET mark_type=$ty, view=$vw, text=$tx, required=$rq, condition_text=$cd,
+    norm_x=$nx, norm_y=$ny, norm_w=$nw, norm_h=$nh
+WHERE profile_id=$pid AND id=$mid";
+        cmd.Parameters.AddWithValue("$pid", profileId);
+        cmd.Parameters.AddWithValue("$mid", markId);
+        cmd.Parameters.AddWithValue("$ty", markType);
+        cmd.Parameters.AddWithValue("$vw", string.IsNullOrWhiteSpace(view) ? "Unspecified" : view);
+        cmd.Parameters.AddWithValue("$tx", (object?)text ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("$rq", required ? 1 : 0);
+        cmd.Parameters.AddWithValue("$cd", (object?)conditionText ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("$nx", nx.HasValue ? (object)nx.Value : DBNull.Value);
+        cmd.Parameters.AddWithValue("$ny", ny.HasValue ? (object)ny.Value : DBNull.Value);
+        cmd.Parameters.AddWithValue("$nw", nw.HasValue ? (object)nw.Value : DBNull.Value);
+        cmd.Parameters.AddWithValue("$nh", nh.HasValue ? (object)nh.Value : DBNull.Value);
+        return cmd.ExecuteNonQuery() > 0;
+    }
+
+    public bool DeleteMark(long profileId, long markId)
+    {
+        using var c = Open();
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = "DELETE FROM v2_drawing_marks WHERE profile_id=$pid AND id=$mid";
+        cmd.Parameters.AddWithValue("$pid", profileId);
+        cmd.Parameters.AddWithValue("$mid", markId);
+        return cmd.ExecuteNonQuery() > 0;
     }
 
     // ---------------- 人工复核闸门（G1） ----------------
@@ -995,8 +1784,18 @@ WHERE id=$id";
         public string Text = "";
         public string View = "";
         public List<string> States = new();
+        public List<string> HumanStates = new();
+        public object? HumanLatest;
         public string Rollup()
         {
+            // ② 人工判定优先：只要人确认过，就以人工结论为准（系统判定仅作参考留痕）
+            if (HumanStates.Count > 0)
+            {
+                if (HumanStates.Any(s => s == "HumanMissing")) return "Missing";
+                if (HumanStates.Any(s => s == "HumanWrongPart")) return "Wrong";
+                if (HumanStates.All(s => s == "HumanPresent")) return "Matched";
+                return "NeedReview";
+            }
             if (States.Count == 0) return "Unknown";
             if (States.All(s => s == "Matched")) return "Matched";
             if (States.Any(s => s is "Missing" or "NotComparable")) return "Missing";
@@ -1024,6 +1823,8 @@ FROM v2_compare_records WHERE session_id=$sid ORDER BY id";
         using var rd = cmd.ExecuteReader();
         var records = new List<object>();
         var agg = new Dictionary<string, SessionAgg>();
+        // ② 会话内人工判定按 markKey 汇总（人工优先于系统判定）
+        var humanByMark = LoadVerdictReviewsOfSession(c, sessionId);
         while (rd.Read())
         {
             var vj = rd.GetString(6);
@@ -1058,6 +1859,12 @@ FROM v2_compare_records WHERE session_id=$sid ORDER BY id";
                         agg[mk] = a;
                     }
                     a.States.Add(st);
+                    if (humanByMark.TryGetValue(mk, out var hl) && hl.Count > 0)
+                    {
+                        a.HumanStates.AddRange(hl.Select(x => x.State));
+                        var last = hl[^1];
+                        a.HumanLatest = new { state = last.State, by = last.By, note = last.Note, at = last.At };
+                    }
                 }
             }
             catch { }
@@ -1068,6 +1875,8 @@ FROM v2_compare_records WHERE session_id=$sid ORDER BY id";
             text = a.Text,
             view = a.View,
             states = a.States.Distinct().ToList(),
+            humanStates = a.HumanStates.Distinct().ToList(),
+            human = a.HumanLatest,
             verdict = a.Rollup()
         }).ToList();
         return new { sessionId, recordCount = records.Count, records, aggregated };
@@ -1096,7 +1905,302 @@ FROM v2_compare_records WHERE session_id=$sid ORDER BY id";
     }
 
     /// <summary>决策层版本：随契约/规则变更递增，用于判断历史 profile 是否需要重算。</summary>
-    public const string DecisionVersion = "m2.1";
+    public const string DecisionVersion = "m2.3-optimized";
+
+    // ---------------- 逻辑图块仓储（P2 · 方案 §4） ----------------
+
+    /// <summary>逻辑图块写入单元（Python logical-blocks/1 契约的 C# 映射）。</summary>
+    public sealed class LogicalBlockRow
+    {
+        public int BlockIndex { get; set; }
+        public string BlockKey { get; set; } = "";
+        public string Name { get; set; } = "";
+        public string NameFp { get; set; } = "";
+        public double[]? Norm { get; set; }          // [x,y,w,h] 归一化
+        public string? BboxJson { get; set; }        // [x0,y0,x1,y1] pt
+        public string ViewHint { get; set; } = "Unspecified";
+        public double AreaPct { get; set; }
+        public int HasMarking { get; set; } = 1;
+        public string? EmptyReason { get; set; }
+        public int LowConf { get; set; }
+        public string AlgoVersion { get; set; } = "";
+        public string? GeomFp { get; set; }
+        public int NElements { get; set; }
+        public int NParticipate { get; set; }
+        public int NImage { get; set; }
+        public List<LogicalElementRow> Elements { get; set; } = new();
+    }
+
+    /// <summary>块内元素写入单元（5 分类见方案 §2）。</summary>
+    public sealed class LogicalElementRow
+    {
+        public string Kind { get; set; } = "";
+        public string? Text { get; set; }
+        public double? OcrConf { get; set; }
+        public double[]? Norm { get; set; }
+        public string? BboxJson { get; set; }
+        public int Participate { get; set; }
+        public string Source { get; set; } = "";
+    }
+
+    /// <summary>读取结果单元（可变类：elements 需回填，匿名类型做不到）。</summary>
+    public sealed class LogicalBlockView
+    {
+        public long Id { get; set; }
+        public int PageIndex { get; set; }
+        public string BlockKey { get; set; } = "";
+        public int BlockIndex { get; set; }
+        public string Name { get; set; } = "";
+        public string NameFp { get; set; } = "";
+        public double?[] Norm { get; set; } = new double?[4];
+        public string? BboxJson { get; set; }
+        public double AreaPct { get; set; }
+        public string ViewHint { get; set; } = "Unspecified";
+        public bool HasMarking { get; set; }
+        public string? EmptyReason { get; set; }
+        public bool LowConf { get; set; }
+        public string AlgoVersion { get; set; } = "";
+        public string? GeomFp { get; set; }
+        public int NElements { get; set; }
+        public int NParticipate { get; set; }
+        public int NImage { get; set; }
+        public string CreatedAt { get; set; } = "";
+        public List<LogicalElementView> Elements { get; set; } = new();
+    }
+
+    /// <summary>读取结果：块内元素。</summary>
+    public sealed class LogicalElementView
+    {
+        public string Kind { get; set; } = "";
+        public string? Text { get; set; }
+        public double? OcrConf { get; set; }
+        public double?[] Norm { get; set; } = new double?[4];
+        public string? BboxJson { get; set; }
+        public bool Participate { get; set; }
+        public bool IsAnchor { get; set; }
+        public string Source { get; set; } = "";
+    }
+
+    /// <summary>取 profile 的 drawing_key / pdf_path / pdf_sha256（供逻辑图块提取定位源文件）。</summary>
+    public (string drawingKey, string pdfPath, string sha256)? GetProfileLocation(long id)
+    {
+        using var c = Open();
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = "SELECT drawing_key, pdf_path, pdf_sha256 FROM v2_drawing_profiles WHERE id=$id";
+        cmd.Parameters.AddWithValue("$id", id);
+        using var rd = cmd.ExecuteReader();
+        if (!rd.Read()) return null;
+        return (rd.GetString(0), rd.GetString(1), rd.GetString(2));
+    }
+
+    /// <summary>
+    /// 整体替换某 profile 某页的逻辑图块（幂等覆盖）。
+    ///
+    /// <para>先删该页旧 elements 再删旧 blocks，最后写入 —— 保证「同一 profile 重跑不产生重复行」，
+    /// 也让 has_marking 口径变化（如判空规则调整）能干净地整体重算。</para>
+    /// </summary>
+    /// <returns>(块数, 元素数, 有打标块数)</returns>
+    public (int blocks, int elements, int hasMarking) ReplaceLogicalBlocks(
+        long profileId, int pageIndex, IReadOnlyList<LogicalBlockRow> rows)
+    {
+        var now = DateTime.UtcNow.ToString("o");
+        using var c = Open();
+        using var tx = c.BeginTransaction();
+
+        // 1) 删旧：先 elements 再 blocks（顺序不可颠倒）
+        using (var del = c.CreateCommand())
+        {
+            del.Transaction = tx;
+            del.CommandText = @"
+DELETE FROM v2_block_elements
+ WHERE block_id IN (SELECT id FROM v2_logical_blocks WHERE profile_id=$p AND page_index=$g)";
+            del.Parameters.AddWithValue("$p", profileId);
+            del.Parameters.AddWithValue("$g", pageIndex);
+            del.ExecuteNonQuery();
+        }
+        using (var del2 = c.CreateCommand())
+        {
+            del2.Transaction = tx;
+            del2.CommandText = "DELETE FROM v2_logical_blocks WHERE profile_id=$p AND page_index=$g";
+            del2.Parameters.AddWithValue("$p", profileId);
+            del2.Parameters.AddWithValue("$g", pageIndex);
+            del2.ExecuteNonQuery();
+        }
+
+        // 2) 写新
+        int nEl = 0, nHas = 0;
+        foreach (var b in rows)
+        {
+            long blockId;
+            using (var ins = c.CreateCommand())
+            {
+                ins.Transaction = tx;
+                ins.CommandText = @"
+INSERT INTO v2_logical_blocks
+ (profile_id, page_index, block_key, block_index, name, name_fp,
+  norm_x, norm_y, norm_w, norm_h, bbox_json, area_pct, view_hint,
+  has_marking, empty_reason, low_conf, algo_version, geom_fp,
+  n_elements, n_participate, n_image, created_at)
+VALUES
+ ($pid,$pg,$bk,$bi,$nm,$fp,$nx,$ny,$nw,$nh,$bb,$ap,$vh,$hm,$er,$lc,$av,$gf,$ne,$np,$ni,$ts);
+SELECT last_insert_rowid();";
+                ins.Parameters.AddWithValue("$pid", profileId);
+                ins.Parameters.AddWithValue("$pg", pageIndex);
+                ins.Parameters.AddWithValue("$bk", b.BlockKey);
+                ins.Parameters.AddWithValue("$bi", b.BlockIndex);
+                ins.Parameters.AddWithValue("$nm", b.Name ?? "");
+                ins.Parameters.AddWithValue("$fp", b.NameFp ?? "");
+                AddNullable(ins, "$nx", b.Norm is { Length: 4 } n0 ? n0[0] : (double?)null);
+                AddNullable(ins, "$ny", b.Norm is { Length: 4 } n1 ? n1[1] : (double?)null);
+                AddNullable(ins, "$nw", b.Norm is { Length: 4 } n2 ? n2[2] : (double?)null);
+                AddNullable(ins, "$nh", b.Norm is { Length: 4 } n3 ? n3[3] : (double?)null);
+                ins.Parameters.AddWithValue("$bb", (object?)b.BboxJson ?? DBNull.Value);
+                ins.Parameters.AddWithValue("$ap", b.AreaPct);
+                ins.Parameters.AddWithValue("$vh", b.ViewHint ?? "Unspecified");
+                ins.Parameters.AddWithValue("$hm", b.HasMarking);
+                ins.Parameters.AddWithValue("$er", (object?)b.EmptyReason ?? DBNull.Value);
+                ins.Parameters.AddWithValue("$lc", b.LowConf);
+                ins.Parameters.AddWithValue("$av", b.AlgoVersion ?? "");
+                ins.Parameters.AddWithValue("$gf", (object?)b.GeomFp ?? DBNull.Value);
+                ins.Parameters.AddWithValue("$ne", b.NElements);
+                ins.Parameters.AddWithValue("$np", b.NParticipate);
+                ins.Parameters.AddWithValue("$ni", b.NImage);
+                ins.Parameters.AddWithValue("$ts", now);
+                blockId = Convert.ToInt64(ins.ExecuteScalar());
+            }
+            if (b.HasMarking != 0) nHas++;
+
+            foreach (var e in b.Elements)
+            {
+                using var ie = c.CreateCommand();
+                ie.Transaction = tx;
+                ie.CommandText = @"
+INSERT INTO v2_block_elements
+ (block_id, kind, text, ocr_conf, norm_x, norm_y, norm_w, norm_h, bbox_json, participate, is_anchor, source)
+VALUES
+ ($b,$k,$t,$cf,$nx,$ny,$nw,$nh,$bb,$pa,0,$src)";
+                ie.Parameters.AddWithValue("$b", blockId);
+                ie.Parameters.AddWithValue("$k", e.Kind ?? "");
+                ie.Parameters.AddWithValue("$t", (object?)e.Text ?? DBNull.Value);
+                AddNullable(ie, "$cf", e.OcrConf);
+                AddNullable(ie, "$nx", e.Norm is { Length: 4 } q0 ? q0[0] : (double?)null);
+                AddNullable(ie, "$ny", e.Norm is { Length: 4 } q1 ? q1[1] : (double?)null);
+                AddNullable(ie, "$nw", e.Norm is { Length: 4 } q2 ? q2[2] : (double?)null);
+                AddNullable(ie, "$nh", e.Norm is { Length: 4 } q3 ? q3[3] : (double?)null);
+                ie.Parameters.AddWithValue("$bb", (object?)e.BboxJson ?? DBNull.Value);
+                ie.Parameters.AddWithValue("$pa", e.Participate);
+                ie.Parameters.AddWithValue("$src", e.Source ?? "");
+                ie.ExecuteNonQuery();
+                nEl++;
+            }
+        }
+
+        tx.Commit();
+        return (rows.Count, nEl, nHas);
+    }
+
+    private static void AddNullable(SqliteCommand cmd, string name, double? v)
+    {
+        if (v.HasValue) cmd.Parameters.AddWithValue(name, v.Value);
+        else cmd.Parameters.AddWithValue(name, DBNull.Value);
+    }
+
+    /// <summary>
+    /// 读取某 profile 的逻辑图块。
+    /// <para><paramref name="hasMarkingOnly"/> 为 true 时只返回 <c>has_marking=1</c> 的块 ——
+    /// 即 P3 命中检索的候选集；空块在此被天然隔离，见方案 §2.3。</para>
+    /// </summary>
+    public List<LogicalBlockView> ListLogicalBlocks(long profileId, bool hasMarkingOnly = false,
+        bool withElements = true)
+    {
+        using var c = Open();
+
+        var where = hasMarkingOnly
+            ? "WHERE profile_id=$p AND has_marking=1"
+            : "WHERE profile_id=$p";
+
+        var blocks = new List<LogicalBlockView>();
+        using (var cmd = c.CreateCommand())
+        {
+            cmd.CommandText =
+@"SELECT id, page_index, block_key, block_index, name, name_fp,
+       norm_x, norm_y, norm_w, norm_h, bbox_json, area_pct, view_hint,
+       has_marking, empty_reason, low_conf, algo_version, geom_fp,
+       n_elements, n_participate, n_image, created_at
+FROM v2_logical_blocks " + where + " ORDER BY block_index";
+            cmd.Parameters.AddWithValue("$p", profileId);
+            using var rd = cmd.ExecuteReader();
+            while (rd.Read())
+            {
+                blocks.Add(new LogicalBlockView
+                {
+                    Id = rd.GetInt64(0),
+                    PageIndex = rd.GetInt32(1),
+                    BlockKey = rd.GetString(2),
+                    BlockIndex = rd.GetInt32(3),
+                    Name = rd.GetString(4),
+                    NameFp = rd.GetString(5),
+                    Norm = new[] { Nul(rd, 6), Nul(rd, 7), Nul(rd, 8), Nul(rd, 9) },
+                    BboxJson = RdStr(rd, 10),
+                    AreaPct = rd.GetDouble(11),
+                    ViewHint = rd.GetString(12),
+                    HasMarking = rd.GetInt32(13) != 0,
+                    EmptyReason = RdStr(rd, 14),
+                    LowConf = rd.GetInt32(15) != 0,
+                    AlgoVersion = rd.GetString(16),
+                    GeomFp = RdStr(rd, 17),
+                    NElements = rd.GetInt32(18),
+                    NParticipate = rd.GetInt32(19),
+                    NImage = rd.GetInt32(20),
+                    CreatedAt = rd.GetString(21)
+                });
+            }
+        }
+
+        if (!withElements || blocks.Count == 0) return blocks;
+
+        using (var cmd = c.CreateCommand())
+        {
+            var ph = new System.Text.StringBuilder();
+            for (int i = 0; i < blocks.Count; i++)
+            {
+                if (i > 0) ph.Append(',');
+                ph.Append("$i").Append(i);
+            }
+            cmd.CommandText =
+@"SELECT block_id, kind, text, ocr_conf, norm_x, norm_y, norm_w, norm_h,
+       bbox_json, participate, is_anchor, source
+FROM v2_block_elements WHERE block_id IN (" + ph + ") ORDER BY id";
+            for (int i = 0; i < blocks.Count; i++)
+                cmd.Parameters.AddWithValue("$i" + i, blocks[i].Id);
+
+            using var rd = cmd.ExecuteReader();
+            while (rd.Read())
+            {
+                long bid = rd.GetInt64(0);
+                LogicalBlockView? host = null;
+                for (int i = 0; i < blocks.Count; i++)
+                    if (blocks[i].Id == bid) { host = blocks[i]; break; }
+                if (host is null) continue;
+                host.Elements.Add(new LogicalElementView
+                {
+                    Kind = rd.GetString(1),
+                    Text = RdStr(rd, 2),
+                    OcrConf = Nul(rd, 3),
+                    Norm = new[] { Nul(rd, 4), Nul(rd, 5), Nul(rd, 6), Nul(rd, 7) },
+                    BboxJson = RdStr(rd, 8),
+                    Participate = rd.GetInt32(9) != 0,
+                    IsAnchor = rd.GetInt32(10) != 0,
+                    Source = rd.GetString(11)
+                });
+            }
+        }
+
+        return blocks;
+    }
+
+    private static double? Nul(SqliteDataReader rd, int i) => rd.IsDBNull(i) ? null : rd.GetDouble(i);
+    private static string? RdStr(SqliteDataReader rd, int i) => rd.IsDBNull(i) ? null : rd.GetString(i);
 
     private static class Json
     {

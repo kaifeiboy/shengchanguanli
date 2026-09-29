@@ -12,8 +12,8 @@ namespace Platform.Modules.DrawingsV2.Decision;
 /// 只做三类客观比较，不做任何语义猜测：
 ///   1. 文本：TextNormalizer 三级匹配（Exact / Normalized / Ambiguous），
 ///      Ambiguous 只能判 LowConfidence，绝不当 Matched（防 0/O、1/I 伪造一致）；
-///   2. 二维码：定点解码 + 盲检兜底，**只验存在性与位置**（V2Models 注释即规范），
-///      不把解码内容当合格依据；
+///   2. 二维码：定点解码 + 盲检兜底，**只验存在性与位置**（V2Models 注释即规范）；
+///      解码内容按设计 §7 **不参与通过与否**，仅作提示性人工标注（P4 回正）；
 ///   3. 图标：只验存在性（前景墨迹占比）与位置。
 /// 感知降级（code_degraded / 质量不可用 / 区域无坐标）→ NotComparable，绝不谎报 Missing。</para>
 ///
@@ -40,8 +40,33 @@ public static class MarkVerifier
     /// </summary>
     public const double ViewPosTol = 0.10;
 
+    /// <summary>P0：锚点配准后的位置容差上限（防止不确定度叠加后位置判据失去意义）。</summary>
+    public const double MaxPosTol = 0.35;
+
+    /// <summary>
+    /// R4（#35）QR 配对的唯一性判据：最近距离 / 次近距离 的上限。
+    /// ≤ 该值（最近比次近近 40% 以上）才判「明确 = Matched」；两候选距离接近则判歧义 → 黄 + 人工按编号指认。
+    /// **不得因召回压力下调**（与「不得用召回换时延」同原则）。
+    /// </summary>
+    public const double QrUniquenessRatio = 0.60;
+
+    /// <summary>P0：不确定度随「离锚点质心距离」的增长系数（每 1.0 归一化距离增加的容差）。
+    /// 单锚点平移只在锚点附近可信，越远越不可信 —— 防止自证循环把远处项误判为位置核对通过。</summary>
+    public const double AnchorDistK = 0.25;
+
     /// <summary>图标存在性判定：裁剪区前景墨迹占比下限（语料白底图 ink_ratio 1.3%~2.9%）。</summary>
     public const double IconInkMin = 0.02;
+
+    /// <summary>
+    /// 视图标签框的最小可信面积（页面归一化面积）。
+    ///
+    /// CAD 图纸里“上盖二维码格式：”等说明文字也会被 InferView 当作视图锚点，
+    /// 但它们通常只是页面上的一小行字。若直接把该文字框当成 viewBbox，
+    /// RebaseToView 会把整张产品面的 mark 压缩到一个极小区域，现场照片裁剪随即偏离。
+    /// 面积低于此阈值时，ViewBboxOf 回退到同视图实际 mark 的并集；阈值只针对锚点框，
+    /// 不会过滤或改变 mark 本身。
+    /// </summary>
+    public const double MinViewLabelArea = 0.0025;
 
     // ---------------- 结果模型 ----------------
 
@@ -68,12 +93,47 @@ public static class MarkVerifier
         /// 页面级配准时 == 图纸页面坐标；视图级配准时 == RebaseToView + 仿射配准后的照片坐标。
         /// 用于照片画布上画虚线框，告诉复核人"系统在这里找过"。</summary>
         public double[]? ExpectedBbox { get; set; }
+        /// <summary>
+        /// 内部标记：定点区为空、由全图盲检**精确**命中兜底（Ambiguous 不算）。
+        /// 供坐标对齐（EstimateConsistentOffset）估计整体偏移用，不对外序列化。
+        /// </summary>
+        [System.Text.Json.Serialization.JsonIgnore]
+        public bool BlindFallbackHit { get; set; }
+
+        /// <summary>
+        /// M3（#36）判定置信度 0~1 —— **不参与任何判定分支**。
+        /// ⚠️ 2026-09-27：原本消费它的「严格 Gate 自动放行」已删除（真值集作废、无标定依据），
+        /// 本字段现仅作诊断输出随 verdict 返回，H5 未消费。
+        /// （Verify* 里没有任何一处读它，因此新增它不会改变任何既有 state）。
+        /// 由 <see cref="AddVerdict"/> 在 verdict 入列前统一计算，保证所有早退分支都有值。
+        /// <para>⚠️ 数值口径：基础分按内容级匹配等级（Exact/Normalized/Ambiguous/Qr/QrBlind/Icon）
+        /// 给定，再按状态、位置偏移、几何可信度、感知降级逐级折减。
+        /// 这些系数是**工程经验值，未经真实数据标定** —— Gate 默认关闭，
+        /// 启用前必须用真实确认数据校准（见 docs 执行说明）。</para>
+        /// </summary>
+        public double Confidence { get; set; }
+
+        /// <summary>内容级匹配等级（Exact/Normalized/Ambiguous/Qr/QrBlind/Icon），仅供 Confidence 计算，不序列化。</summary>
+        [System.Text.Json.Serialization.JsonIgnore]
+        public string? MatchLevel { get; set; }
     }
 
     public sealed class Result
     {
         public List<Verdict> Verdicts { get; set; } = new();
         public bool PhotoUsable { get; set; } = true;
+
+        /// <summary>
+        /// 照片有效部位区域（产品主体）归一化 [x, y, w, h]，来自 observe 的 subject。
+        /// null = 未启用主体约束（文档 §5 产品轮廓 / §8 灰色「未拍到该部位」）。
+        /// </summary>
+        public double[]? Subject { get; set; }
+
+        /// <summary>B（#37）：配准是否可信（affine/anchor 生效或指定视图）。仅此时部位覆盖判据才启用。</summary>
+        public bool RegistrationTrusted { get; set; }
+
+        /// <summary>B（#37）：部位覆盖判据总开关（来自 DrawingsV2:PartCoverageGate）。</summary>
+        public bool PartCoverageGate { get; set; } = true;
         /// <summary>S1（2026-09-14）：照片整体是否可读（盲检至少检出一个文本或码）。
         /// 整体可读但单项未 OCR 到时判 NotDetected（黄）而非 Missing（红），避免批量假红警。</summary>
         public bool PhotoReadable { get; set; }
@@ -97,10 +157,69 @@ public static class MarkVerifier
         /// </summary>
         public Dictionary<string, double[]>? ViewNormMap { get; set; }
 
+        /// <summary>P0（2026-09-15）：文本锚点配准变换（null = 未校正）。
+        /// 用于位置容差的不确定度衰减与结果追溯。</summary>
+        public AnchorTransform? Anchor { get; set; }
+
+        /// <summary>
+        /// 【P4 多 QR 消歧】已被某个 Qr mark 认领的盲检码索引（相对 Verify 内部 blindCodes 列表）。
+        /// 一个盲检码只能服务一个 Qr mark：多个 QR mark 各自指向不同实体码，
+        /// 避免「同一个码被多个 mark 重复引用」造成多 QR 场景判定混淆。
+        /// </summary>
+        public HashSet<int> ClaimedBlindCodeIdx { get; } = new();
+
         public double VerifyMs { get; set; }
         public Dictionary<string, int> Counts => Verdicts
             .GroupBy(v => v.State)
             .ToDictionary(g => g.Key, g => g.Count());
+    }
+
+    /// <summary>
+    /// 文本锚点配准变换（P0，2026-09-15）。
+    ///
+    /// <para>【实证根因】平面图纸照片 geometry=no-quad → 仿射配准生产 0/60 生效 →
+    /// 图纸坐标直映照片 → 取景差异原样变成错位（实测「服务热线」图纸 y=0 vs 照片 y=0.548，
+    /// 偏差超半张图）。定点框因此大面积落空，判定只能靠全图盲检兜底。</para>
+    ///
+    /// <para>【为什么不用轮廓/孔位基准点】最初设计 Stage2 的「轮廓→边框/孔位/面板结构」经实测
+    /// 不可行：图纸侧 v2_drawing_views 无几何字段；照片侧 3 张真实照片合格基准点候选 0/3
+    /// （手持特写、部件被手指遮挡、背景杂乱）。改用已有的 OCR 文本作锚点载体。</para>
+    ///
+    /// <para>【保守性】0 锚点 → 不校正（行为与校正前逐字相同）；1 锚点 → 仅平移（不用尺寸比，
+    /// mark 框与 OCR 框语义不同，尺寸比不可靠）；≥2 锚点 → 平移 + 均匀尺度（两两距离比
+    /// 中位数抗离群，限幅 0.25~4.0）。</para>
+    /// </summary>
+    public sealed class AnchorTransform
+    {
+        /// <summary>【P3】锚点残差 RMS 门限（归一化页面比例）：≥3 锚点且超过 → 抑制变换并标需人工复核。</summary>
+        public const double ResidualGate = 0.10;
+
+        public double Dx { get; init; }
+        public double Dy { get; init; }
+        public double Scale { get; init; } = 1.0;
+        public int AnchorCount { get; init; }
+        /// <summary>锚点残差 RMS（归一化）：变换后预测位置与实际检出的偏差。</summary>
+        public double Residual { get; init; }
+        /// <summary>【P3】残差超门限被抑制（Applied=false，坐标未变换）：需人工复核坐标，不硬给错误映射。</summary>
+        public bool Suppressed { get; init; }
+        /// <summary>锚点质心（图纸坐标系），供不确定度随距离衰减使用。</summary>
+        public double[] Centroid { get; init; } = { 0.5, 0.5 };
+        public bool Applied => AnchorCount > 0 && !Suppressed;
+
+        /// <summary>把图纸坐标系下的 [x,y,w,h] 变换到照片坐标系。</summary>
+        public double[] Apply(double[] nb)
+        {
+            var w = Math.Clamp(nb[2] * Scale, 0.001, 1.0);
+            var h = Math.Clamp(nb[3] * Scale, 0.001, 1.0);
+            var cx = (nb[0] + nb[2] / 2.0) * Scale + Dx;
+            var cy = (nb[1] + nb[3] / 2.0) * Scale + Dy;
+            return new[]
+            {
+                Math.Clamp(cx - w / 2.0, 0.0, Math.Max(0.0, 1.0 - w)),
+                Math.Clamp(cy - h / 2.0, 0.0, Math.Max(0.0, 1.0 - h)),
+                w, h
+            };
+        }
     }
 
     // ---------------- 入口 ----------------
@@ -188,7 +307,7 @@ public static class MarkVerifier
             if (char.IsLetter(ch)) letters++;
             else if (char.IsDigit(ch)) digits++;
         }
-        return letters >= 2 && digits >= 2;
+        return letters >= 2 && digits >= 1 && (digits >= 2 || s.Contains('-'));
     }
 
     // ---------------- 仿射配准（Stage 4 真正几何配准） ----------------
@@ -306,9 +425,11 @@ public static class MarkVerifier
     public static Dictionary<string, double[]> ApplyAffineRegistration(
         IReadOnlyList<DrawingMark> filteredMarks,
         Dictionary<string, double[]> viewNormMap,
-        JsonElement? observeDoc)
+        JsonElement? observeDoc,
+        out bool applied)
     {
-        if (viewNormMap is null || viewNormMap.Count == 0) return viewNormMap;
+        applied = false;
+        if (viewNormMap.Count == 0) return viewNormMap;
 
         // 从 observeDoc 提取盲检文本和 QR
         var blindTexts = new List<TextObs>();
@@ -336,6 +457,7 @@ public static class MarkVerifier
 
         var affine = ComputeAffine(filteredMarks, viewNormMap, blindTexts, blindCodes);
         if (affine is null) return viewNormMap;
+        applied = true;
 
         var remapped = new Dictionary<string, double[]>();
         foreach (var kv in viewNormMap)
@@ -355,13 +477,179 @@ public static class MarkVerifier
         return remapped;
     }
 
+    /// <summary>
+    /// 【P0 文本锚点配准】用盲检 OCR 命中的 mark 作锚点，估计「图纸坐标系 → 照片坐标系」的
+    /// 平移/尺度，供定点框搬正使用。详见 <see cref="AnchorTransform"/> 的实证说明。
+    ///
+    /// <para>锚点匹配复用判定层的同一套语义（<see cref="MarkRules.MatchKeysOf"/> +
+    /// <see cref="TextNormalizer.Contains"/>），保证「锚点认得出的文本」与「判定认得出的文本」一致。</para>
+    ///
+    /// <para>返回 null 表示无法配准（无盲检文本或 0 命中），调用方应保持原坐标不动。</para>
+    /// </summary>
+    public static AnchorTransform? EstimateAnchorTransform(
+        IEnumerable<DrawingMark> marks,
+        Dictionary<string, double[]>? viewNormMap,
+        JsonElement? observeDoc)
+    {
+        var blind = new List<TextObs>();
+        if (observeDoc is { ValueKind: JsonValueKind.Object } ob &&
+            ob.TryGetProperty("texts", out var bts) && bts.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var t in bts.EnumerateArray())
+            {
+                if (t.ValueKind != JsonValueKind.Object) continue;
+                var to = new TextObs();
+                if (t.TryGetProperty("text", out var tx) && tx.ValueKind == JsonValueKind.String)
+                    to.Text = tx.GetString() ?? "";
+                if (t.TryGetProperty("norm_bbox", out var nb) && nb.ValueKind == JsonValueKind.Array)
+                    to.NormBbox = RegionObs.Doubles(nb);
+                if (to.Text.Length > 0) blind.Add(to);
+            }
+        }
+        // 【P3 锚点拓宽】照片侧 QR 解码结果（codes[].norm_bbox）也可作锚点：QR 框语义一致
+        // （图纸应打标区域 ↔ 实物同款框），比 OCR 文本框更稳；texts 与 codes 都为空才放弃。
+        var blindQrs = new List<BlindCode>();
+        if (observeDoc is { ValueKind: JsonValueKind.Object } ob2 &&
+            ob2.TryGetProperty("codes", out var cds) && cds.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var c in cds.EnumerateArray())
+            {
+                var bc = BlindCode.Parse(c);
+                if (bc is not null) blindQrs.Add(bc);
+            }
+        }
+        if (blind.Count == 0 && blindQrs.Count == 0) return null;
+
+        var pairs = new List<(double[] draw, double[] photo)>();
+        foreach (var m in marks)
+        {
+            if (string.IsNullOrWhiteSpace(m.Text)) continue;
+            var draw = viewNormMap is not null && viewNormMap.TryGetValue(m.Id, out var vb)
+                       ? vb : m.NormBbox;
+            if (draw is not { Length: >= 4 }) continue;
+            var dc = Center(draw);
+            if (dc is null) continue;
+
+            var keys = MarkRules.MatchKeysOf(m.Text!).ToList();
+            if (keys.Count == 0) keys.Add(m.Text!);
+
+            foreach (var t in blind)
+            {
+                if (t.NormBbox is not { Length: >= 4 }) continue;
+                if (!keys.Any(k => TextNormalizer.Contains(t.Text, k) != TextMatch.None)) continue;
+                var pc = Center(t.NormBbox);
+                if (pc is null) continue;
+                pairs.Add((dc, pc));
+                break;   // 一个 mark 只取一个最靠前的命中，避免同文本重复加权
+            }
+        }
+
+        // 【P3 QR 锚点配对】图纸侧 Qr mark 中心 ↔ 照片侧 codes 中心：贪心最近配对
+        // （全部距离对升序依次取用未配过的，防多对一），与文本锚点合并进 pairs 统一估参。
+        var qrDraws = new List<double[]>();
+        foreach (var m in marks)
+        {
+            if (m.Type != MarkType.Qr) continue;
+            var qb = viewNormMap is not null && viewNormMap.TryGetValue(m.Id, out var qv)
+                     ? qv : m.NormBbox;
+            if (qb is not { Length: >= 4 }) continue;
+            var qc = Center(qb);
+            if (qc is not null) qrDraws.Add(qc);
+        }
+        var qrPhotos = new List<double[]>();
+        foreach (var bc2 in blindQrs)
+        {
+            if (bc2.NormBbox is not { Length: >= 4 }) continue;
+            var pc2 = Center(bc2.NormBbox);
+            if (pc2 is not null) qrPhotos.Add(pc2);
+        }
+        if (qrDraws.Count > 0 && qrPhotos.Count > 0)
+        {
+            // R3（#35）：全局最优一对一 —— 取代原「距离升序贪心」。
+            // 贪心在多码场景会产出非最优、甚至错误的配对。规模保护：任一侧超过 8 个时退回贪心
+            // （当前业务实测单份图纸最多 2 个 Qr mark，该分支不会触发）。
+            var bestPairs = (qrDraws.Count <= 8 && qrPhotos.Count <= 8)
+                ? BestOneToOne(qrDraws, qrPhotos)
+                : GreedyPairs(qrDraws, qrPhotos);
+            foreach (var (di, pi) in bestPairs)
+                pairs.Add((qrDraws[di], qrPhotos[pi]));
+        }
+        if (pairs.Count == 0) return null;
+
+        double dx, dy, scale;
+        if (pairs.Count == 1)
+        {
+            // 单锚点：只做平移。尺寸比不可用 —— mark 框是「应打标区域」，
+            // OCR 框是「实际检出的整行文字」，二者语义不同（实测宽度比可达 3 倍）。
+            scale = 1.0;
+            dx = pairs[0].photo[0] - pairs[0].draw[0];
+            dy = pairs[0].photo[1] - pairs[0].draw[1];
+        }
+        else
+        {
+            // ≥2 锚点：两两距离比的中位数估均匀尺度（抗离群），再做质心对齐
+            var ratios = new List<double>();
+            for (int i = 0; i < pairs.Count; i++)
+                for (int j = i + 1; j < pairs.Count; j++)
+                {
+                    var dd = Dist(pairs[i].draw, pairs[j].draw);
+                    var dp = Dist(pairs[i].photo, pairs[j].photo);
+                    if (dd > 1e-4 && dp > 1e-4) ratios.Add(dp / dd);
+                }
+            ratios.Sort();
+            scale = ratios.Count > 0 ? ratios[ratios.Count / 2] : 1.0;
+            if (scale < 0.25) scale = 0.25;
+            if (scale > 4.0) scale = 4.0;
+
+            double sx = 0, sy = 0, px = 0, py = 0;
+            foreach (var (d, p) in pairs) { sx += d[0]; sy += d[1]; px += p[0]; py += p[1]; }
+            var n = pairs.Count;
+            dx = px / n - (sx / n) * scale;
+            dy = py / n - (sy / n) * scale;
+        }
+
+        double rss = 0, cx = 0, cy = 0;
+        foreach (var (d, p) in pairs)
+        {
+            var ex = d[0] * scale + dx;
+            var ey = d[1] * scale + dy;
+            rss += (ex - p[0]) * (ex - p[0]) + (ey - p[1]) * (ey - p[1]);
+            cx += d[0]; cy += d[1];
+        }
+        var residual = Math.Sqrt(rss / pairs.Count);
+
+        // 【P3 残差 gating】≥3 锚点时残差才有诊断意义（1~2 点总能拟合）。
+        // 残差超门限 → 配准明显不可信（锚点错配/极端取景），抑制变换并标需人工复核，
+        // 不硬给错误映射。门限为归一化页面 10%（AnchorTransform.ResidualGate），可依基线调优。
+        var suppressed = pairs.Count >= 3 && residual > AnchorTransform.ResidualGate;
+
+        return new AnchorTransform
+        {
+            Dx = dx, Dy = dy, Scale = scale,
+            AnchorCount = pairs.Count,
+            Residual = residual,
+            Suppressed = suppressed,
+            Centroid = new[] { cx / pairs.Count, cy / pairs.Count }
+        };
+    }
+
     public static Result Verify(IReadOnlyList<DrawingMark> marks,
                                 JsonElement verifyDoc,
                                 JsonElement? observeDoc,
                                 MarkView? selectedView = null,
-                                Dictionary<string, double[]>? precomputedViewNormMap = null)
+                                Dictionary<string, double[]>? precomputedViewNormMap = null,
+                                AnchorTransform? precomputedAnchor = null,
+                                double[]? subject = null,
+                                bool? registrationTrusted = null,
+                                bool partCoverageGate = true)
     {
-        var result = new Result();
+        var result = new Result
+        {
+            Anchor = precomputedAnchor,
+            Subject = subject,
+            RegistrationTrusted = registrationTrusted == true,
+            PartCoverageGate = partCoverageGate
+        };
 
         // 质量门槛：照片不可用 → 全部 NotComparable（这是 not_comparable 存在的意义）
         if (observeDoc is { ValueKind: JsonValueKind.Object } obs)
@@ -419,6 +707,7 @@ public static class MarkVerifier
                         Type = "View",
                         View = sv.ToString(),
                         State = nameof(MarkState.NotApplicable),
+                        Confidence = 1.0,   // M3：非判定项，不参与 Gate
                         Evidence = $"该图纸无 {sv} 视图声明，跳过该视图下所有 mark（不判缺标）"
                     });
                     return result;
@@ -501,7 +790,11 @@ public static class MarkVerifier
                     MarkKey = $"extra#{result.Verdicts.Count:X4}",
                     Type = "Qr",
                     State = nameof(MarkState.Extra),
+                    Confidence = 0.40,   // M3：图纸未声明，恒需人工定性，不给高置信
                     ObservedData = bc.Data,
+                    // R1（#34）：补盲检检出坐标 —— 此前 Extra 恒无 photoBbox，
+                    // 导致照片上多出的真实二维码「无法编号、无法标示定位」（实测 34/34 为 null）。
+                    PhotoBbox = bc.NormBbox,
                     Evidence = $"照片在图纸未声明位置扫到二维码「{bc.Data ?? "(未解码)"}」"
                 });
             }
@@ -518,15 +811,34 @@ public static class MarkVerifier
                                    List<TextObs> blindTexts,
                                    Result result, string? parentKey, string? inheritedState)
     {
+        // A（#37）：被排除的疑似非打标内容（屏显文案/页脚碎片/二维码格式说明）→ 不适用（灰），不参与比对。
+        if (m.Excluded)
+        {
+            result.Verdicts.Add(new Verdict
+            {
+                MarkKey = m.Id,
+                Type = m.Type.ToString(),
+                View = m.View.ToString(),
+                Text = m.Text,
+                State = nameof(MarkState.NotApplicable),
+                Confidence = 1.0,
+                DrawingBbox = m.NormBbox,
+                ExpectedBbox = ExpectedBbox(m, result),
+                Evidence = "已排除（疑似非打标内容：" + (m.ExcludeReason ?? "污染") + "），不参与比对"
+            });
+            return;
+        }
+
         // Group：逐子项判定，组状态取子项聚合（不再把组合文本当文本匹配）
         if (m.Type == MarkType.Group)
         {
             var childStates = new List<string>();
+            var childConfs = new List<double>();
             foreach (var kid in m.Children ?? new List<DrawingMark>())
             {
                 VerifyMark(kid, regions, blindCodes, blindTexts, result, m.Id, null);
                 var kv = result.Verdicts.LastOrDefault(v => v.MarkKey == kid.Id);
-                if (kv is not null) childStates.Add(kv.State);
+                if (kv is not null) { childStates.Add(kv.State); childConfs.Add(kv.Confidence); }
             }
             var worst = Aggregate(childStates);
             result.Verdicts.Add(new Verdict
@@ -536,6 +848,10 @@ public static class MarkVerifier
                 View = m.View.ToString(),
                 Text = m.Text,
                 State = worst,
+                // M3：组合项置信度取子项最差者 —— 组的结论强度不可能高于最弱子项。
+                // 空组（无子项）时 Aggregate 返回 NotApplicable：那是「没有可判定内容」，
+                // 不是「不确定」，置信度按非判定项给 1.0（与 NotApplicable 分支一致）。
+                Confidence = childConfs.Count > 0 ? childConfs.Min() : 1.0,
                 Evidence = $"组合项聚合（{string.Join(" / ", childStates)}）"
             });
             return;
@@ -559,16 +875,19 @@ public static class MarkVerifier
         {
             v.State = nameof(MarkState.NotApplicable);
             v.Evidence = "标记为非必标";
-            result.Verdicts.Add(v);
+            AddVerdict(result, v, m);
             return;
         }
+
+        // B（#37）：部位覆盖判据已后置到匹配之后（见下方 _applyPartCoverage 段），
+        // 仅把「未观测到的缺标项」翻为不适用（灰），绝不翻已命中项（避免假阴性）。
 
         // 上层（组/照片）已判不可比 → 传染
         if (inheritedState == nameof(MarkState.NotComparable))
         {
             v.State = inheritedState;
             v.Evidence = "继承不可比状态";
-            result.Verdicts.Add(v);
+            AddVerdict(result, v, m);
             return;
         }
 
@@ -577,9 +896,18 @@ public static class MarkVerifier
         {
             v.State = nameof(MarkState.NotComparable);
             v.Evidence = "照片质量不可用：" + string.Join("；", result.QualityReasons);
-            result.Verdicts.Add(v);
+            AddVerdict(result, v, m);
             return;
         }
+
+        // 【文档 §5】observe 已提取照片有效部位区域（subject），随记录留痕（result.Subject）。
+        // 【实测回退 2026-09-17】原设计「定点区域与 subject 不相交 → 未拍到该部位（灰）」
+        // 在 42 例基线上产生 50 处负向（含 Matched → NotComparable）：viewNormMap 是
+        // 「图纸视图 → 照片」的直接映射，与照片实际内容分布（受取景/比例/遮挡影响）
+        // 并不同源，二者求交不可靠。故 subject 暂不参与判定，仅作观测数据；
+        // 启用前需先解决坐标对齐（例如按配准残差把 mark 位置投到照片内容坐标系）。
+        // 【#37 B 项】在「配准可信（affine/anchor 生效 或 指定视图）」前提下 subject 重新参与判定，
+        // 但仅翻「未观测到的缺标项」为不适用，不翻已命中项，故不重现 2026-09-17 的假阴性。
 
         var regionId = RegionIdOf(m.Id, parentKey);
         regions.TryGetValue(regionId, out var obs);
@@ -591,7 +919,7 @@ public static class MarkVerifier
         {
             v.State = nameof(MarkState.NotComparable);
             v.Evidence = obs?.Error is not null ? $"定点区域异常：{obs.Error}" : "定点区域无观测结果";
-            result.Verdicts.Add(v);
+            AddVerdict(result, v, m);
             return;
         }
 
@@ -627,6 +955,84 @@ public static class MarkVerifier
             };
         }
 
+        // B（#37）：部位覆盖判据（后置，避免假阴性）。
+        // 仅当配准可信 且 该 mark 未被观测到（将判 Missing/NotDetected）时，
+        // 若其（图纸映射的）期望位置在照片主体范围之外 → 该部位未拍到 → 不适用（灰）而非缺标（红）。
+        // 已观测到的 mark（Matched/LowConfidence/Extra）视为照片拍到了该部位，绝不翻灰。
+        if (result.PartCoverageGate && result.RegistrationTrusted
+            && (v.State == nameof(MarkState.Missing) || v.State == nameof(MarkState.NotDetected))
+            && result.Subject is { Length: >= 4 } sub
+            && result.ViewNormMap.TryGetValue(m.Id, out var covB) && covB is { Length: >= 4 })
+        {
+            var cx = covB[0] + covB[2] / 2;
+            var cy = covB[1] + covB[3] / 2;
+            const double M = 0.06;
+            bool inside = cx >= sub[0] - M && cx <= sub[0] + sub[2] + M
+                       && cy >= sub[1] - M && cy <= sub[1] + sub[3] + M;
+            if (!inside)
+            {
+                v.State = nameof(MarkState.NotApplicable);
+                v.Confidence = 1.0;
+                v.Evidence = "部位覆盖判据：mark 期望位置在照片主体范围之外（照片未拍到该部位），原「"
+                             + v.State + "」改为不适用";
+            }
+        }
+
+        AddVerdict(result, v, m);
+    }
+
+    // ---------------- M3（#36）置信度 ----------------
+
+    /// <summary>内容级匹配等级 → 置信度基础分（工程经验值，未经真实数据标定）。</summary>
+    private static double BaseConfOf(string? level) => level switch
+    {
+        "Exact"      => 0.95,   // 逐字命中
+        "Normalized" => 0.85,   // 归一化后命中（空格/全半角/大小写差异）
+        "Ambiguous"  => 0.45,   // 易混折叠后命中（0/O、1/I 类）—— 本就不判绿
+        "Qr"         => 0.90,   // 定点区解出码 + 位置核过
+        "QrBlind"    => 0.60,   // 盲检兜底命中，位置证据弱于定点
+        "Icon"       => 0.70,   // 只验墨迹存在性，无内容证据
+        _            => 0.60    // 无内容级证据（存在性/缺失类判定）
+    };
+
+    /// <summary>
+    /// verdict 统一入列口：先算 <see cref="Verdict.Confidence"/> 再加入结果集。
+    /// 所有早退分支都走这里，保证「没有任何 verdict 会漏掉置信度」。
+    /// </summary>
+    private static void AddVerdict(Result result, Verdict v, DrawingMark m)
+    {
+        double c = BaseConfOf(v.MatchLevel);
+
+        // ① 状态天花板：无论证据多强，状态本身决定了结论可信上限
+        c = v.State switch
+        {
+            nameof(MarkState.Matched)        => c,
+            nameof(MarkState.LowConfidence)  => Math.Min(c, 0.55),
+            nameof(MarkState.Extra)          => Math.Min(c, 0.40),
+            nameof(MarkState.NotDetected)    => Math.Min(c, 0.30),
+            nameof(MarkState.Missing)        => Math.Min(c, 0.70),  // 缺标结论同样依赖位置可信度
+            nameof(MarkState.NotComparable)  => Math.Min(c, 0.10),
+            nameof(MarkState.NotApplicable)  => 1.0,                // 非判定项
+            _                                => 0.0                 // Wrong / ProcessingError
+        };
+
+        // ② 位置因子：偏移越接近容差上限越不可信（下限 0.5，避免把位置判据放大成主导项）
+        if (v.Offset is { } off && v.State is nameof(MarkState.Matched) or nameof(MarkState.LowConfidence))
+        {
+            var tol = PosTolOf(result);
+            var f = tol > 1e-9 ? 1.0 - Math.Min(1.0, off / (2.0 * tol)) : 0.5;
+            c *= Math.Clamp(f, 0.5, 1.0);
+        }
+
+        // ③ 感知/几何降级折减
+        if (!result.GeometryTrusted) c *= 0.70;                                  // 定点框位置本身不可信
+        if (result.CodeDegraded && v.Type == nameof(MarkType.Qr)) c *= 0.85;     // 码检测器降级
+        if (v.BlindFallbackHit) c *= 0.80;                                       // 靠全图兜底命中的
+
+        // ④ 图纸侧对象自身的剖析置信度（视觉兜底来源的 mark 更低）
+        if (m.Confidence > 0) c *= 0.85 + 0.15 * Math.Clamp(m.Confidence, 0.0, 1.0);
+
+        v.Confidence = Math.Round(Math.Clamp(c, 0.0, 1.0), 4);
         result.Verdicts.Add(v);
     }
 
@@ -648,6 +1054,7 @@ public static class MarkVerifier
                 if (fb is not null)
                 {
                     v.State = nameof(MarkState.LowConfidence);
+                    v.BlindFallbackHit = fb.Value.Match != TextMatch.Ambiguous;
                     // 照片标注：定点区空但全图命中时，把框画在盲检实际检出的位置
                     // （否则 H5 照片画布一片空白，复核人无从下手）
                     v.PhotoBbox = fb.Value.Bbox;
@@ -671,6 +1078,7 @@ public static class MarkVerifier
                 if (fb is not null)
                 {
                     v.State = nameof(MarkState.LowConfidence);
+                    v.BlindFallbackHit = fb.Value.Match != TextMatch.Ambiguous;
                     v.PhotoBbox = fb.Value.Bbox;   // 同上：黄框画在全图命中处
                     v.Evidence = fb.Value.Match == TextMatch.Ambiguous
                         ? $"定点区域为空，全图仅易混命中「{fb.Value.Text}」（视图级配准位置可能有偏差，需人工复核）"
@@ -704,13 +1112,17 @@ public static class MarkVerifier
             if (best == TextMatch.Exact) break;
         }
 
+        // M3：记录内容级匹配等级，供 Confidence 计算（不参与判定）
+        v.MatchLevel = best.ToString();
+
         switch (best)
         {
             case TextMatch.Exact or TextMatch.Normalized:
             {
                 var expected = ExpectedBbox(m, result);
                 v.Offset = Offset(expected, bestBox);
-                var tol = PosTolOf(result);
+                // P0：锚点配准后按「离锚点距离」放宽容差（远处不确定度更高），上限 MaxPosTol
+                var tol = PosTolForMark(expected, result);
                 if (PositionOk(expected, bestBox, v.Offset, tol))
                 {
                     v.State = nameof(MarkState.Matched);
@@ -856,52 +1268,107 @@ public static class MarkVerifier
         // 1) 定点解码
         if (obs.QrFound)
         {
+            v.MatchLevel = "Qr";   // M3：定点区解出码 = 最强的内容级证据
             v.ObservedData = obs.QrData;
             v.Offset = Offset(ExpectedBbox(m, result), obs.QrNormBbox);
-            if (v.Offset is null || v.Offset <= PosTolOf(result) * 2) // 码中心允许更大漂移（裁剪+透视）
+            var decoded = (obs.QrData ?? "").Trim();
+            var expected = (m.Text ?? "").Trim();
+            var posOk = v.Offset is null || v.Offset <= PosTolOf(result) * 2; // 码中心允许更大漂移（裁剪+透视）
+            // 【P4 回正·设计 §7】只验存在性/外接矩形/中心位置：解码内容不参与结论，
+            // 内容差异仅作提示性人工标注（ObservedData + Evidence），不再改判 LowConfidence。
+            var contentHint = QrContentHint(decoded, expected);
+            if (posOk)
             {
                 v.State = nameof(MarkState.Matched);
-                v.Evidence = $"定点解码成功「{obs.QrData}」（scale={obs.QrScale}）";
+                v.Evidence = $"定点解码成功「{decoded}」（scale={obs.QrScale}）{contentHint}";
             }
             else
             {
                 v.State = nameof(MarkState.LowConfidence);
-                v.Evidence = $"定点解码「{obs.QrData}」但中心偏移 {v.Offset:F3}";
+                v.Evidence = $"定点解码「{decoded}」但中心偏移 {v.Offset:F3}（位置存疑，需人工复核）{contentHint}";
             }
             return;
         }
 
         // 2) 盲检兜底：全图扫到的码落在预期位置附近
+        // 【P4 多 QR 消歧】一个盲检码只能被一个 Qr mark 认领（按距预期位置最近优先）：
+        // 多个 QR mark 各自指向不同实体码，避免同一码被重复引用造成判定混淆。
         var c = Center(ExpectedBbox(m, result));
         if (c is not null)
         {
-            BlindCode? near = null;
-            double nearDist = double.MaxValue;
-            foreach (var bc in blindCodes)
+            // R4（#35）唯一性判据：先在容差内收集全部候选（按几何竞争关系），
+            // 取最近的「未被认领」者配对；若还存在距离接近的次近候选
+            // （r = d1/d2 > QrUniquenessRatio），说明「指哪一个」并不明确 → 判黄交人工按编号指认。
+            // 与「宁黄勿红」同源：宁可多问一次，不可把歧义当明确。
+            var candQr = new List<(double D, int Idx)>();
+            for (int i = 0; i < blindCodes.Count; i++)
             {
-                var cc = Center(bc.NormBbox);
+                var cc = Center(blindCodes[i].NormBbox);
                 if (cc is null) continue;
                 var d = Dist(c, cc);
-                if (d <= PosTolOf(result) * 2 && d < nearDist) { near = bc; nearDist = d; }
+                if (d <= PosTolOf(result) * 2) candQr.Add((d, i));
             }
-            if (near is not null)
+            candQr.Sort((x, y) => x.D.CompareTo(y.D));
+
+            int nearIdx = -1;
+            double nearDist = 0;
+            foreach (var (d, i) in candQr)
             {
+                if (result.ClaimedBlindCodeIdx.Contains(i)) continue;   // 已被其它 Qr mark 认领
+                nearIdx = i; nearDist = d; break;
+            }
+            double? secondDist = null;
+            foreach (var (d, i) in candQr)
+            {
+                if (i == nearIdx) continue;
+                if (result.ClaimedBlindCodeIdx.Contains(i)) continue;   // 已认领者不构成可选歧义
+                secondDist = d; break;
+            }
+
+            if (nearIdx >= 0)
+            {
+                v.MatchLevel = "QrBlind";   // M3：盲检兜底命中，弱于定点解码
+                var near = blindCodes[nearIdx];
+                result.ClaimedBlindCodeIdx.Add(nearIdx);
                 v.ObservedData = near.Data;
-                v.State = nameof(MarkState.Matched);
+                var decoded = (near.Data ?? "").Trim();
+                var expected = (m.Text ?? "").Trim();
                 v.PhotoBbox = near.NormBbox;   // 盲检码的实际位置（照片标注用）
-                v.Evidence = $"盲检码「{near.Data}」落于预期位置（距离 {nearDist:F3}）";
+                // 【P4 回正·设计 §7】只验位置；内容差异仅作人工标注，不改判
+                var contentHint = QrContentHint(decoded, expected);
+
+                // r = 最近/次近：无次近候选（唯一）或明显更近 → 明确；否则歧义
+                double ratio = secondDist is { } sd && sd > 1e-9 ? nearDist / sd : 0.0;
+                if (secondDist is null || ratio <= QrUniquenessRatio)
+                {
+                    v.State = nameof(MarkState.Matched);
+                    v.Evidence = $"盲检码「{decoded}」落于预期位置（距离 {nearDist:F3}）{contentHint}";
+                }
+                else
+                {
+                    v.State = nameof(MarkState.LowConfidence);
+                    v.Evidence = $"盲检码「{decoded}」距预期 {nearDist:F3}，但存在距离接近的候选"
+                               + $"（次近 {secondDist!.Value:F3}，比 {ratio:F2} > {QrUniquenessRatio}）"
+                               + $"→ 需按编号人工指认{contentHint}";
+                }
                 return;
             }
             // 几何未配准：预期位置不可信，但全图只要解出了码，至少证明「照片上有码」——
             // 不判绿（位置未核对）也不判红（可能就是该标的码），只判黄交人工复核。
-            if (!result.GeometryTrusted && blindCodes.Count > 0)
+            // 【P4】取**未被认领**的第一个码，多个 QR mark 各自引用不同码。
+            if (!result.GeometryTrusted)
             {
-                var any = blindCodes[0];
-                v.ObservedData = any.Data;
-                v.State = nameof(MarkState.LowConfidence);
-                v.PhotoBbox = any.NormBbox;
-                v.Evidence = $"盲检解出「{any.Data ?? "(未解码)"}」，但几何未配准、位置未核对（需人工复核）";
-                return;
+                for (int i = 0; i < blindCodes.Count; i++)
+                {
+                    if (result.ClaimedBlindCodeIdx.Contains(i)) continue;
+                    var any = blindCodes[i];
+                    result.ClaimedBlindCodeIdx.Add(i);
+                    v.ObservedData = any.Data;
+                    v.State = nameof(MarkState.LowConfidence);
+                    v.PhotoBbox = any.NormBbox;
+                    v.Evidence = $"盲检解出「{any.Data ?? "(未解码)"}」，但几何未配准、位置未核对（需人工复核）";
+                    return;
+                }
             }
         }
 
@@ -938,8 +1405,24 @@ public static class MarkVerifier
               + "（几何未配准，定点框位置不可信，需人工复核）";
     }
 
+    /// <summary>
+    /// 【P4 设计 §7】二维码内容提示文案：录入了预期码时给出「一致 / 不一致」提示，
+    /// 但**只作人工标注，绝不改变判定状态**——内容不参与通过与否（见类头判定原则 2）。
+    /// </summary>
+    private static string QrContentHint(string decoded, string expected)
+    {
+        if (expected.Length == 0) return "";
+        if (decoded.Length == 0)
+            return $"（已录入预期码「{expected}」，本次未解码出内容；按设计 §7 不影响结论）";
+        return string.Equals(decoded, expected, StringComparison.OrdinalIgnoreCase)
+            ? $"（内容与录入预期「{expected}」一致，仅供参考）"
+            : $"（内容「{decoded}」与录入预期「{expected}」不一致；按设计 §7 仅作人工标注，不影响结论）";
+    }
+
     private static void VerifyIcon(DrawingMark m, RegionObs obs, Result result, Verdict v)
     {
+        v.MatchLevel = "Icon";   // M3：图标只验存在性，证据强度低于文本精确匹配
+
         // 几何未配准：定点框罩住的「墨迹」可能是背景/手/阴影
         // 【真实照片实测（2026-09-12，P1HVQ）】框落进背景 ink_ratio=0.669 → 假「一致」（漏报）。
         // 存在性判据依赖位置可信，位置不可信时只判黄，绝不判绿。
@@ -991,6 +1474,221 @@ public static class MarkVerifier
     /// </summary>
     private static double PosTolOf(Result? result)
         => result?.ViewNormMap is not null ? ViewPosTol : PosTol;
+
+    /// <summary>
+    /// P0：单个 mark 的位置容差 = 基础容差 + 锚点残差 + 离锚点质心距离 × <see cref="AnchorDistK"/>。
+    /// 未启用锚点配准时退化为 <see cref="PosTolOf"/>（向后兼容，逐字不变）。
+    /// </summary>
+    private static double PosTolForMark(double[]? expected, Result? result)
+    {
+        var tol = PosTolOf(result);
+        if (result?.Anchor is { Applied: true } a && expected is { Length: >= 4 })
+        {
+            var c = Center(expected);
+            if (c is not null)
+                tol += a.Residual + AnchorDistK * Dist(c, a.Centroid);
+        }
+        return Math.Min(tol, MaxPosTol);
+    }
+
+    // ---------------- 坐标对齐（2026-09-17 #27）----------------
+    // 【实测根因】真实照片（p63 系列）上，图纸→照片的定点框存在**系统性整体平移**：
+    // 同一视图内多个互相独立的 mark，其「全图实际检出位置 − 图纸映射位置」的偏移高度一致
+    // （实测 7 例 dy 极差仅 0.005~0.014，dx 亦逐字相近），偏移量约 (-0.6, +0.6) ——
+    // 这不是随机误差而是整体错位，定点框因此罩到空白，只能靠全图兜底判黄。
+    // 处理：用内容已确认（Exact 命中）的兜底项估计一致偏移，把定点框搬正后重裁一次；
+    // 重裁命中才升级为绿，未命中一律保持原黄 —— 只可能变好，不会制造假绿。
+
+    /// <summary>一致偏移估计结果（null = 不足以判定为整体平移）。</summary>
+    public sealed class OffsetAlignment
+    {
+        public double Dx;
+        public double Dy;
+        public List<string> MarkIds = new();
+        public int Support;
+    }
+
+    /// <summary>偏移一致性容差：到中位偏移的距离超过此值视为离群，不参与估计也不重裁。</summary>
+    public const double OffsetConsistencyTol = 0.25;
+
+    /// <summary>启用坐标对齐所需的最少一致项数（≥2 才能证明是整体平移而非单点巧合）。</summary>
+    public const int MinAlignmentSupport = 2;
+
+    /// <summary>
+    /// 从「定点区为空但全图精确命中」的项估计一致的照片偏移。
+    /// 取各独立 mark 偏移向量的中位数，保留与中位数一致（≤容差）的项；
+    /// 一致项 <see cref="MinAlignmentSupport"/> 个时返回 null（不做任何校正）。
+    /// </summary>
+    public static OffsetAlignment? EstimateConsistentOffset(Result result)
+    {
+        var vecs = new List<(string id, double dx, double dy)>();
+        foreach (var v in result.Verdicts)
+        {
+            if (!v.BlindFallbackHit || string.IsNullOrEmpty(v.MarkKey)) continue;
+            var p = Center(v.PhotoBbox);
+            var e = Center(v.ExpectedBbox);
+            if (p is null || e is null) continue;
+            vecs.Add((v.MarkKey, p[0] - e[0], p[1] - e[1]));
+        }
+        if (vecs.Count < MinAlignmentSupport) return null;
+
+        var mdx = Median(vecs.Select(x => x.dx).ToList());
+        var mdy = Median(vecs.Select(x => x.dy).ToList());
+        var ids = new List<string>();
+        foreach (var x in vecs)
+        {
+            var ax = x.dx - mdx;
+            var ay = x.dy - mdy;
+            if (Math.Sqrt(ax * ax + ay * ay) <= OffsetConsistencyTol) ids.Add(x.id);
+        }
+        if (ids.Count < MinAlignmentSupport) return null;
+        return new OffsetAlignment { Dx = mdx, Dy = mdy, MarkIds = ids, Support = ids.Count };
+    }
+
+    private static double Median(List<double> xs)
+    {
+        if (xs.Count == 0) return 0.0;
+        var s = xs.OrderBy(x => x).ToList();
+        int n = s.Count;
+        return n % 2 == 1 ? s[n / 2] : (s[n / 2 - 1] + s[n / 2]) / 2.0;
+    }
+
+    /// <summary>
+    /// 把「按一致偏移搬正后重裁」的观测应用到判定：仅在重裁命中时升级为 Matched，
+    /// 未命中或异常一律保持原判定 —— 绝不降级、绝不制造假绿。
+    /// 返回升级的项数。
+    /// </summary>
+    public static int ApplyRealignedRegions(IReadOnlyList<DrawingMark> marks, Result result,
+                                            JsonElement verifyDoc2, JsonElement? observeDoc,
+                                            OffsetAlignment al)
+    {
+        var regions2 = new Dictionary<string, RegionObs>();
+        if (verifyDoc2.TryGetProperty("regions", out var arr) && arr.ValueKind == JsonValueKind.Array)
+            foreach (var r in arr.EnumerateArray())
+            {
+                var o = RegionObs.Parse(r);
+                if (o is not null) regions2[o.Id] = o;
+            }
+        if (regions2.Count == 0) return 0;
+
+        var blindCodes = new List<BlindCode>();
+        var blindTexts = new List<TextObs>();
+        ParseBlind(observeDoc, blindCodes, blindTexts);
+
+        // 判定位置必须与重裁位置一致 → 同步平移 viewNormMap
+        if (result.ViewNormMap is { } vm)
+        {
+            var shifted = new Dictionary<string, double[]>();
+            foreach (var kv in vm)
+            {
+                var b = kv.Value;
+                shifted[kv.Key] = b is { Length: >= 4 }
+                    ? new[] { b[0] + al.Dx, b[1] + al.Dy, b[2], b[3] }
+                    : b;
+            }
+            result.ViewNormMap = shifted;
+        }
+
+        int upgraded = 0;
+        foreach (var id in al.MarkIds)
+        {
+            var m = FindMarkById(marks, id);
+            if (m is null) continue;
+            if (!regions2.TryGetValue(id, out var obs2) || obs2.Error is not null) continue;
+            var old = result.Verdicts.FirstOrDefault(v => v.MarkKey == id);
+            if (old is null) continue;
+
+            var nv = new Verdict
+            {
+                MarkKey = m.Id,
+                Type = m.Type.ToString(),
+                View = m.View.ToString(),
+                Text = m.Text,
+                DrawingBbox = m.NormBbox,
+                ExpectedBbox = ExpectedBbox(m, result)
+            };
+            switch (m.Type)
+            {
+                case MarkType.Text: VerifyText(m, obs2, blindTexts, result, nv); break;
+                case MarkType.Qr: VerifyQr(m, obs2, blindCodes, result, nv); break;
+                case MarkType.Icon: VerifyIcon(m, obs2, result, nv); break;
+                default: continue;
+            }
+            if (nv.PhotoBbox is null)
+                nv.PhotoBbox = obs2.Texts.FirstOrDefault(t => t.NormBbox is { Length: >= 4 })?.NormBbox;
+
+            if (nv.State != nameof(MarkState.Matched)) continue;   // 未命中 → 保持原判定
+
+            old.State = nv.State;
+            old.Evidence = $"【坐标对齐·偏移校正 d=({al.Dx:F3},{al.Dy:F3})，{al.Support} 项一致】" + nv.Evidence;
+            old.PhotoBbox = nv.PhotoBbox ?? old.PhotoBbox;
+            old.ExpectedBbox = nv.ExpectedBbox ?? old.ExpectedBbox;
+            old.Offset = nv.Offset;
+            old.ObservedData = nv.ObservedData ?? old.ObservedData;
+            upgraded++;
+        }
+
+        if (upgraded > 0) ReaggregateGroups(marks, result);
+        return upgraded;
+    }
+
+    /// <summary>子项升级后重算 Group 的聚合状态，避免组仍停留在旧结论。</summary>
+    private static void ReaggregateGroups(IReadOnlyList<DrawingMark> marks, Result result)
+    {
+        foreach (var m in marks)
+        {
+            if (m.Type != MarkType.Group) continue;
+            var states = new List<string>();
+            foreach (var kid in m.Children ?? new List<DrawingMark>())
+            {
+                var kv = result.Verdicts.FirstOrDefault(v => v.MarkKey == kid.Id);
+                if (kv is not null) states.Add(kv.State);
+            }
+            if (states.Count == 0) continue;
+            var gv = result.Verdicts.FirstOrDefault(v => v.MarkKey == m.Id);
+            if (gv is null) continue;
+            gv.State = Aggregate(states);
+            gv.Evidence = $"组合项聚合（{string.Join(" / ", states)}）";
+        }
+    }
+
+    private static DrawingMark? FindMarkById(IReadOnlyList<DrawingMark> marks, string id)
+    {
+        foreach (var m in marks)
+        {
+            if (m.Id == id) return m;
+            if (m.Children is { Count: > 0 } kids)
+            {
+                var r = FindMarkById(kids, id);
+                if (r is not null) return r;
+            }
+        }
+        return null;
+    }
+
+    /// <summary>从 observe 文档解析盲检码/文本（供重判使用）。</summary>
+    private static void ParseBlind(JsonElement? observeDoc, List<BlindCode> blindCodes,
+                                   List<TextObs> blindTexts)
+    {
+        if (observeDoc is not { ValueKind: JsonValueKind.Object } ob) return;
+        if (ob.TryGetProperty("codes", out var codes) && codes.ValueKind == JsonValueKind.Array)
+            foreach (var c in codes.EnumerateArray())
+            {
+                var bc = BlindCode.Parse(c);
+                if (bc is not null) blindCodes.Add(bc);
+            }
+        if (ob.TryGetProperty("texts", out var bts) && bts.ValueKind == JsonValueKind.Array)
+            foreach (var t in bts.EnumerateArray())
+            {
+                if (t.ValueKind != JsonValueKind.Object) continue;
+                var to = new TextObs();
+                if (t.TryGetProperty("text", out var tx) && tx.ValueKind == JsonValueKind.String)
+                    to.Text = tx.GetString() ?? "";
+                if (t.TryGetProperty("norm_bbox", out var nb) && nb.ValueKind == JsonValueKind.Array)
+                    to.NormBbox = RegionObs.Doubles(nb);
+                if (to.Text.Length > 0) blindTexts.Add(to);
+            }
+    }
 
     /// <summary>
     /// 取 mark 的预期 NormBbox：启用视图级配准时返回视图级坐标（按 mark.Id 查 ViewNormMap），
@@ -1047,6 +1745,14 @@ public static class MarkVerifier
     /// 「父 Group 视图代表子项视图」的语义）；Group 的 View 不匹配 → 整组跳过。</para>
     /// <para>被过滤的 mark 不产生 verdict（不判 Missing），避免单面照片上误报缺标。</para>
     /// </summary>
+    /// <summary>两个归一化框 [x, y, w, h] 是否相交（有效部位区域判定用）。</summary>
+    private static bool BoxesIntersect(double[] a, double[] b)
+    {
+        double ax1 = a[0], ay1 = a[1], ax2 = a[0] + a[2], ay2 = a[1] + a[3];
+        double bx1 = b[0], by1 = b[1], bx2 = b[0] + b[2], by2 = b[1] + b[3];
+        return ax1 < bx2 && bx1 < ax2 && ay1 < by2 && by1 < ay2;
+    }
+
     public static List<DrawingMark> FilterByView(IReadOnlyList<DrawingMark> marks, MarkView view)
     {
         var result = new List<DrawingMark>();
@@ -1056,11 +1762,8 @@ public static class MarkVerifier
     }
 
     /// <summary>
-    /// 计算视图级配准的 viewBbox（M6 修正·视图词范围）。
-    /// <para>优先用视图标签文字的 NormBbox（marks 的 <see cref="DrawingMark.ViewBbox"/>）作为锚点，
-    /// 只保留距视图标签 <paramref name="maxDist"/> 内的 marks 参与并集，
-    /// 排除因 InferView 误判而散乱分布的 marks，使 viewBbox 更贴合照片实际产品面。</para>
-    /// <para>无视图标签时回退到 marks 的 UnionBbox（向后兼容老档案 / 无 ViewBbox 的 marks）。</para>
+    /// 计算视图级配准的 viewBbox。
+    /// <para>优先使用视图标签文字框约束同视图 marks，并最终回退到 marks 并集。</para>
     /// </summary>
     /// <param name="filteredMarks">已按视图过滤的 marks（FilterByView 的输出）</param>
     /// <param name="maxDist">marks 与视图标签中心的最大归一化距离（默认 1.0），
@@ -1076,6 +1779,14 @@ public static class MarkVerifier
             .Where(m => m.ViewBbox is { Length: >= 4 })
             .Select(m => m.ViewBbox)
             .FirstOrDefault();
+
+        // 视图词有时来自二维码格式说明/注释，框本身只有一行小字。
+        // 这种框不是产品视图范围：若拿它做 RebaseToView，所有 mark 会被压缩到
+        // 说明文字附近，导致照片裁剪和定点检测整体错位。小标签直接忽略，
+        // 回退到同视图实际 mark 的并集（没有 mark 时再返回 null）。
+        if (labelBbox is { Length: >= 4 } && labelBbox[2] > 0 && labelBbox[3] > 0
+            && labelBbox[2] * labelBbox[3] < MinViewLabelArea)
+            labelBbox = null;
 
         // 无视图标签 → 回退到 marks 的 UnionBbox（老档案 / ViewBbox 全 null）
         if (labelBbox is null || labelBbox.Length < 4)
@@ -1247,6 +1958,73 @@ public static class MarkVerifier
     {
         public string Text = "";
         public double[]? NormBbox;
+    }
+
+    /// <summary>
+    /// R3（#35）全局最优一对一配对：**先最大化配对数，再最小化总距离**。
+    /// 原贪心只保证「配对数最大」，总距离可能非最优；本实现在同等配对数下取总距离最小的解。
+    /// n、m ≤ 6（实测最多 2 个 Qr mark），枚举可行；规模变大时应换匈牙利算法。
+    /// </summary>
+    private static List<(int I, int J)> BestOneToOne(IReadOnlyList<double[]> a, IReadOnlyList<double[]> b)
+    {
+        var best = new List<(int, int)>();
+        double bestCost = double.MaxValue;
+        if (a.Count == 0 || b.Count == 0) return best;
+
+        var usedB = new bool[b.Count];
+        var cur = new List<(int, int)>();
+
+        void Dfs(int i, double cost)
+        {
+            if (i == a.Count)
+            {
+                if (cur.Count > best.Count || (cur.Count == best.Count && cost < bestCost))
+                {
+                    best = new List<(int, int)>(cur);
+                    bestCost = cost;
+                }
+                return;
+            }
+            // 剪枝 1：剩余元素全用上也追不上当前最好配对数
+            if (cur.Count + (a.Count - i) < best.Count) return;
+            // 剪枝 2：只有在「配对数追平」时才用 cost 剪枝。
+            // ⚠️ 不能无条件写 `if (cost >= bestCost) return;`：首次到达「空匹配」时 cost=0 会把
+            // bestCost 压成 0，其后所有非空配对（cost>0）都会被误剪，最终恒返回空配对
+            // —— 该缺陷在 300 组随机数据上 300/300 全错（已用暴力全枚举交叉验证发现并修正）。
+            if (cur.Count + (a.Count - i) == best.Count && cost >= bestCost) return;
+            Dfs(i + 1, cost);                                   // 不选 a[i]
+            for (int j = 0; j < b.Count; j++)
+            {
+                if (usedB[j]) continue;
+                usedB[j] = true;
+                cur.Add((i, j));
+                Dfs(i + 1, cost + Dist(a[i], b[j]));
+                cur.RemoveAt(cur.Count - 1);
+                usedB[j] = false;
+            }
+        }
+        Dfs(0, 0.0);
+        return best;
+    }
+
+    /// <summary>原贪心配对（距离升序依次取用未配过的），仅作为超大规模时的兜底。</summary>
+    private static List<(int I, int J)> GreedyPairs(IReadOnlyList<double[]> a, IReadOnlyList<double[]> b)
+    {
+        var cand = new List<(double Dist, int I, int J)>();
+        for (int i = 0; i < a.Count; i++)
+            for (int j = 0; j < b.Count; j++)
+                cand.Add((Dist(a[i], b[j]), i, j));
+        cand.Sort((x, y) => x.Dist.CompareTo(y.Dist));
+        var usedD = new HashSet<int>();
+        var usedB = new HashSet<int>();
+        var outp = new List<(int, int)>();
+        foreach (var (_, i, j) in cand)
+        {
+            if (usedD.Contains(i) || usedB.Contains(j)) continue;
+            usedD.Add(i); usedB.Add(j);
+            outp.Add((i, j));
+        }
+        return outp;
     }
 
     private sealed class BlindCode

@@ -1,0 +1,57 @@
+{
+  "generatedAt": "2026-09-22 20:03:53",
+  "endpoint": "http://127.0.0.1:5000",
+  "metrics": {
+    "casesTotal": 2,
+    "casesOk": 2,
+    "photoUsableRate": 0.0,
+    "viewInferRate": null,
+    "anchorApplyRate": null,
+    "judgedTotal": 0,
+    "decisiveRate": null,
+    "notDetectedRate": null,
+    "verdictDistribution": {},
+    "latencyP50Ms": 3722,
+    "latencyP95Ms": 3104,
+    "truthCoverage": {
+      "viewLabeled": 0,
+      "marksLabeled": 0,
+      "humanReviews": 206
+    },
+    "viewAccuracy": null,
+    "recall": null,
+    "falseRedRate": null,
+    "falseGreenRate": null,
+    "acceptanceReady": false
+  },
+  "results": [
+    {
+      "id": "p61-f403feb6",
+      "profileId": 61,
+      "photoName": "real_25.jpg",
+      "ok": true,
+      "ms": 4341,
+      "usable": null,
+      "inferredView": null,
+      "selectedView": null,
+      "anchorApplied": false,
+      "counts": {},
+      "verdicts": [],
+      "recordId": null
+    },
+    {
+      "id": "p61-ed96d26e",
+      "profileId": 61,
+      "photoName": "wxwork_edge.jpg",
+      "ok": true,
+      "ms": 3104,
+      "usable": null,
+      "inferredView": null,
+      "selectedView": null,
+      "anchorApplied": false,
+      "counts": {},
+      "verdicts": [],
+      "recordId": null
+    }
+  ]
+}

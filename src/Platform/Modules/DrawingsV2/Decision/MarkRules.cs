@@ -146,7 +146,7 @@ public static class MarkRules
 
     // ---------------- 排除：修订记录 ----------------
     /// <summary>修订记录动词。修订表里常出现打标字样，必须排除。</summary>
-    public static readonly string[] RevisionVerbs = { "更改", "更正", "更新", "修订", "改为", "增加" };
+    public static readonly string[] RevisionVerbs = { "更改", "更正", "更新", "修订", "改为", "增加", "取消", "删除", "新增" };
 
     /// <summary>修订记录日期（24.03.18 / 25.09.05）。</summary>
     private static readonly Regex RevisionDate = new(@"[0-9]{2,4}[./-][0-9]{1,2}[./-][0-9]{1,2}", RegexOptions.Compiled);
@@ -245,7 +245,20 @@ public static class MarkRules
         "第三角", "第一角", "视角", "未注", "公差", "GB/T", "QA标准",
         // 以下为实测新增：这些是**字段名标签**（二维码内容的组成部分名称），不是打标内容本身
         "制造编码", "供应商代码", "产品型号", "生产日期", "流水号", "厂商代码",
-        "二维码格式", "二维码内容", "字体", "放大图", "贴纸", "此处"
+        "二维码格式", "二维码内容", "字体", "放大图", "贴纸", "此处",
+        // 工艺材料/工艺方式词（文档 §1：技术要求类默认不进打标对象）
+        // 这些是图纸描述"怎么印"的加工说明，不会成为产品表面的打标内容。
+        // 实测：p54「-/+标识丝印冷灰9C油墨」曾被误当打标对象；
+        // 注意不能加「丝印」—— p62 合法对象组名「按键丝印」会被误删。
+        "油墨", "喷码", "移印", "烫金", "丝网印", "冷灰", "热灰"
+    };
+
+    /// <summary>说明性/批注句式词 —— 这些是图纸对打标内容的描述，不是打标内容本身。</summary>
+    public static readonly string[] ExplanatoryWords =
+    {
+        "示例", "虚线框不打印", "虚线框", "生产规则", "一机一地址", "设备ID", "为二维码",
+        "说明", "注：", "注:", "此处", "扫码", "扫描", "查看", "请", "电话", "网址",
+        "www.", "http", "格式", "内容", "贴纸", "放大图", "字体", "标签"
     };
 
     private static readonly Regex NoiseCode = new(@"^[A-Z]{1,3}-?[0-9]{2,}", RegexOptions.Compiled);     // JT-010-F-9
@@ -303,6 +316,90 @@ public static class MarkRules
     /// </summary>
     public const double TitleBandBottom = 0.90;
     public const double TitleBandRight = 0.88;
+
+    /// <summary>
+    /// 是否说明性长句/批注（不是产品表面打标内容）。
+    /// 设计 §1：标题栏/技术要求/尺寸/批注默认不进比对；只有关键词/引线附近内容才候选。
+    /// 说明性文字（如「为二维码，生产规则为设备ID，一机一地址，示例：…，虚线框不打印。」）
+    /// 虽邻近 QR 图像，但是对 QR 的描述，不应成为比对对象。
+    /// </summary>
+    public static bool IsExplanatoryProse(string text)
+    {
+        var t = NoSpace(text ?? "").Trim();
+        if (t.Length == 0) return true;
+        if (ExplanatoryWords.Any(w => t.Contains(NoSpace(w), StringComparison.OrdinalIgnoreCase))) return true;
+        if (t.Length > 8 && t.Any(ch => "。，；、".Contains(ch))) return true;
+        return false;
+    }
+
+    // ---------------- A（#37）：图纸侧清单净化 ----------------
+    /// <summary>屏显 / 数码管 UI 专用词（多字，低风险误杀真实打标内容）。来源：p62 实测污染
+    /// （8888 / 点检模式冲突 / 试运行热启动 / 开送小时后 / 地址系统 / 定时 等屏显文案）。</summary>
+    public static readonly string[] DisplayUiWords =
+    {
+        "点检", "试运行", "热启动", "风量", "风向", "模式冲突", "开送", "地址系统",
+        "定时", "显示屏", "数码管", "面板显示", "运行模式", "待机", "故障码", "参数设置", "屏显"
+    };
+
+    /// <summary>短屏显词：单/双字，配合「整条极短」门限，避免误杀真实短打标内容。</summary>
+    public static readonly string[] DisplayUiShort =
+    {
+        "模式", "定时", "开", "关", "屏", "显", "运行", "暂停", "锁定", "菜单", "设定"
+    };
+
+    /// <summary>
+    /// A（#37）：判断一条图纸侧文本是否疑似「非打标内容」污染，返回排除原因；否则 null。
+    /// 仅应用于 R4/R5 低置信兜底链（MarkBuilder 内已限定），R1/R2/R3 正向证据不受影响。
+    /// 三类污染：①屏显/数码管 UI 文案 ②页脚/署名碎片 ③二维码格式说明文字。
+    /// </summary>
+    public static string? PollutionReason(string text)
+    {
+        var t = NoSpace((text ?? "").Trim());
+        if (t.Length == 0) return null;
+        // ③ 二维码格式说明 / 字段名标签（与 R4 噪声表一致）
+        if (NoiseWords.Any(w => t.Contains(NoSpace(w), StringComparison.OrdinalIgnoreCase))) return "二维码格式说明/字段标签";
+        if (IsQrFormatDeclaration(t)) return "二维码格式声明";
+        if (IsExplanatoryProse(t)) return "说明性长句/批注";
+        // ① 屏显 UI 专用词（多字，低风险）
+        if (DisplayUiWords.Any(w => t.Contains(w, StringComparison.OrdinalIgnoreCase))) return "屏显UI文案";
+        // ① 短屏显词：仅当整条极短（≤4 字）且无已知内容词命中，避免误杀真实短内容
+        if (t.Length <= 4)
+        {
+            if (DisplayUiShort.Any(w => t.Equals(w, StringComparison.OrdinalIgnoreCase) || t.Contains(w)))
+                return "屏显UI短词";
+            // 纯数字屏显值（如 8888）：排除已知内容词（热线/编码）后的纯数字串
+            if (t.All(char.IsAsciiDigit) && t.Length >= 3
+                && !KnownContent.Values.Any(vals => vals.Any(v => t.Contains(v, StringComparison.OrdinalIgnoreCase))))
+                return "屏显数字值";
+        }
+        return null;
+    }
+
+    
+
+    /// <summary>
+    /// R4 候选正向判定：只把"像打标内容"的文本块作为图面候选，过滤批注/说明长句。
+    /// 与 IsNoiseBlock（排除）互补：IsNoiseBlock 排除标题栏/尺寸/修订等已知噪声，
+    /// 本方法进一步要求剩余文本"像是实际打标内容"（已知内容词 / 代码式 / 短标签）。
+    /// </summary>
+    public static bool IsMarkingLike(string text)
+    {
+        var t = (text ?? "").Trim();
+        if (t.Length == 0) return false;
+        if (IsExplanatoryProse(t)) return false;
+        foreach (var forms in KnownContent.Values)
+            foreach (var f in forms)
+                if (t.Contains(f, StringComparison.OrdinalIgnoreCase)) return true;
+        int L = 0, D = 0;
+        foreach (var c in t)
+        {
+            if (char.IsLetter(c)) L++;
+            else if (char.IsDigit(c)) D++;
+        }
+        if (L >= 2 && D >= 2 && t.Length >= 4) return true;
+        if (t.Length <= 12 && !t.Any(ch => "。，；、".Contains(ch))) return true;
+        return false;
+    }
 
     /// <summary>R4 专用：是否落在标题栏带内。</summary>
     public static bool InTitleBand(double nx, double ny)

@@ -20,4 +20,10 @@
     <None Update="Modules\InvTail\inv_export.py" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- H5 静态资源（wwwroot）随附输出目录：Production 模式下 UseStaticFiles 从 bin 目录读取，必须物理复制。
+         SDK 默认已含 wwwroot 的 Content 项，但不会复制到输出；用 Update 改其 CopyToOutputDirectory 即可。 -->
+    <Content Update="wwwroot\**\*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

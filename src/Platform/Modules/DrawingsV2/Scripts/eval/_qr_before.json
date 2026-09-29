@@ -1,0 +1,210 @@
+{
+  "profiles": [
+    61,
+    64
+  ],
+  "caseCount": 19,
+  "qrStateTally": {
+    "LowConfidence": 12,
+    "NotComparable": 3,
+    "Matched": 4
+  },
+  "latencyMs": {
+    "p50": 10255,
+    "p95": 14516,
+    "avg": 11243,
+    "n": 19
+  },
+  "per": [
+    {
+      "id": "p61-f403feb6",
+      "ms": 12768,
+      "qr": [
+        [
+          "005",
+          "LowConfidence"
+        ]
+      ]
+    },
+    {
+      "id": "p61-ed96d26e",
+      "ms": 9011,
+      "qr": [
+        [
+          "005",
+          "NotComparable"
+        ]
+      ]
+    },
+    {
+      "id": "p61-89ec3ab0",
+      "ms": 10326,
+      "qr": [
+        [
+          "005",
+          "LowConfidence"
+        ]
+      ]
+    },
+    {
+      "id": "p61-1550cee2",
+      "ms": 10133,
+      "qr": [
+        [
+          "005",
+          "LowConfidence"
+        ]
+      ]
+    },
+    {
+      "id": "p61-c91b6258",
+      "ms": 9925,
+      "qr": [
+        [
+          "005",
+          "Matched"
+        ]
+      ]
+    },
+    {
+      "id": "p61-b8f7be02",
+      "ms": 10513,
+      "qr": [
+        [
+          "005",
+          "LowConfidence"
+        ]
+      ]
+    },
+    {
+      "id": "p61-77534c34",
+      "ms": 10255,
+      "qr": [
+        [
+          "005",
+          "LowConfidence"
+        ]
+      ]
+    },
+    {
+      "id": "p61-e783f363",
+      "ms": 9338,
+      "qr": [
+        [
+          "005",
+          "NotComparable"
+        ]
+      ]
+    },
+    {
+      "id": "p61-150010ad",
+      "ms": 11206,
+      "qr": [
+        [
+          "005",
+          "LowConfidence"
+        ]
+      ]
+    },
+    {
+      "id": "p61-6f206d21",
+      "ms": 14516,
+      "qr": [
+        [
+          "005",
+          "Matched"
+        ]
+      ]
+    },
+    {
+      "id": "p61-0253298c",
+      "ms": 25804,
+      "qr": [
+        [
+          "005",
+          "Matched"
+        ]
+      ]
+    },
+    {
+      "id": "p61-ab54f291",
+      "ms": 10957,
+      "qr": [
+        [
+          "005",
+          "Matched"
+        ]
+      ]
+    },
+    {
+      "id": "p61-64d97161",
+      "ms": 9772,
+      "qr": [
+        [
+          "005",
+          "LowConfidence"
+        ]
+      ]
+    },
+    {
+      "id": "p64-d470809b",
+      "ms": 10975,
+      "qr": [
+        [
+          "005",
+          "LowConfidence"
+        ]
+      ]
+    },
+    {
+      "id": "p64-bed894ce",
+      "ms": 9329,
+      "qr": [
+        [
+          "005",
+          "NotComparable"
+        ]
+      ]
+    },
+    {
+      "id": "p64-29537114",
+      "ms": 9718,
+      "qr": [
+        [
+          "005",
+          "LowConfidence"
+        ]
+      ]
+    },
+    {
+      "id": "p64-69716771",
+      "ms": 9539,
+      "qr": [
+        [
+          "005",
+          "LowConfidence"
+        ]
+      ]
+    },
+    {
+      "id": "p64-543710f9",
+      "ms": 10677,
+      "qr": [
+        [
+          "005",
+          "LowConfidence"
+        ]
+      ]
+    },
+    {
+      "id": "p64-ae4973b4",
+      "ms": 8845,
+      "qr": [
+        [
+          "005",
+          "LowConfidence"
+        ]
+      ]
+    }
+  ]
+}
