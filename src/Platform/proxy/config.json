@@ -6,7 +6,7 @@
   "cors": true,
   "mock": false,
   "comment_mock": "false=转发到真实目标系统；true=返回 mockData 演示数据（不请求真实系统）。拿到真实接口后保持 false。",
-  "token": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxOTgzNzk1NDE0MzEzNjExMjY1IiwiaWF0IjoxNzg2OTQ0MzExLCJleHAiOjE3ODk1MzYzMTEsInVzZXJJZCI6MTk4Mzc5NTQxNDMxMzYxMTI2NSwiYWNjb3VudCI6IjE3ODMwODUxNjcwIiwidXNlcktleSI6Inh4eHgifQ.Oi0BjzPvw3sgwbF1-vQ1U_8xfU90mieVcqF-tHeg8ecTfLfp4L_Q9r3NYliFMsiKlBcO8FV1Nw4bUET8go7eWg",
+  "token": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxOTgzNzk1NDE0MzEzNjExMjY1IiwiaWF0IjoxNzg5MTA0MzQ0LCJleHAiOjE3OTE2OTYzNDQsInVzZXJJZCI6MTk4Mzc5NTQxNDMxMzYxMTI2NSwiYWNjb3VudCI6IjE3ODMwODUxNjcwIiwidXNlcktleSI6Inh4eHgifQ.srIKw4NOSMOvvJQdgrkN-RpUzYwjcjyCVLU9voKzYoXhHzfgiO-8nEZuQpxGk82iLR8_2Zrl33PEMepDcw0bwQ",
   "comment_token": "目标系统 JWT（注入到 Authorization: Bearer）。可手动填，也可由「自动续期」自动刷新并回写此处。当前值有效期约 30 天。",
   "refreshLeadDays": 5,
   "comment_refreshLeadDays": "到期前 N 天自动重新登录换发新 token（配合 secrets.json 里的加密账号密码）。设为 0 则只在遇 401 时刷新。",

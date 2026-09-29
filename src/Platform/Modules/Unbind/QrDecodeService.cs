@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Configuration;
-using Platform.Modules.Drawings;
+using Platform.Infrastructure;
 
 namespace Platform.Modules.Unbind;
 
@@ -15,19 +15,21 @@ namespace Platform.Modules.Unbind;
 /// Binarizer.LocalAverage）无法定位 finder pattern，而 zxing-cpp 的
 /// GlobalHistogram + CLAHE + 多尺度 + 标签 ROI 正方形裁剪能解出。
 ///
-/// 复用 OcrService 的 CreatePythonPsi（构造与宿主隔离的干净 Python 环境）。
+/// 使用平台级 IPythonProcessFactory 的干净 Python 环境（与宿主隔离，UTF-8）。
+/// 注意：不再借用 Drawings 模块的 OcrService —— 那属于「业务模块横向依赖业务模块」，
+/// 会在 Drawings 模块被替换时导致本模块 DI 解析失败、平台启动崩溃。
 /// </summary>
 public class QrDecodeService
 {
     private readonly string _pythonExe;
     private readonly string _script;
-    private readonly OcrService _ocr;
+    private readonly IPythonProcessFactory _python;
 
-    public QrDecodeService(IConfiguration config, OcrService ocr)
+    public QrDecodeService(IConfiguration config, IPythonProcessFactory python)
     {
         _pythonExe = config["Ocr:PythonExe"]
             ?? @"C:\Users\Administrator\.workbuddy\binaries\python\envs\default\Scripts\python.exe";
-        _ocr = ocr;
+        _python = python;
         _script = FindScript("qr_decode.py");
     }
 
@@ -106,7 +108,7 @@ public class QrDecodeService
                 statusCode: 500);
 
         // 3) 调 Python 子进程：stdin 喂 JSON，stdout 收结果
-        var psi = _ocr.CreatePythonPsi(_script, Array.Empty<string>());
+        var psi = _python.Create(_script, Array.Empty<string>());
         psi.RedirectStandardInput = true;   // qr_decode.py 从 stdin 读
         try
         {
