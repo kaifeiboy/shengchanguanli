@@ -58,3 +58,6 @@ _archive_20260926_cdrive/
 
 # Windows 快捷方式
 *.lnk
+
+# Node.js 本地工具链（337MB，本地留存不入库；运行时改用 .workbuddy/binaries 托管 node）
+tools/node/
