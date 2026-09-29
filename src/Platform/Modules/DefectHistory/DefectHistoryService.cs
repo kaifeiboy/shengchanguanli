@@ -1,12 +1,14 @@
 using System.Diagnostics;
 using System.Text.Json;
-using Platform.Modules.Drawings;
+using Platform.Infrastructure;
 
 namespace Platform.Modules.DefectHistory;
 
 /// <summary>
 /// 不良履历服务（v2 底层重构）：单工作簿单 Sheet 数据源 {root}/不良履历汇总.xlsx。
-/// 通过 Python 子进程（defect_history.py）读写；复用 OcrService.CreatePythonPsi（干净最小环境，UTF-8）；
+/// 通过 Python 子进程（defect_history.py）读写；使用平台级 IPythonProcessFactory
+/// 构造干净最小环境（UTF-8）。不再借用 Drawings 的 OcrService —— 那会造成跨业务模块
+/// 依赖，在 Drawings 模块被替换时导致本模块 DI 解析失败、平台启动崩溃。
 /// 写操作（add/batch/delete/analysis_auto）经静态 _writeLock 串行化。
 /// 数据源根目录可用配置 DefectHistory:Root 覆盖（默认 E:\生产不良履历）。
 /// </summary>
@@ -16,15 +18,15 @@ public class DefectHistoryService
     private const string BOOK_FILE = "不良履历汇总.xlsx";
     private const string SHEET_NAME = "不良履历";
 
-    private readonly OcrService _ocr;
+    private readonly IPythonProcessFactory _python;
     private readonly string _script;
     private readonly string _root;
     private readonly string _uploadDir;
     private readonly string _exportDir;
 
-    public DefectHistoryService(OcrService ocr, IConfiguration config)
+    public DefectHistoryService(IPythonProcessFactory python, IConfiguration config)
     {
-        _ocr = ocr;
+        _python = python;
         _script = FindScript("defect_history.py");
         _root = config["DefectHistory:Root"] ?? @"E:\生产不良履历";
         var dbPath = config["Database:Path"] ?? Path.Combine(AppContext.BaseDirectory, "app.db");
@@ -74,7 +76,7 @@ public class DefectHistoryService
             int exitCode = -1;
             for (int attempt = 1; attempt <= 3; attempt++)
             {
-                var psi = _ocr.CreatePythonPsi(_script, args);
+                var psi = _python.Create(_script, args);
                 using (var p = Process.Start(psi)!)
                 {
                     var outTask = p.StandardOutput.ReadToEndAsync();
