@@ -11,9 +11,17 @@
 用法（CLI）：
     python logical_blocks.py --pdf=<pdf> [--json-out=<path>] [--no-ocr]
     python logical_blocks.py --pid=67
+    python logical_blocks.py --pid=66 --override=data/drawingsv2_blocks_override/66.json
+
+人工块框 override（2026-09-30，66/72 密排图纸专用）：
+    --override 指向 JSON：{"blocks": [{"bbox_pt": [x0,y0,x1,y1], "name"?: str, "view_hint"?: str}, ...]}
+    存在 override 时跳过 v8.4 部位分离（_extract_separate 聚集），直接以人工 bbox 走
+    既有 _elements_in_block 元素提取/5 分类/判空/命名链路 —— 分块由人工标定，语义层零改动。
+    algo_version 记为 v8.4+override（block_key 随之变化，不与自动提取的历史结论混键）。
 """
 from __future__ import annotations
 
+import hashlib
 import io
 import json
 import os
@@ -765,19 +773,56 @@ def run_separation(pdf_path: str) -> Dict[str, Any]:
         return json.load(f)
 
 
+def _load_override(path: str) -> List[Dict[str, Any]]:
+    """读取人工块框 override JSON → 归一化为 pg['blocks'] 同构条目。"""
+    with io.open(path, encoding="utf-8") as f:
+        data = json.load(f)
+    items = data.get("blocks") if isinstance(data, dict) else data
+    if not isinstance(items, list) or not items:
+        raise ValueError("override 文件缺少非空 blocks 数组：%s" % path)
+    out: List[Dict[str, Any]] = []
+    for i, it in enumerate(items):
+        bb = it.get("bbox_pt") or it.get("bbox")
+        if not isinstance(bb, list) or len(bb) != 4:
+            raise ValueError("override blocks[%d] 缺 bbox_pt[x0,y0,x1,y1]" % i)
+        x0, y0, x1, y1 = (float(v) for v in bb)
+        if not (x1 > x0 and y1 > y0):
+            raise ValueError("override blocks[%d] bbox 非法：%s" % (i, bb))
+        out.append({
+            "idx": i,
+            "bbox_pt": [x0, y0, x1, y1],
+            "name": it.get("name"),
+            "view_hint": it.get("view_hint"),
+            "has_marking": it.get("has_marking"),
+            "_origin": "override",
+        })
+    return out
+
+
 def extract_logical_blocks(pdf_path: str, page_index: int = 0,
-                           ocr_on: bool = True) -> Dict[str, Any]:
-    """产出 `logical-blocks/1` 契约。"""
+                           ocr_on: bool = True,
+                           override_blocks: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
+    """产出 `logical-blocks/1` 契约。
+
+    override_blocks 非空时跳过 v8.4 部位分离，直接用人工块框
+    （元素提取/5 分类/判空/命名链路与自动分块完全一致）。"""
     if fitz is None:
         raise RuntimeError("PyMuPDF(fitz) 不可用")
-    rep = run_separation(pdf_path)
-    pg = rep["pages"][page_index]
+    if override_blocks:
+        pg = {"width": 0.0, "height": 0.0, "source": "override", "blocks": override_blocks}
+        blocks_source = "override"
+    else:
+        rep = run_separation(pdf_path)
+        pg = rep["pages"][page_index]
+        blocks_source = "separation-v8.4"
 
     doc = fitz.open(pdf_path)
     try:
         page = doc[page_index]
         page.remove_rotation()
         W, H = page.rect.width, page.rect.height
+        if override_blocks:
+            pg["width"], pg["height"] = W, H
         img_rects = []
         try:
             for info in page.get_image_info():
@@ -807,6 +852,11 @@ def extract_logical_blocks(pdf_path: str, page_index: int = 0,
         name_seen: Dict[str, int] = {}
         for b in pg["blocks"]:
             bb = b["bbox_pt"]
+            if b.get("_origin") == "override":
+                # 人工块框：派生量就地计算（与 _extract_separate L1303 同口径）
+                x0, y0, x1, y1 = bb
+                b["bbox_norm"] = [x0 / W, y0 / H, (x1 - x0) / W, (y1 - y0) / H]
+                b["area_pct"] = (x1 - x0) * (y1 - y0) / (W * H) if (W and H) else 0.0
             meta: Dict[str, Any] = {}
             els = _elements_in_block(page, bb, W, H, img_rects, ocr_on=ocr_on, meta=meta, ctx=ctx)
             # 阅读序：从上到下、从左到右
@@ -818,33 +868,52 @@ def extract_logical_blocks(pdf_path: str, page_index: int = 0,
             n_img = sum(1 for e in els if e["kind"] in ("qr", "icon"))
             area_pct = b.get("area_pct", 0.0)
             vh = infer_view_hint(texts, bb[2] - bb[0], bb[3] - bb[1], area_pct, n_img, n_draw)
+            if b.get("view_hint"):
+                vh = str(b["view_hint"])
 
             # has_marking（§2.2）：a/b/e 参与 + c 类（QR/图标算打标内容）
             has_c = n_img > 0
             has_marking = 1 if (parts or has_c) else 0
+            # override 强制位：用户真值标注的「无打标内容图块」（如 72 Hisense正视/侧视/底座
+            # 含品牌 logo / 矢量 QR 图案，自动判据会误判 mark=1）→ 人工强制判空。
+            forced_empty = False
+            if b.get("_origin") == "override" and b.get("has_marking") is not None:
+                if int(b["has_marking"]) == 0 and has_marking == 1:
+                    has_marking = 0
+                    forced_empty = True
             empty_reason = None
             if not has_marking:
+                if forced_empty:
+                    empty_reason = "override_forced_empty"   # 人工标定为非打标部位
                 # 审计口径：OCR 有检出但全是尺寸/说明 → all_dim_note；
                 # OCR 检出全为噪声串 → ocr_noise_only；
                 # 文本层与 OCR 皆空 → ocr_empty；未开 OCR → no_text_layer
                 _NON_MARKING = ("dim", "note", "meta")   # L1：meta 与 dim/note 同样不算打标内容
-                if meta.get("ocr_noise", 0) > 0 and not any(
+                if not forced_empty and meta.get("ocr_noise", 0) > 0 and not any(
                         e["kind"] in _NON_MARKING for e in els):
                     empty_reason = "ocr_noise_only"
-                elif any(e["kind"] in _NON_MARKING for e in els) or meta.get("ocr_raw", 0) > 0:
+                elif not forced_empty and (any(e["kind"] in _NON_MARKING for e in els) or meta.get("ocr_raw", 0) > 0):
                     empty_reason = "all_dim_note"
-                else:
+                elif not forced_empty:
                     empty_reason = "ocr_empty" if ocr_on else "no_text_layer"
 
             low_conf = 0
             if parts and any((e.get("ocr_conf") or 1.0) < LOW_CONF for e in parts):
                 low_conf = 1
 
-            name = build_name(texts, vh) if has_marking else ""
+            if b.get("name"):
+                name = str(b["name"])          # 人工显式命名优先
+            elif has_marking:
+                name = build_name(texts, vh)
+            else:
+                name = ""
             if name:
                 seq = name_seen.get(name, 0)
                 if seq:
-                    name = build_name(texts, vh, dup_seq=seq)
+                    if b.get("name"):
+                        name = "%s#%d" % (name, seq + 1)   # 人工显式命名的去重后缀
+                    else:
+                        name = build_name(texts, vh, dup_seq=seq)
                 name_seen[name] = name_seen.get(name, 0) + 1
 
             blocks_out.append({
@@ -866,12 +935,27 @@ def extract_logical_blocks(pdf_path: str, page_index: int = 0,
     finally:
         doc.close()
 
+    # override 路径没有分离报告的 sha，就地计算（同 sha256 口径：文件字节）
+    src_sha = None
+    if override_blocks:
+        try:
+            with open(pdf_path, "rb") as _f:
+                src_sha = hashlib.sha256(_f.read()).hexdigest()
+        except Exception:
+            src_sha = None
+        rep_sha: Optional[str] = src_sha
+        rep_intact: Optional[bool] = None
+    else:
+        rep_sha = rep.get("source_sha256_before")
+        rep_intact = rep.get("source_intact")
+
     return {
         "schema": SCHEMA,
-        "algo_version": ALGO,
+        "algo_version": (ALGO + "+override") if override_blocks else ALGO,
+        "blocks_source": blocks_source,
         "source_pdf": pdf_path,
-        "source_sha256": rep.get("source_sha256_before"),
-        "source_intact": rep.get("source_intact"),
+        "source_sha256": rep_sha,
+        "source_intact": rep_intact,
         "page_index": page_index,
         "page": {"width": pg["width"], "height": pg["height"], "source": pg.get("source")},
         "n_blocks": len(blocks_out),
@@ -886,6 +970,7 @@ def main(argv: List[str]) -> int:
     out = None
     no_ocr = False
     json_only = False
+    override = None
     # 同时支持【等号形式 --pdf=】与【分离形式 --pdf <path>】：
     # C# 侧 V2Python 用 ProcessStartInfo.ArgumentList 传参（自动处理空格/引号），
     # 传的是分离形式，若只认等号形式会静默走到 usage 分支并退出码 2。
@@ -899,12 +984,16 @@ def main(argv: List[str]) -> int:
             pdf = nxt; i += 2; continue
         if a == "--json-out" and nxt is not None:
             out = nxt; i += 2; continue
+        if a == "--override" and nxt is not None:
+            override = nxt; i += 2; continue
         if a.startswith("--pid="):
             pid = int(a.split("=")[1])
         elif a.startswith("--pdf="):
             pdf = a.split("=", 1)[1]
         elif a.startswith("--json-out="):
             out = a.split("=", 1)[1]
+        elif a.startswith("--override="):
+            override = a.split("=", 1)[1]
         elif a == "--no-ocr":
             no_ocr = True
         elif a == "--json-only":
@@ -922,10 +1011,17 @@ def main(argv: List[str]) -> int:
         pdf = row[0]
 
     if not pdf:
-        print("用法: python logical_blocks.py --pdf=<pdf> | --pid=<id>  [--json-out=<path>] [--no-ocr]")
+        print("用法: python logical_blocks.py --pdf=<pdf> | --pid=<id>  [--json-out=<path>] [--no-ocr] [--override=<blocks.json>]")
         return 2
 
-    res = extract_logical_blocks(pdf, ocr_on=not no_ocr)
+    ovr = None
+    if override:
+        if not os.path.exists(override):
+            print("override 文件不存在：%s" % override)
+            return 2
+        ovr = _load_override(override)
+
+    res = extract_logical_blocks(pdf, ocr_on=not no_ocr, override_blocks=ovr)
     if json_only:
         # C# 侧 V2Python.RunAsync 用 ExtractJson 切「首个 { 到最后 }」，
         # 若再打印摘要行会被包进 JSON 区间 → 必须独占 stdout。

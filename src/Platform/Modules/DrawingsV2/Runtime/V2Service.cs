@@ -431,7 +431,13 @@ public sealed class V2Service
             throw new V2Exception($"档案 {profileId} 的图纸不存在：{pdfPath}");
 
         var sw = System.Diagnostics.Stopwatch.StartNew();
-        var json = await _py.LogicalBlocksAsync(pdfPath, ocrOn, ct);
+        // 人工块框 override（2026-09-30，66/72 密排图纸分块标定）：
+        // data/drawingsv2_blocks_override/{profileId}.json 存在即走人工分块，
+        // Python 侧跳过 v8.4 部位分离；文件不存在回退自动分块，链路不变。
+        var overridePath = Path.Combine(
+            Path.GetDirectoryName(_store.DbPath) ?? ".", "drawingsv2_blocks_override",
+            $"{profileId}.json");
+        var json = await _py.LogicalBlocksAsync(pdfPath, ocrOn, ct, overridePath);
 
         JsonDocument doc;
         try { doc = JsonDocument.Parse(json); }

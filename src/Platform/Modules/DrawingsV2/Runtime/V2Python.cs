@@ -179,9 +179,13 @@ public sealed class V2Python
     ///
     /// <paramref name="ocrOn"/> 关闭时只走文本层（<c>--no-ocr</c>）：判空会退化为
     /// 「仅文本层判空」，可能误杀转曲部位，仅供调试/快速预览使用。
+    ///
+    /// <paramref name="overridePath"/> 非空且文件存在时传 <c>--override</c>：
+    /// 人工块框标定（66/72 密排图纸），Python 侧跳过 v8.4 部位分离直接用人工 bbox。
+    /// 文件缺失时静默忽略（回退自动分块），不阻断提取。
     /// </summary>
     public async Task<string> LogicalBlocksAsync(string pdfPath, bool ocrOn = true,
-        CancellationToken ct = default)
+        CancellationToken ct = default, string? overridePath = null)
     {
         if (string.IsNullOrWhiteSpace(pdfPath)) throw new V2Exception("pdfPath 为空");
         if (!File.Exists(pdfPath)) throw new V2Exception($"PDF 不存在：{pdfPath}");
@@ -190,6 +194,11 @@ public sealed class V2Python
         // 而 ExtractJson 取「首个 { 到最后 }」会把摘要包进 JSON 区间导致解析失败。
         var args = new List<string> { "--pdf", pdfPath, "--json-only" };
         if (!ocrOn) args.Add("--no-ocr");
+        if (!string.IsNullOrWhiteSpace(overridePath) && File.Exists(overridePath))
+        {
+            args.Add("--override");
+            args.Add(overridePath);
+        }
         return await RunAsync(args.ToArray(), ct, LogicalBlocksScriptPath,
             _blocksTimeoutMs, "逻辑图块提取");
     }
