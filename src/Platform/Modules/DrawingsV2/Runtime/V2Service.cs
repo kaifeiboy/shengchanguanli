@@ -24,6 +24,14 @@ namespace Platform.Modules.DrawingsV2.Runtime;
 /// </summary>
 public sealed class V2Service
 {
+    // ★ 2026-09-30：完整路径响应落盘/回读序列化策略 —— 必须与早退路径（ASP.NET 默认 camelCase）
+    //   及 H5 契约（2026-09-28 #111：全 camelCase 读取）一致；否则 blockMatch 匿名属性推断名
+    //   （mr.Enabled 等）与 BlockVerdict 类属性以 PascalCase 入缓存，H5 四色框静默不渲染。
+    private static readonly System.Text.Json.JsonSerializerOptions ResponseJsonCamel = new()
+    {
+        PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
+    };
+
     private readonly V2Python _py;
     private readonly V2Store _store;
     private readonly FileAccessService _files;
@@ -1408,7 +1416,12 @@ public sealed class V2Service
             // M1（#35）：把完整响应落盘作为「下一次相同输入的复用源」，并把 recordId 校正为真实值。
             try
             {
-                var rj = JsonSerializer.Serialize(response);
+                // ★ 2026-09-30：序列化必须用 camelCase 策略 —— 匿名属性推断名（如 blockMatch 的
+                //   mr.Enabled/mr.Reason、BlockVerdict 类属性）默认保留 PascalCase，而早退路径经
+                //   ASP.NET 序列化是 camelCase；H5 契约（2026-09-28 #111 拍板）全 camelCase 读取，
+                //   导致「InferView 自动选中 view → 走完整路径」的响应四色框/结论卡片静默不渲染。
+                //   既有 M1 缓存经 CodeFingerprint（重编译即变）自动失效，无需迁移。
+                var rj = JsonSerializer.Serialize(response, ResponseJsonCamel);
                 if (JsonNode.Parse(rj) is JsonObject joOut)
                 {
                     joOut["recordId"] = recordId;
