@@ -382,7 +382,12 @@ def _get_ocr():
 
 
 def ocr_block(page, rect, dpi_list=(300, 400), pad_px=64, mask_rects=None):
-    """块包围盒局部高分辨率 OCR（双分辨率投票）。返回 [(text, conf)]。
+    """块包围盒局部高分辨率 OCR（双分辨率投票）。返回 [(text, conf, page_rect)]。
+
+    page_rect: 检出文字在【页面坐标系】（remove_rotation 之后，与块 bbox/元素
+        bbox_norm 同系）的外接矩形；由 RapidOCR 检测框 item[0]（clip 图像像素
+        坐标，含四周 pad_px 补白）按 dpi 比例反算（2026-09-30 坐标补全）。
+        反算式：page_x = rect.x0 + (px - pad_px) / (dpi/72)。
 
     mask_rects: 文本层 span 包围盒（page 坐标系，remove_rotation 之后）列表。
         传入后在 OCR 前将其**涂白**，使 OCR 只识别曲线(转曲)文字，避免把 a 类
@@ -393,7 +398,7 @@ def ocr_block(page, rect, dpi_list=(300, 400), pad_px=64, mask_rects=None):
         return []
     import numpy as np
     import cv2
-    best: Dict[str, float] = {}
+    best: Dict[str, tuple] = {}
     for dpi in dpi_list:
         try:
             pix = page.get_pixmap(dpi=dpi, clip=rect)
@@ -429,14 +434,31 @@ def ocr_block(page, rect, dpi_list=(300, 400), pad_px=64, mask_rects=None):
             res, _ = ocr(img)
         except Exception:
             continue
+        scale = float(dpi) / 72.0
         for item in (res or []):
             txt = (item[1] or "").strip()
             conf = float(item[2]) if len(item) > 2 else 0.0
             if not txt:
                 continue
-            if txt not in best or conf > best[txt]:
-                best[txt] = conf
-    return [(k, v) for k, v in best.items()]
+            # 检测框 4 点（图像像素，含 pad 偏移）→ 页面坐标外接矩形
+            page_rect = None
+            try:
+                pts = item[0] if item and len(item) > 0 else None
+                if pts and len(pts) >= 4:
+                    xs = [float(p[0]) for p in pts]
+                    ys = [float(p[1]) for p in pts]
+                    px0 = min(xs) - pad_px
+                    py0 = min(ys) - pad_px
+                    px1 = max(xs) - pad_px
+                    py1 = max(ys) - pad_px
+                    page_rect = fitz.Rect(
+                        rect.x0 + px0 / scale, rect.y0 + py0 / scale,
+                        rect.x0 + px1 / scale, rect.y0 + py1 / scale)
+            except Exception:
+                page_rect = None
+            if txt not in best or conf > best[txt][0]:
+                best[txt] = (conf, page_rect)
+    return [(k, v[0], v[1]) for k, v in best.items()]
 
 
 # ---------------- view_hint 推断（§3.1，10 值） ----------------
@@ -464,10 +486,10 @@ def _quadrant_rescan(page, bb, W, H, mask_rects=None):
         q = fitz.Rect(max(0, q.x0), max(0, q.y0), min(W, q.x1), min(H, q.y1))
         if q.is_empty or q.get_area() < 50:
             continue
-        for txt, conf in ocr_block(page, q, dpi_list=(600,), mask_rects=mask_rects):
+        for txt, conf, prect in ocr_block(page, q, dpi_list=(600,), mask_rects=mask_rects):
             if txt not in seen:
                 seen.add(txt)
-                out.append((txt, conf))
+                out.append((txt, conf, prect))
     return out
 
 
@@ -575,7 +597,7 @@ def _elements_in_block(page, bb, W, H, img_rects, ocr_on=True, meta: Optional[Di
         if e.get("source") == "text_layer" and e.get("text"):
             a_norm.add(_norm_text(e["text"]))
     if ocr_on:
-        for txt, conf in ocr_block(page, orect, mask_rects=mask_rects):
+        for txt, conf, prect in ocr_block(page, orect, mask_rects=mask_rects):
             meta["ocr_raw"] += 1          # 审计：OCR 有检出（即便随后被判为 d 类）
             # OCR 源无 font/坐标 → ctx=None，只用字符形态 + ③量纲边界（宁黄勿漏）
             kind = classify_text(txt)
@@ -591,14 +613,18 @@ def _elements_in_block(page, bb, W, H, img_rects, ocr_on=True, meta: Optional[Di
                 continue
             els.append({
                 "kind": "curve_text", "text": txt, "ocr_conf": round(float(conf), 3),
-                "bbox_norm": None,        # OCR 结果暂无精确落点（后续 P4 定位再补）
+                # 2026-09-30 坐标补全：RapidOCR 检测框反算页面坐标（供屏显判据/H5 画框）
+                "bbox_norm": ([
+                    round(prect.x0 / W, 6), round(prect.y0 / H, 6),
+                    round(prect.width / W, 6), round(prect.height / H, 6),
+                ] if prect is not None and not prect.is_empty else None),
                 "participate": 1,
                 "source": "outline_ocr",
             })
         # 两级 OCR（§2.2-⑦）：整块无有效内容 → 2x2 象限 600dpi 补扫，防小 logo 漏检误杀
         if not any(e["kind"] == "curve_text" for e in els) and \
                 not any(e["kind"] in ("qr", "icon") for e in els):
-            for txt, conf in _quadrant_rescan(page, bb, W, H, mask_rects=mask_rects):
+            for txt, conf, prect in _quadrant_rescan(page, bb, W, H, mask_rects=mask_rects):
                 meta["ocr_raw"] += 1
                 meta["quad_rescan"] = 1
                 kind = classify_text(txt)
@@ -612,7 +638,10 @@ def _elements_in_block(page, bb, W, H, img_rects, ocr_on=True, meta: Optional[Di
                     continue
                 els.append({
                     "kind": "curve_text", "text": txt, "ocr_conf": round(float(conf), 3),
-                    "bbox_norm": None,
+                    "bbox_norm": ([
+                        round(prect.x0 / W, 6), round(prect.y0 / H, 6),
+                        round(prect.width / W, 6), round(prect.height / H, 6),
+                    ] if prect is not None and not prect.is_empty else None),
                     "participate": 1,
                     "source": "outline_ocr_quad",   # 补扫来源（审计用）
                 })
@@ -641,6 +670,83 @@ def _elements_in_block(page, bb, W, H, img_rects, ocr_on=True, meta: Optional[Di
         meta["ocr_dup_variant"] = len(drop)
         els = [cur for i, cur in enumerate(els) if i not in drop]
 
+    # 【2026-09-30 屏显菜单簇转灰】（用户拍板：66 YCWA15NCBQ 屏显 UI 标签不参与匹配）
+    # 整机正视图块的 OCR 结果常混入「屏幕示意区」的 UI 菜单文字（设定/室内/节能…），
+    # 它们是图纸示意内容、非激光打标，照片上永远没有 → 匹配虚增红计数。
+    # 通用判据（纯几何，无词汇表）：对块内【有坐标】的 curve_text 按行聚类连簇，
+    # 满足以下全部条件的簇判为屏显菜单、整体转灰（participate=0）：
+    #   ① 簇内条数 ≥ LCD_MENU_MIN_N（8）——铭牌条通常 3~5 条，不会触发；
+    #   ② 簇合并 bbox 面积 ≤ 块面积 × 0.25（紧凑）——端子丝印等分散标注不触发；
+    #   ③ 簇内行数 ≥ 3（多行菜单网格）——单行/竖排铭牌文字不触发。
+    # 66 实测：UI 15 条、合并 bbox 占块 11.9%、5 行 → 触发；铭牌 3 条单行 → 不触发。
+    # 72 实测：端子丝印走文本层（a 类），本判据只作用 OCR 元素，天然不误伤（用户拍板算打标）。
+    els = _gray_out_lcd_menu_clusters(els, rect, meta)
+
+    return els
+
+
+def _gray_out_lcd_menu_clusters(els, block_rect, meta):
+    """屏显菜单簇判据（判据与阈值推导见上方注释）。返回新 els。"""
+    LCD_MENU_MIN_N = 8
+    LCD_MENU_MAX_AREA = 0.25
+    idx = [i for i, e in enumerate(els)
+           if e.get("kind") == "curve_text" and e.get("participate") == 1
+           and e.get("bbox_norm")]
+    if len(idx) < LCD_MENU_MIN_N:
+        return els
+    x0, y0, x1, y1 = block_rect.x0, block_rect.y0, block_rect.x1, block_rect.y1
+    # 中心点与字高（页面 pt）
+    items = []
+    for i in idx:
+        bn = els[i]["bbox_norm"]
+        cx = x0 + (bn[0] + bn[2] / 2) * (x1 - x0)
+        cy = y0 + (bn[1] + bn[3] / 2) * (y1 - y0)
+        hpt = bn[3] * (y1 - y0)
+        items.append((i, cx, cy, max(hpt, 1.0)))
+    med_h = sorted(it[3] for it in items)[len(items) // 2]
+    row_thr = med_h * 1.5        # 行聚类阈值（同一条菜单行内的字间基线抖动）
+    gap_thr = med_h * 10.0       # 相邻行连簇阈值（66 实证：设定行→节能行间距 41pt ≈ 8×字高，
+                                 # 铭牌→屏幕区间距 83pt ≈ 16×字高，10× 恰在两者之间）
+    # 按 y 中心聚行
+    rows = []
+    for it in sorted(items, key=lambda t: t[2]):
+        if rows and abs(it[2] - rows[-1][-1][2]) <= row_thr:
+            rows[-1].append(it)
+        else:
+            rows.append([it])
+    # 相邻行连簇（行距 ≤ gap_thr 视为同一菜单网格）
+    clusters = []
+    for r in rows:
+        if clusters and (r[0][2] - clusters[-1][-1][2]) <= gap_thr:
+            clusters[-1].extend(r)
+        else:
+            clusters.append(list(r))
+    gray = set()
+    for c in clusters:
+        if len(c) < LCD_MENU_MIN_N:
+            continue
+        xs0 = min(x0 + els[it[0]]["bbox_norm"][0] * (x1 - x0) for it in c)
+        ys0 = min(y0 + els[it[0]]["bbox_norm"][1] * (y1 - y0) for it in c)
+        xs1 = max(x0 + (els[it[0]]["bbox_norm"][0] + els[it[0]]["bbox_norm"][2]) * (x1 - x0) for it in c)
+        ys1 = max(y0 + (els[it[0]]["bbox_norm"][1] + els[it[0]]["bbox_norm"][3]) * (y1 - y0) for it in c)
+        blk_area = max(block_rect.get_area(), 1.0)
+        if (xs1 - xs0) * (ys1 - ys0) > LCD_MENU_MAX_AREA * blk_area:
+            continue
+        # 行数（按簇内再聚一次，阈值同 row_thr）
+        n_rows = 1
+        yy = sorted(it[2] for it in c)
+        for a, b in zip(yy, yy[1:]):
+            if b - a > row_thr:
+                n_rows += 1
+        if n_rows < 3:
+            continue
+        for it in c:
+            gray.add(it[0])
+    if gray:
+        for i in gray:
+            els[i]["participate"] = 0
+            els[i]["lcd_menu"] = 1       # 审计标记
+        meta["lcd_menu_cluster"] = len(gray)
     return els
 
 
