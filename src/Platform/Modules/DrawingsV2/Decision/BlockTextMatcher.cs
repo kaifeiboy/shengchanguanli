@@ -324,10 +324,15 @@ public static class BlockTextMatcher
             res.Candidates.Add(bv);
         }
 
+        // ★ 选块改「命中率优先」（2026-09-30 用户拍板，修复 66 YCWA15NCBQ 铭牌照片选中
+        //   25 元素整机块而非干净铭牌条的问题）：主排序仍看命中数（保召回，端子区照片
+        //   命中整机块的正确场景不受影响），同命中数时以绿命中率（绿/参与文本数）排序——
+        //   大块靠"未命中元素多"不再占优；再按红少、最后黄少。Score 字段保留 =NGreen 供对外展示。
         res.Candidates = res.Candidates
-            .OrderByDescending(c => c.Score)
-            .ThenByDescending(c => c.NGreen)
-            .ThenBy(c => c.NRed)          // ★ 平局（同分同绿）时，缺标条数更少者优先 → 命中率更高
+            .OrderByDescending(c => c.NGreen)
+            .ThenByDescending(c => c.NGreen / (double)Math.Max(1, c.NGreen + c.NRed + c.NYellow))
+            .ThenBy(c => c.NRed)          // 命中率同档时，缺标条数更少者优先
+            .ThenBy(c => c.NYellow)
             .ToList();
 
         var top = res.Candidates.FirstOrDefault();
