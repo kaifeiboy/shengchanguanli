@@ -19,6 +19,7 @@ matched/missing/not_comparable 由 C# MarkVerifier 判定。
 from __future__ import annotations
 
 import os
+import re
 import time
 
 import cv2
@@ -301,6 +302,53 @@ def _presence(crop: np.ndarray) -> dict:
     return {"ink_ratio": round(float((bw > 0).mean()), 4)}
 
 
+# ---------------- B 优化：全图 QR 复用（2026-10-06） ----------------
+# 【B】QR 解码合并：verify 一次性 M.detect 全图（受控分辨率），qr region 命中已检码则
+#     跳过 _verify_qr 多检测器级联；未命中 → 回退局部 _verify_qr（事实源）。
+# 【C 已评估后弃用】文本「全图 OCR 复用」：实测全图 T.detect（即便限 2000px 仍 ~3.8s）比
+#     逐小裁剪 OCR（~2.7s）更慢，且真实样本复用率 0%（稀疏丝印在缩图下漏检）→ 净回归，
+#     违反「性能须达标」红线，故文本回退到原始逐裁剪路径（见 _verify_text）。
+# 红线：全图结果仅作「跳过局部 OCR」的性能优化，绝不覆盖局部定点结论（局部兜底始终运行）。
+_CODE_OVERLAP_MIN = 0.5      # 码 bbox 与 region 交集占 region 面积的最小比例
+
+# 全图码检测分辨率上限（长边 px）。原生 warped 常 4096px+，M.detect（含 4x4 分块扫描 + 2x 放大）
+# 在原生分辨率极慢（实测 ~2.2s）；缩到该长边后再检测，QR 码稳健可检，成本 ~0.3s。
+_CODE_FULL_MAX_SIDE = int(os.environ.get("V2_CODE_FULL_MAX_SIDE", "2000"))
+
+
+def _inter_area(a, b):
+    """a/b = [x,y,w,h]（像素），返回交集面积。"""
+    ix = max(0.0, min(a[0] + a[2], b[0] + b[2]) - max(a[0], b[0]))
+    iy = max(0.0, min(a[1] + a[3], b[1] + b[3]) - max(a[1], b[1]))
+    return ix * iy
+
+
+def _detect_codes_once(warped):
+    """全图一次性码检测（复用 M.detect），受控分辨率下运行以控制耗时。
+
+    ⚠️ 降级守护：M.detect 在 pyzbar/zxing/cv2 全失败时退回「轮廓法」假码
+    （detector=contour-square(degraded), degraded=True）。这类码不可信，
+    若用于 fast-path 会产生旧逻辑没有的「假命中」→ 故 degraded 时返回空，
+    令 B 全部回退到受信任的 _verify_qr 级联，保证 QR 结论与改动前完全一致。
+    ⚠️ 性能：原生 warped 6000px+ 上 M.detect（含 4x4 分块扫描 + 2x 放大）极慢；
+    先缩到 _CODE_FULL_MAX_SIDE 再检测，QR 码稳健可检，成本可控。
+    """
+    try:
+        H, W = warped.shape[:2]
+        long = max(H, W)
+        scale = 1.0
+        if _CODE_FULL_MAX_SIDE > 0 and long > _CODE_FULL_MAX_SIDE:
+            scale = _CODE_FULL_MAX_SIDE / float(long)
+        im = warped if scale == 1.0 else cv2.resize(warped, None, fx=scale, fy=scale,
+                                                     interpolation=cv2.INTER_AREA)
+        codes, _, degraded = M.detect(im)
+        if degraded:
+            return []
+        return [(list(c.norm_bbox), getattr(c, "data", None)) for c in codes]
+    except Exception:
+        return []
+
+
 def verify_image(bgr: np.ndarray, regions: list, do_warp: bool = True) -> dict:
     """对照片上若干预期位置做定点感知。
 
@@ -309,6 +357,13 @@ def verify_image(bgr: np.ndarray, regions: list, do_warp: bool = True) -> dict:
     t0 = time.perf_counter()
     warped, geo = G.normalize(bgr, do_warp=do_warp)
     H, W = warped.shape[:2]
+
+    # 【B】一次性全图码检测（受控分辨率），供 qr region 的 fast-path 复用。
+    # 文本走原始逐小裁剪 OCR（_verify_text），不跑全图（全图文本检测更慢且复用到 0%，见文件头）。
+    _kinds = [str(r.get("kind", "any")) for r in regions]
+    need_codes = any(k in ("qr", "any") for k in _kinds)
+    all_codes = _detect_codes_once(warped) if need_codes else []
+    _cnt = {"qr_reused": 0, "qr_local": 0, "text_reused": 0, "text_local": 0}
 
     out_regions = []
     for reg in regions:
@@ -355,7 +410,24 @@ def verify_image(bgr: np.ndarray, regions: list, do_warp: bool = True) -> dict:
             continue
 
         if kind in ("qr", "any"):
-            q = _verify_qr(crop)
+            q = None
+            # 【B】复用全图已检码：region 与某码 bbox 交集充足 → 跳过 _verify_qr 级联
+            if all_codes:
+                rc = [nb[0] * W, nb[1] * H, nb[2] * W, nb[3] * H]
+                rarea = max(rc[2] * rc[3], 1e-9)
+                for cb, cdata in all_codes:
+                    cpx = [cb[0] * W, cb[1] * H, cb[2] * W, cb[3] * H]
+                    if _inter_area(rc, cpx) / rarea >= _CODE_OVERLAP_MIN:
+                        q = {"found": True, "data": cdata,
+                             "detector": "M.detect(reused)", "scale": None,
+                             "scales_tried": [], "detectors_tried": ["M.detect"],
+                             "bbox": cb, "ink_ratio": None, "reused": True}
+                        _cnt["qr_reused"] += 1
+                        break
+            if q is None:
+                q = _verify_qr(crop)
+                q["reused"] = False
+                _cnt["qr_local"] += 1
             if q["bbox"] is not None:
                 bx = q["bbox"]
                 q["norm_bbox"] = G.norm_bbox(bx[0] + ox, bx[1] + oy,
@@ -364,7 +436,11 @@ def verify_image(bgr: np.ndarray, regions: list, do_warp: bool = True) -> dict:
         if kind in ("icon", "any"):
             entry["presence"] = _presence(crop)
         if kind in ("text", "any"):
+            # 文本走原始逐小裁剪 OCR（_verify_text）。全图文本复用已评估弃用（见文件头）。
             texts = _verify_text(crop)
+            for t in texts:
+                t["reused"] = False
+            _cnt["text_local"] += 1
             for t in texts:
                 x0, y0, x1, y1 = t["bbox"]
                 t["norm_bbox"] = G.norm_bbox(x0 + ox, y0 + oy, x1 + ox, y1 + oy, W, H)
@@ -383,6 +459,11 @@ def verify_image(bgr: np.ndarray, regions: list, do_warp: bool = True) -> dict:
             "region_count": len(out_regions),
             "blank_skipped": sum(1 for r in out_regions if r.get("blank_skipped")),
             "blank_skip_enabled": BLANK_SKIP_ENABLED,
+            "qr_reused": _cnt["qr_reused"],
+            "qr_local": _cnt["qr_local"],
+            "text_reused": _cnt["text_reused"],
+            "text_local": _cnt["text_local"],
+            "codes_detected": len(all_codes),
         },
     }
 
