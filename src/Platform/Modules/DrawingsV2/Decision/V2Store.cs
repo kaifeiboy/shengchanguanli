@@ -1233,13 +1233,49 @@ ORDER BY r.id DESC LIMIT 20";
     }
 
     /// <summary>比对记录列表（最近的在前）。</summary>
+    /// <summary>
+    /// 历史卡片图文同源（2026-09-30）：缩略图按 response_json.blockMatch 画四色框，
+    /// 但部分记录 counts_json 为空（或仅存 selected_view）→ 卡片摘要显示「—」与配图不符。
+    /// counts 缺失时从 blockMatch.top 派生 green/red/yellow/gray（与配图同一数据源）；
+    /// 兼容 e68dd34 之前 PascalCase 落盘的旧响应（nGreen/NGreen 双读）。
+    /// </summary>
+    private static Dictionary<string, int> MergeBlockMatchCounts(Dictionary<string, int> counts, string? responseJson)
+    {
+        if (counts.Keys.Any(k => !string.Equals(k, "selected_view", StringComparison.Ordinal)))
+            return counts;
+        if (string.IsNullOrWhiteSpace(responseJson)) return counts;
+        try
+        {
+            using var doc = JsonDocument.Parse(responseJson);
+            if (!doc.RootElement.TryGetProperty("blockMatch", out var bm) || bm.ValueKind != JsonValueKind.Object)
+                return counts;
+            if (!bm.TryGetProperty("top", out var top) || top.ValueKind != JsonValueKind.Object)
+                return counts;
+            long G(string k)
+            {
+                foreach (var key in new[] { k, char.ToUpperInvariant(k[0]) + k[1..] })
+                    if (top.TryGetProperty(key, out var v) && v.ValueKind == JsonValueKind.Number && v.TryGetInt64(out var n))
+                        return n;
+                return 0;
+            }
+            var merged = new Dictionary<string, int>();
+            void Add(string key, long v) { if (v > 0) merged[key] = (int)v; }
+            Add("green", G("nGreen"));
+            Add("red", G("nRed"));
+            Add("yellow", G("nYellow"));
+            Add("gray", G("nGray"));
+            return merged.Count > 0 ? merged : counts;
+        }
+        catch { return counts; }
+    }
+
     public List<object> ListCompareRecords(int limit = 50)
     {
         using var c = Open();
         using var cmd = c.CreateCommand();
         cmd.CommandText = @"
 SELECT id, profile_id, drawing_key, photo_path, photo_sha256, photo_name, usable,
-       code_detector, code_degraded, verify_ms, counts_json, quality_json, created_at
+       code_detector, code_degraded, verify_ms, counts_json, quality_json, created_at, response_json
 FROM v2_compare_records ORDER BY id DESC LIMIT $n";
         cmd.Parameters.AddWithValue("$n", limit > 0 ? limit : 50);
         using var rd = cmd.ExecuteReader();
@@ -1257,7 +1293,7 @@ FROM v2_compare_records ORDER BY id DESC LIMIT $n";
                 codeDetector = rd.GetString(7),
                 codeDegraded = rd.GetInt32(8) != 0,
                 verifyMs = rd.GetDouble(9),
-                counts = JsonDict(rd.GetString(10)),
+                counts = MergeBlockMatchCounts((Dictionary<string, int>)JsonDict(rd.GetString(10)), rd.IsDBNull(13) ? null : rd.GetString(13)),
                 qualityReasons = JsonArr(rd.GetString(11)),
                 createdAt = rd.GetString(12)
             });
@@ -1285,7 +1321,7 @@ FROM v2_compare_records ORDER BY id DESC LIMIT $n";
         using var cmd = c.CreateCommand();
         cmd.CommandText = @"
 SELECT id, profile_id, drawing_key, photo_path, photo_sha256, photo_name, usable,
-       code_detector, code_degraded, verify_ms, counts_json, quality_json, verdicts_json, created_at
+       code_detector, code_degraded, verify_ms, counts_json, quality_json, verdicts_json, created_at, response_json
 FROM v2_compare_records WHERE id=$id";
         cmd.Parameters.AddWithValue("$id", id);
         using var rd = cmd.ExecuteReader();
@@ -1330,7 +1366,7 @@ FROM v2_compare_records WHERE id=$id";
             codeDetector = rd.GetString(7),
             codeDegraded = rd.GetInt32(8) != 0,
             verifyMs = rd.GetDouble(9),
-            counts = JsonDict(rd.GetString(10)),
+            counts = MergeBlockMatchCounts((Dictionary<string, int>)JsonDict(rd.GetString(10)), rd.IsDBNull(14) ? null : rd.GetString(14)),
             qualityReasons = JsonArr(rd.GetString(11)),
             verdicts,
             humanApplied = reviews.Count > 0,

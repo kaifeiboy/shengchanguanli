@@ -33,6 +33,41 @@ def _imread_any(path: str):
     return cv2.imdecode(data, cv2.IMREAD_COLOR)
 
 
+def _imread_oriented(path: str):
+    """读图 + EXIF 方向转置（H5 照片自动扶正·2026-09-30 问题3）。
+
+    cv2 解码不读 EXIF：手机竖拍照片（Orientation=6/8）像素「躺倒」，浏览器 <img>
+    自动应用 EXIF 显示为正 →「预览对、OCR 坐标系错位」。此处按 EXIF（3/6/8 纯旋转）
+    内存转置，并发生旋转时用转置后像素**回写原文件**（JPEG q=95），使 H5 展示、
+    render_marked 历史缩略图、verify 定点裁剪等所有下游与 OCR 坐标系天然一致。
+
+    ⚠ 无 EXIF 的 90° 像素侧歪**不做自动判向**——OCR 证据分/文本框角度/PCA 三种信号
+    均已被实验证伪（RapidOCR 全方向可读、quad 已归一化、PCA 被画面污染，详见
+    deskew.py 注释）。宁可不转、不可转错。
+
+    返回 (bgr_or_None, orientation_deg)；回写失败只降级不阻断
+    （比对仍用转置后内存像素，仅落盘文件未扶正）。
+    """
+    data = np.fromfile(path, dtype=np.uint8)
+    if data.size == 0:
+        return None, 0
+    bgr = cv2.imdecode(data, cv2.IMREAD_COLOR)
+    if bgr is None:
+        return None, 0
+    ori = D.exif_orientation(data.tobytes())
+    if ori == 1:
+        return bgr, 0
+    bgr = cv2.rotate(bgr, D._EXIF_ROT_CV[ori])
+    deg = {3: 180, 6: 90, 8: 270}[ori]
+    try:
+        ok, buf = cv2.imencode(".jpg", bgr, [int(cv2.IMWRITE_JPEG_QUALITY), 95])
+        if ok:
+            buf.tofile(path)
+    except Exception:
+        pass   # 回写失败不影响比对，仅落盘文件未扶正
+    return bgr, deg
+
+
 def _sha256(path: str) -> str:
     h = hashlib.sha256()
     with open(path, "rb") as f:
@@ -60,6 +95,36 @@ def _resize_max_side(bgr, max_side: int):
 
 SUBJECT_PAD = 0.08       # 内容并集外扩比例（给主体边缘留余量，避免过紧误伤）
 SUBJECT_MIN_ITEMS = 2    # 少于此数量的内容不足以确定主体区域
+
+
+def _unrotate_regions(items, src_hw, dst_hw, deg: float):
+    """把「旋转后图（dst）」上得到的像素框逆变换回「未旋转图（src）」坐标系并重算归一化框。
+
+    【坐标映射加强·2026-09-30】deskew 之后 OCR 的坐标属于旋转图，而展示端画的是原图。
+    逆用的正是 deskew._rotate_cv 的同一矩阵（绕中心旋转 + expand 平移），保证数学上严格互逆。
+    """
+    h, w = int(src_hw[0]), int(src_hw[1])
+    H, W = int(dst_hw[0]), int(dst_hw[1])
+    try:
+        m = cv2.getRotationMatrix2D((w / 2.0, h / 2.0), deg, 1.0)
+        m[0, 2] += (W - w) / 2.0
+        m[1, 2] += (H - h) / 2.0
+        inv = cv2.invertAffineTransform(m)
+    except Exception:
+        return items
+    for it in items:
+        bb = getattr(it, "bbox", None)
+        if not bb or len(bb) < 4:
+            continue
+        x0, y0, x1, y1 = (float(v) for v in bb[:4])
+        pts = np.array([[x0, y0], [x1, y0], [x1, y1], [x0, y1]], dtype=np.float32)
+        one = np.concatenate([pts, np.ones((4, 1), np.float32)], axis=1)
+        out = one @ inv.T
+        nx0, ny0 = float(out[:, 0].min()), float(out[:, 1].min())
+        nx1, ny1 = float(out[:, 0].max()), float(out[:, 1].max())
+        it.bbox = [nx0, ny0, nx1, ny1]
+        it.norm_bbox = G.norm_bbox(nx0, ny0, nx1, ny1, w, h)
+    return items
 
 
 def _subject_of(texts, codes, pad: float = SUBJECT_PAD, min_items: int = SUBJECT_MIN_ITEMS):
@@ -102,6 +167,41 @@ def _subject_of(texts, codes, pad: float = SUBJECT_PAD, min_items: int = SUBJECT
     }
 
 
+def _whiten_code_regions(bgr: np.ndarray, codes: list, pad: int = 0) -> np.ndarray:
+    """把已检出的码（QR/方块码）区域白化，返回供文本 OCR 使用的新图。
+
+    【指令 N·QR 白化，2026-10-06】
+    目的：RapidOCR 会把 QR 码图形（定位方块 + 码内嵌文本）误读成文本行，
+    生成「口口QHR45」这类伪前缀，进而污染 photoTexts、触发 degraded。
+    此处仅在「文本识别」环节把 QR 图形从输入图抹掉，降低误识别。
+
+    ⚠ 范围约束（用户拍板）：
+      - 只白化 M.detect 已检出的 **码区域**；图标不在 codes 内，绝不被白化。
+      - 不改变 codes 输出、不改变 QR 的匹配标示规则与实现（M.detect 在原 proc 上跑，结果原样返回）。
+      - 文本 OCR 看到的只是"无 QR 图形"的图，匹配逻辑对 QR 的判定不变量。
+    pad=0 用精确 bbox（zxing-cpp/cv2 的 QR bbox 已含定位方块，精确框即可消除口口，
+    实测 pad=-4~8 均干净且 73K0016 等邻字无夹损）；codes 为空则原样返回（零成本）。
+    """
+    if not codes:
+        return bgr
+    H, W = bgr.shape[:2]
+    out = bgr.copy()
+    for c in codes:
+        nb = getattr(c, "norm_bbox", None)
+        if not nb or len(nb) < 4:
+            continue
+        x0 = int(round(nb[0] * W)) + pad
+        y0 = int(round(nb[1] * H)) + pad
+        x1 = int(round((nb[0] + nb[2]) * W)) - pad
+        y1 = int(round((nb[1] + nb[3]) * H)) - pad
+        if x1 <= x0 or y1 <= y0:
+            continue
+        x0 = max(0, x0); y0 = max(0, y0)
+        x1 = min(W, x1); y1 = min(H, y1)
+        cv2.rectangle(out, (x0, y0), (x1, y1), (255, 255, 255), -1)
+    return out
+
+
 def observe_image(bgr, source_name: str = "", sha256: str = "", do_warp: bool = True,
                   max_side: int = MAX_SIDE) -> dict:
     """对已加载的 BGR 图像做感知，返回 observe/1 文档。"""
@@ -112,12 +212,25 @@ def observe_image(bgr, source_name: str = "", sha256: str = "", do_warp: bool = 
     warped, geo = G.normalize(bgr, do_warp=do_warp)
 
     # OCR 在缩放后的图上跑（耗时的主要来源）
-    proc, _ = _resize_max_side(warped, max_side)
+    resized, _ = _resize_max_side(warped, max_side)
     # 【2026-09-29 迁移增强】复用 V1 平面内旋转纠偏：透视矫正后再做纯旋转纠偏，
     # 提升照片侧 L2 落点准确度与稳定性。平正照片 angle≈0 不旋转（零回归）。
-    proc, deskew_deg = D.deskew(proc)
-    texts = T.detect(proc)
+    proc, deskew_deg = D.deskew(resized)
+
+    # 【指令 N·QR 白化，2026-10-06】先检出码（M.detect 在原 proc 上跑，结果原样返回，
+    # 不影响 QR 匹配标示规则），再把码区域白化后交给文本 OCR，避免 QR 图形被误读为文本。
+    # 顺序：M.detect → 白化 → T.detect（同一张 proc 几何不变，_unrotate_regions 仍成立）。
     codes, detector, degraded = M.detect(proc)
+    proc_for_text = _whiten_code_regions(proc, codes)
+    texts = T.detect(proc_for_text)
+
+    # 【2026-09-30 坐标映射加强】deskew 旋转后 OCR 拿到的是**旋转图**坐标系，
+    # 而 H5/render_marked 都把框画在**原图**上 → 小角度旋转（实测 1~2°）会让整片框偏移。
+    # 此处把 OCR 框逆变换回「未旋转（仅等比缩放）」坐标系：等比缩放下归一化坐标不变，
+    # 故只需按旋转矩阵求逆、再对未旋转图尺寸归一化即可（零额外成本）。
+    if deskew_deg:
+        texts = _unrotate_regions(texts, resized.shape[:2], proc.shape[:2], deskew_deg)
+        codes = _unrotate_regions(codes, resized.shape[:2], proc.shape[:2], deskew_deg)
 
     # 【文档 §5 / §6】OCR 是「能否比对」的前置判断依据：
     # 能正常取出内容就不以清晰度为由拒绝，质量类理由降级为提示。
@@ -158,7 +271,13 @@ def observe_image(bgr, source_name: str = "", sha256: str = "", do_warp: bool = 
 
 
 def observe_file(path: str, do_warp: bool = True) -> dict:
-    bgr = _imread_any(path)
+    bgr, orient_deg = _imread_oriented(path)
     if bgr is None:
         raise RuntimeError(f"cannot read image: {path}")
-    return observe_image(bgr, source_name=path, sha256=_sha256(path), do_warp=do_warp)
+    doc = observe_image(bgr, source_name=path, sha256=_sha256(path), do_warp=do_warp)
+    # 方向扶正审计字段：orientation_deg=施加的净旋转（0=无；文件已按扶正后像素回写）
+    try:
+        doc["diagnostics"]["orientation_deg"] = orient_deg
+    except Exception:
+        pass
+    return doc

@@ -248,10 +248,17 @@ public static class BlockTextMatcher
         }
 
         // 召回闸门：照片侧证据不足 → 仅记 degraded 供诊断；文本差异仍判红（黄色仅图标/QR）
+        // 【2026-09-30 准确度修复】OCR 对模糊字形常输出「口」占位（实例：记录 1000「昆日」→「口口」），
+        //   条数够但内容残缺，缺标红可信度低 → 同样记 degraded，结论卡片提示重拍/人工复核。
         bool degraded = photoUsable.Count < MinPhotoTextsForRed;
+        int placeholderCnt = photoUsable.Count(p => !string.IsNullOrEmpty(p.Text)
+                                && p.Text.Length - p.Text.Replace("口", "").Length >= 2);
+        if (!degraded && placeholderCnt > 0) degraded = true;
         res.Degraded = degraded;
         if (degraded)
-            res.DegradeReason = $"照片侧仅 OCR 到 {photoUsable.Count} 条有效文本（<{MinPhotoTextsForRed}）；文本差异仍判红（用户口径：文本一律绿或红）";
+            res.DegradeReason = placeholderCnt > 0
+                ? $"照片 OCR 含 {placeholderCnt} 条「口」占位（模糊字形识别失败），内容可能残缺；文本差异仍判红，建议重拍或人工复核"
+                : $"照片侧仅 OCR 到 {photoUsable.Count} 条有效文本（<{MinPhotoTextsForRed}）；文本差异仍判红（用户口径：文本一律绿或红）";
 
         if (photoUsable.Count == 0)
         {
@@ -346,27 +353,71 @@ public static class BlockTextMatcher
         res.Candidates = res.Candidates.Take(3).ToList();
         res.Enabled = true;
 
-        // 照片多出：Top 块内找不到的内容 → 红（多标，属文本差异）
+        // 【P4+ 坐标映射加强（2026-09-30）】未命中元素（缺标红）此前 PhotoNorm=null → L3 不画框，
+        //   现场看不出「缺在照片哪个位置」。用已命中元素的「块内相对位置 ↔ 照片框」锚点对拟合
+        //   仿射（≥3 对）或并集粗配（2 对），把缺标元素映射到照片坐标 → 可画框落点。
+        MapMissingElements(top);
+
+        // 【2026-09-30 修复·照片多出不再一律判红】
+        //   现场反馈「开/关」「AB」等真实存在的打标被标红：根因是图纸侧提取漏了这些内容，
+        //   照片 OCR 读到后落进 extra，被旧规则一律判红，与「缺标/文本差异」混淆不清。
+        //   现按三类处理：
+        //   ① 与块内某参与元素互为 OCR 变体（编辑距离≤1 / 包含关系）→ 同一处文本，不再重复标；
+        //   ② 疑似变量数据（机身编号/序列号：无汉字、长度≥5、数字占比≥50%）→ 灰、不画框；
+        //   ③ 其余真实文本（图纸块内未列出）→ 黄「多标」；红只保留给「块内有而照片缺失/不一致」。
         var consumed = new HashSet<string>(StringComparer.Ordinal);
         foreach (var ev in top.Elements)
             if (ev.PhotoText is { Length: > 0 } pt) consumed.Add(TextNormalizer.LooseKey(pt));
 
+        // 【2026-09-30 准确度修复·单字母豁免】端子/按键的单字母标识（A、B…）因 MinTextLen=2
+        //   在元素侧被判灰跳过；照片 OCR 常把它们读成连串（如 AB）。若变体比对只看非灰元素，
+        //   连串会漏配而误标「照片多出」（实例：记录 1004，块内 A|B vs 照片 AB）。
+        //   故灰元素中的**单字母**仍参与 extra 变体比对（仅用于消重，不改变元素判定）。
+        var blockKeys = top.Elements
+            .Where(e => !string.IsNullOrEmpty(e.Text) && (e.Color != Gray || IsSingleLetter(e.Text)))
+            .Select(e => TextNormalizer.LooseKey(e.Text!))
+            .Where(k => k.Length > 0)
+            .ToList();
+
         foreach (var p in photoUsable)
         {
             if (consumed.Contains(p.Key)) continue;
+            // ① OCR 变体：与块内元素编辑距离≤1 或互相包含 → 已是同一处文本
+            bool variant = blockKeys.Any(bk =>
+                Levenshtein(p.Key, bk) <= 1
+                || (p.Key.Length >= MinContainLen && (bk.Contains(p.Key, StringComparison.Ordinal)
+                                                      || p.Key.Contains(bk, StringComparison.Ordinal))));
+            if (variant) continue;
+            // ② 变量数据：机身编号/序列号 → 灰，不画框（每台机器不同，不参与打标比对）
+            if (IsSerialLike(p.Text))
+            {
+                res.Extra.Add(new ElementVerdict
+                {
+                    Kind = "photo_extra",
+                    Text = p.Text,
+                    Color = Gray,
+                    Reason = "疑似变量数据/机身编号（每台不同），不参与打标比对",
+                    PhotoText = p.Text,
+                    PhotoNorm = null,
+                    MappingLevel = "L3",
+                    OcrConf = p.Conf
+                });
+                continue;
+            }
+            // ③ 其余 → 黄（多标：照片上有、图纸块内未列出）
             res.Extra.Add(new ElementVerdict
             {
                 Kind = "photo_extra",
                 Text = p.Text,
-                Color = Red,
-                Reason = "照片多出：Top 块内没有此内容（多标，文本差异→红）",
+                Color = Yellow,
+                Reason = "照片多出：Top 块内没有此内容（多标→黄；红仅表示块内有而照片缺失/不一致）",
                 PhotoText = p.Text,
-                Norm = null,
                 PhotoNorm = p.Norm,
                 MappingLevel = "L2",
                 OcrConf = p.Conf
             });
         }
+
         // 照片侧有码/图标，而 Top 块内没有任何 c 类元素 → 任一方不具备 → 黄（多标）
         if (codesList.Count > 0 && !top.Elements.Any(e => e.Kind is "qr" or "icon"))
         {
@@ -469,7 +520,7 @@ public static class BlockTextMatcher
 
         // 1) 全等 → 绿（低置信仍判绿，仅标注低置信）
         var exact = photo.FirstOrDefault(p => string.Equals(p.Key, key, StringComparison.Ordinal));
-        if (exact is not null) return Hit(ev, exact, lowConf, blockLowConf, el.OcrConf, "命中：文本一致");
+        if (exact is not null) return Hit(ev, exact, lowConf, blockLowConf, el.OcrConf, "命中：文本一致", codes);
 
         // 2) 【实证修正一】照片整行串包含块内内容（needle ≥4）→ 命中
         //    场景：照片 OCR 把整条铭牌读成一行，图纸块内是逐条元素。
@@ -478,7 +529,7 @@ public static class BlockTextMatcher
             var host = photo.FirstOrDefault(p => p.Key.Length > key.Length
                                                   && p.Key.Contains(key, StringComparison.Ordinal));
             if (host is not null)
-                return Hit(ev, host, lowConf, blockLowConf, el.OcrConf, "命中：照片文本包含该内容（整行粘连场景）");
+                return Hit(ev, host, lowConf, blockLowConf, el.OcrConf, "命中：照片文本包含该内容（整行粘连场景）", codes);
         }
 
         // 3) 相似：长度 ≥6 且编辑距离 ≤1 → 文本差异（部分不同）→ 红（记最近照片文本供 P4 字符级对齐）
@@ -496,7 +547,7 @@ public static class BlockTextMatcher
             {
                 ev.Color = Red;
                 ev.PhotoText = best.Text;
-                ev.PhotoNorm = best.Norm;   // 最近照片文本框（P4 在差异附近画红）
+                ev.PhotoNorm = TrimCodeOverlap(best.Norm, codes);   // 最近照片文本框（P4 在差异附近画红）；2026-10-01 压码裁剪
                 ev.MappingLevel = "L2";
                 ev.Reason = $"相似但不一致：编辑距离 {bestDist}（部分不同→红）";
                 return ev;
@@ -513,7 +564,7 @@ public static class BlockTextMatcher
             {
                 ev.Color = Red;
                 ev.PhotoText = p.Text;
-                ev.PhotoNorm = p.Norm;     // 最近照片文本框（P4 落点）
+                ev.PhotoNorm = TrimCodeOverlap(p.Norm, codes);     // 最近照片文本框（P4 落点）；2026-10-01 压码裁剪
                 ev.MappingLevel = "L2";
                 ev.Reason = "包含关系但不一致（部分不同→红）";
                 return ev;
@@ -530,11 +581,39 @@ public static class BlockTextMatcher
         return ev;
     }
 
+    /// <summary>【2026-10-01 绿框压码修正】照片 OCR 检测框与照片侧码框（QR）重叠时，
+    /// 裁掉重叠侧、保留较大剩余部分。场景：OCR 把 QR 图案误读为「口」并与相邻文本
+    /// 合并成一行检测框（如「口QHRLA」），框左端落在 QR 上 → 文本绿框盖住码区。
+    /// 仅影响画框坐标与映射锚点质量，不改任何四色结论。
+    /// 裁后过小（宽&lt;0.02 或高&lt;0.005）则放弃裁剪维持原框（宁缺勿错）。</summary>
+    private static double[]? TrimCodeOverlap(double[]? norm, IReadOnlyList<PhotoCode> codes)
+    {
+        if (norm is not { Length: 4 } || codes.Count == 0) return norm;
+        double x0 = norm[0], y0 = norm[1], x1 = norm[0] + norm[2], y1 = norm[1] + norm[3];
+        foreach (var c in codes)
+        {
+            if (c.Norm is not { Length: 4 } cn) continue;
+            double cx1 = cn[0] + cn[2], cy1 = cn[1] + cn[3];
+            double ix0 = Math.Max(x0, cn[0]), ix1 = Math.Min(x1, cx1);
+            double iy0 = Math.Max(y0, cn[1]), iy1 = Math.Min(y1, cy1);
+            if (ix1 <= ix0 || iy1 <= iy0) continue;
+            // 明显重叠才裁：横向 ≥15% 文本宽 且 纵向 ≥50% 较矮者（码与文本同行场景）
+            if (ix1 - ix0 < 0.15 * norm[2]) continue;
+            if (iy1 - iy0 < 0.5 * Math.Min(norm[3], cn[3])) continue;
+            double leftW = ix0 - x0, rightW = x1 - ix1;
+            if (rightW >= leftW) x0 = ix1; else x1 = ix0;
+        }
+        double w = x1 - x0, h = y1 - y0;
+        if (w < 0.02 || h < 0.005) return norm;
+        return new[] { x0, y0, w, h };
+    }
+
     private static ElementVerdict Hit(ElementVerdict ev, PhotoText p, bool lowConf, bool blockLowConf,
-                                      double? ocrConf, string reason)
+                                      double? ocrConf, string reason, IReadOnlyList<PhotoCode> codes)
     {
         ev.PhotoText = p.Text;
-        ev.PhotoNorm = p.Norm;          // 照片侧直接检出框（L2）
+        ev.PhotoNorm = TrimCodeOverlap(p.Norm, codes);   // 照片侧直接检出框（L2）；2026-10-01 裁掉与照片码框重叠
+                                                         //（OCR 把 QR 图案误读为「口」并入文本行 → 框起点压码）
         ev.MappingLevel = "L2";
         // 文本命中即绿（含低置信命中）：黄色仅图标/QR，文本差异才红、匹配即绿。
         ev.Color = Green;
@@ -571,5 +650,194 @@ public static class BlockTextMatcher
             (prev, cur) = (cur, prev);
         }
         return prev[b.Length];
+    }
+
+    // ================= 坐标映射加强 + 多出降噪（2026-09-30） =================
+
+    /// <summary>单字母标识（A/B 等端子、按键丝印）。元素侧因 MinTextLen=2 判灰跳过，
+    /// 但照片 OCR 常把它们读成连串（如 AB），extra 变体比对需要它们兜底（2026-09-30 记录 1004）。</summary>
+    private static bool IsSingleLetter(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return false;
+        var t = text.Trim();
+        return t.Length == 1 && char.IsLetter(t[0]);
+    }
+    /// <summary>疑似变量数据（机身编号/序列号/条码数字串）：每台机器不同，不参与打标比对。
+    /// 判据：无汉字 + 长度 ≥5 + 数字字符占比 ≥50%。
+    /// 反例不判灰：字母主导的型号串（QHSGK / QHR45）→ 仍走「多标黄」，型号不符不会被掩盖。</summary>
+    private static bool IsSerialLike(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return false;
+        var s = text.Trim();
+        if (s.Length < 5) return false;
+        foreach (var ch in s)
+            if (ch >= '\u4e00' && ch <= '\u9fff') return false;   // 含汉字 → 真实文本
+        int digits = 0;
+        foreach (var ch in s)
+            if (char.IsDigit(ch)) digits++;
+        return (double)digits / s.Length >= 0.5;
+    }
+
+    /// <summary>二维仿射（块内相对坐标 → 照片归一化坐标）。</summary>
+    private sealed class Affine2
+    {
+        public double A0, A1, A2, B0, B1, B2;   // x=A0+A1*u+A2*v ; y=B0+B1*u+B2*v
+        public double[] Apply(double[] p) => new[] { A0 + A1 * p[0] + A2 * p[1], B0 + B1 * p[0] + B2 * p[1] };
+        public double ScaleX => Math.Sqrt(A1 * A1 + B1 * B1);
+        public double ScaleY => Math.Sqrt(A2 * A2 + B2 * B2);
+    }
+
+    /// <summary>最小二乘拟合仿射（基 [1,u,v]；≥3 点）。奇异/点数不足返回 null。</summary>
+    private static Affine2? FitAffine(List<(double[] src, double[] dst)> pts)
+    {
+        if (pts.Count < 3) return null;
+        // 正规方程：M^T M c = M^T y（3×3）
+        var ata = new double[3, 3];
+        var atx = new double[3];
+        var aty = new double[3];
+        foreach (var (s, d) in pts)
+        {
+            var b = new[] { 1.0, s[0], s[1] };
+            for (int r = 0; r < 3; r++)
+            {
+                for (int c = 0; c < 3; c++) ata[r, c] += b[r] * b[c];
+                atx[r] += b[r] * d[0];
+                aty[r] += b[r] * d[1];
+            }
+        }
+        var cx = Solve3(ata, atx);
+        var cy = Solve3(ata, aty);
+        if (cx is null || cy is null) return null;
+        return new Affine2 { A0 = cx[0], A1 = cx[1], A2 = cx[2], B0 = cy[0], B1 = cy[1], B2 = cy[2] };
+    }
+
+    /// <summary>3×3 线性方程组求解（高斯消元，带主元）。奇异返回 null。</summary>
+    private static double[]? Solve3(double[,] a, double[] b)
+    {
+        var m = new double[3, 4];
+        for (int r = 0; r < 3; r++)
+        {
+            for (int c = 0; c < 3; c++) m[r, c] = a[r, c];
+            m[r, 3] = b[r];
+        }
+        for (int k = 0; k < 3; k++)
+        {
+            int piv = k;
+            for (int r = k + 1; r < 3; r++)
+                if (Math.Abs(m[r, k]) > Math.Abs(m[piv, k])) piv = r;
+            if (Math.Abs(m[piv, k]) < 1e-12) return null;
+            if (piv != k)
+                for (int c = 0; c < 4; c++) (m[k, c], m[piv, c]) = (m[piv, c], m[k, c]);
+            for (int r = 0; r < 3; r++)
+            {
+                if (r == k) continue;
+                double f = m[r, k] / m[k, k];
+                for (int c = k; c < 4; c++) m[r, c] -= f * m[k, c];
+            }
+        }
+        return new[] { m[0, 3] / m[0, 0], m[1, 3] / m[1, 1], m[2, 3] / m[2, 2] };
+    }
+
+    /// <summary>【P4+ 坐标映射加强】为缺标（红且无照片坐标）元素计算照片侧落点。
+    /// 锚点 = 已命中元素的「块内相对位置 → 照片框中心」；≥3 对拟合仿射（L2），
+    /// 2 对走并集粗配（L1），&lt;2 或无残差可信度则维持 L3 不画框（宁缺勿错）。
+    /// <para>不改变任何四色结论，只补 PhotoNorm 落点。</para></summary>
+    private static void MapMissingElements(BlockVerdict bv)
+    {
+        if (bv.BlockNorm is not { Length: 4 } bn || bn[2] <= 0 || bn[3] <= 0) return;
+
+        // 收集锚点：块内相对中心 ↔ 照片归一化中心
+        var pts = new List<(double[] src, double[] dst)>();
+        foreach (var ev in bv.Elements)
+        {
+            if (ev.Norm is not { Length: 4 } n) continue;
+            if (ev.PhotoNorm is not { Length: 4 } pn) continue;
+            pts.Add((new[] { (n[0] + n[2] / 2.0 - bn[0]) / bn[2], (n[1] + n[3] / 2.0 - bn[1]) / bn[3] },
+                     new[] { pn[0] + pn[2] / 2.0, pn[1] + pn[3] / 2.0 }));
+        }
+        if (pts.Count < 2) return;
+
+        // 【2026-10-05 锚点退化守护】整行粘连场景多个元素命中同一 host 框 →
+        // 全部锚点照片侧中心几乎重合（跨度 <2%）→ 无缩放/平移信息，映射不可信
+        //（1076 实证：APP下载 红框被映射到照片中部无关位置）→ 放弃落点维持 L3。
+        double dxSpan = pts.Max(p => p.dst[0]) - pts.Min(p => p.dst[0]);
+        double dySpan = pts.Max(p => p.dst[1]) - pts.Min(p => p.dst[1]);
+        if (dxSpan < 0.02 && dySpan < 0.02) return;
+
+        Affine2? aff = FitAffine(pts);
+        string level = "L2";
+        if (aff is null)
+        {
+            // L1：并集粗配（平移 + 各向缩放，无旋转）
+            double su0 = pts.Min(p => p.src[0]), su1 = pts.Max(p => p.src[0]);
+            double sv0 = pts.Min(p => p.src[1]), sv1 = pts.Max(p => p.src[1]);
+            double du0 = pts.Min(p => p.dst[0]), du1 = pts.Max(p => p.dst[0]);
+            double dv0 = pts.Min(p => p.dst[1]), dv1 = pts.Max(p => p.dst[1]);
+            double sw = su1 - su0, sh = sv1 - sv0, dw = du1 - du0, dh = dv1 - dv0;
+            if (sw <= 1e-6 || sh <= 1e-6) return;
+            double sx = dw / sw, sy = dh / sh;
+            aff = new Affine2 { A1 = sx, A0 = du0 - su0 * sx, B2 = sy, B0 = dv0 - sv0 * sy };
+            level = "L1";
+        }
+        else
+        {
+            // 残差校验：锚点自身映射误差过大 → 先剔除最差锚点重拟合一次（≥4 对时），
+            // 仍超阈值才放弃落点（宁缺勿错）。2026-10-01：单个坏锚点（如照片 OCR 把 QR
+            // 图案并入文本行的偏移框）会带偏仿射 → 红框偏移/只盖一半的根因之一。
+            double MeanErr(Affine2 f, List<(double[] src, double[] dst)> ps)
+            {
+                double e = 0;
+                foreach (var (s, d) in ps)
+                {
+                    var q = f.Apply(s);
+                    e += Math.Sqrt((q[0] - d[0]) * (q[0] - d[0]) + (q[1] - d[1]) * (q[1] - d[1]));
+                }
+                return e / Math.Max(ps.Count, 1);
+            }
+            double err = MeanErr(aff, pts);
+            if (err > 0.10 && pts.Count >= 4)
+            {
+                int worst = 0; double worstE = -1;
+                for (int i = 0; i < pts.Count; i++)
+                {
+                    var q = aff.Apply(pts[i].src);
+                    double e = Math.Sqrt((q[0] - pts[i].dst[0]) * (q[0] - pts[i].dst[0])
+                                       + (q[1] - pts[i].dst[1]) * (q[1] - pts[i].dst[1]));
+                    if (e > worstE) { worstE = e; worst = i; }
+                }
+                var pts2 = new List<(double[] src, double[] dst)>();
+                for (int i = 0; i < pts.Count; i++) if (i != worst) pts2.Add(pts[i]);
+                var aff2 = FitAffine(pts2);
+                if (aff2 is not null && MeanErr(aff2, pts2) <= 0.10)
+                {
+                    aff = aff2;
+                    err = MeanErr(aff2, pts2);
+                }
+            }
+            if (err > 0.10) return;   // 归一化残差 >10% → 放弃落点（宁缺勿错）
+        }
+
+        foreach (var ev in bv.Elements)
+        {
+            if (ev.PhotoNorm is { Length: 4 }) continue;   // 已有落点（直接检出）
+            if (ev.Color != Red) continue;                  // 只给缺标红元素补落点
+            if (ev.Norm is not { Length: 4 } n) continue;
+            var rel = new[] { (n[0] + n[2] / 2.0 - bn[0]) / bn[2], (n[1] + n[3] / 2.0 - bn[1]) / bn[3] };
+            var c = aff.Apply(rel);
+            double w = aff.ScaleX * (n[2] / bn[2]);
+            double h = aff.ScaleY * (n[3] / bn[3]);
+            // 【2026-10-05 退化守护】锚点近乎共线时最小二乘/并集粗配缩放爆炸
+            //（实测 1073：w≈23.16 → Math.Clamp(min=0, max=1-w=-22.16) 抛
+            //  "'0' cannot be greater than '-22.16'" → blockMatch 整体失败）。
+            //  映射框明显不合理（非正数/超半屏）→ 放弃落点维持 L3（宁缺勿错）。
+            if (double.IsNaN(w) || double.IsNaN(h) || w <= 0 || h <= 0 || w > 0.5 || h > 0.5) return;
+            // 最小可视尺寸：太小的框看不清，给一个下限
+            w = Math.Max(w, 0.02); h = Math.Max(h, 0.015);
+            double x = Math.Clamp(c[0] - w / 2.0, 0.0, Math.Max(0.0, 1.0 - w));
+            double y = Math.Clamp(c[1] - h / 2.0, 0.0, Math.Max(0.0, 1.0 - h));
+            ev.PhotoNorm = new[] { x, y, w, h };
+            ev.MappingLevel = level == "L2" ? "L2" : "L1";
+            ev.Reason += level == "L2" ? "（落点：块内命中锚点仿射映射）" : "（落点：命中框并集粗配 L1）";
+        }
     }
 }

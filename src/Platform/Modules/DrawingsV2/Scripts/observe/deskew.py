@@ -90,3 +90,39 @@ def deskew(bgr, min_deg: float = 0.5, max_abs_deg: float = 10.0, min_conf: float
     if conf is None or conf < min_conf or abs(ang) < min_deg or abs(ang) > max_abs_deg:
         return bgr, 0.0
     return _rotate_cv(bgr, ang), round(ang, 2)
+
+
+# ================= EXIF 方向转置（2026-09-30 问题3） =================
+# 【背景】cv2 解码不读 EXIF：手机竖拍照片（Orientation=6/8）像素是「躺倒」的，
+#   浏览器 <img> 会自动应用 EXIF 显示为正 →「H5 预览对、OCR 坐标系错位」。
+#   pipeline._imread_oriented 按 EXIF 转置后回写原文件（JPEG q=95），使 H5 展示、
+#   render_marked 历史缩略图、verify 定点裁剪等所有下游与 OCR 坐标系天然一致。
+#
+# 【⚠ 90° 像素侧歪（无 EXIF）自动判向已实验证伪（2026-09-30，勿再尝试 OCR/PCA 判向）】
+#   ① OCR 证据分：RapidOCR 对 0/90/180/270 四方向都能正确读出文本（det 四边形透视
+#      校正能力强），分数差 <10%，无法区分方向；
+#   ② 文本框角度：RapidOCR 返回的 quad 已按「阅读系」重排，各方向角度均 ≈0°，无信号；
+#   ③ PCA 主方向（_cheap_skew_angle）：被面板边框/背景结构污染，正向照与侧歪照同为
+#      -33.3°，无法区分。
+#   结论：无可靠判向信号时硬做 90° 自动扶正必然误转（比不转更糟），已按
+#   「宁可不转、不可转错」原则放弃；如现场确有侧歪照片需求，走 H5 手动旋转。
+
+_EXIF_ROT_CV = {
+    3: cv2.ROTATE_180,
+    6: cv2.ROTATE_90_CLOCKWISE,
+    8: cv2.ROTATE_90_COUNTERCLOCKWISE,
+}
+
+
+def exif_orientation(data: bytes) -> int:
+    """读 JPEG EXIF Orientation（tag 274）。无 EXIF/解析失败/非纯旋转方向返回 1。
+
+    仅处理最常见的纯旋转 3/6/8；2/4/5/7（含镜像翻转）极罕见，保持原样不处理。
+    """
+    try:
+        import io
+        from PIL import Image
+        ori = int(Image.open(io.BytesIO(data)).getexif().get(274) or 1)
+    except Exception:
+        return 1
+    return ori if ori in _EXIF_ROT_CV else 1

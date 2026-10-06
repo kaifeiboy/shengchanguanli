@@ -160,6 +160,12 @@ public class DrawingsV2Module : IModule
                 return Results.Ok(res);
             }));
 
+        // 逻辑图块复核（2026-09-30 H5 待复核界面）：保存人工块框 override 并按其重提取落库
+        // （整体覆盖该档案全部块；写入 data/drawingsv2_blocks_override/{id}.json，含 OCR 约 20~60s）。
+        // body: { blocks: [ { bboxPt:[x0,y0,x1,y1] | norm:[x,y,w,h], name?, viewHint?, hasMarking? } ], note?, ocr? }
+        g.MapPost("/profiles/{id:long}/blocks/override", async (long id, JsonElement body, V2Service s, CancellationToken ct) =>
+            await Safe(async () => Results.Ok(await s.SaveBlocksOverrideAsync(id, body, ct))));
+
         // P3 · 文本命中选块 + 四色标示（方案 §0.5.1 / §0.5.3）：
         //   照片 OCR 文本 → 检索图块打标内容 → 命中绿 / 缺标红 / 相似·低置信·多出黄 / 图标·QR·d 类灰。
         //   body: { photo: "绝对路径|虚拟路径" }
@@ -212,6 +218,20 @@ public class DrawingsV2Module : IModule
                 : Results.File(p.Value.PdfPath, "application/pdf", p.Value.DrawingKey + ".pdf");
         }));
 
+        // 逻辑图块复核：渲染档案图纸某页 PNG（供 H5 复核弹窗叠加块框，避免把文件系统路径暴露给前端）。
+        g.MapGet("/profiles/{id:long}/preview", async (long id, HttpContext ctx, V2Service s, CancellationToken ct) =>
+        {
+            var page = int.TryParse(ctx.Request.Query["page"], out var p) ? p : 0;
+            try
+            {
+                var png = await s.RenderProfilePageAsync(id, page, ct);
+                return png is null
+                    ? Results.NotFound(new { error = $"找不到图纸：{id}", code = "not_found" })
+                    : Results.File(png, "image/png");
+            }
+            catch (V2Exception ex) { return Results.BadRequest(new { error = ex.Message, code = "render_failed" }); }
+        });
+
 
         // G1 人工复核：取档案复核页数据（基本信息 + 全部 marks 含 is_active/confirmed）
         g.MapGet("/profiles/{id:long}/review", (long id, V2Service s) => Safe(() =>
@@ -227,16 +247,19 @@ public class DrawingsV2Module : IModule
             {
                 var reviewedBy = ReadString(body, "reviewedBy") ?? ReadString(body, "reviewer");
                 var note = ReadString(body, "note") ?? ReadString(body, "reviewNote");
-                if (!body.TryGetProperty("items", out var itemsEl) || itemsEl.ValueKind != JsonValueKind.Array)
-                    return Results.BadRequest(new { error = "缺少 items（复核项数组）", code = "bad_request" });
+                // 逻辑图块复核口径（2026-09-30）：items 可缺省 = 不改 marks，仅置 reviewed
+                // （复核内容以逻辑图块为准，marks 属旧引擎遗留）。
                 var items = new List<(string MarkKey, bool IsActive, bool Confirmed)>();
-                foreach (var it in itemsEl.EnumerateArray())
+                if (body.TryGetProperty("items", out var itemsEl) && itemsEl.ValueKind == JsonValueKind.Array)
                 {
-                    var mk = ReadString(it, "markKey") ?? ReadString(it, "id");
-                    if (string.IsNullOrWhiteSpace(mk)) continue;
-                    var isActive = !it.TryGetProperty("isActive", out var ia) || ia.ValueKind != JsonValueKind.False;
-                    var confirmed = it.TryGetProperty("confirmed", out var cf) && cf.ValueKind == JsonValueKind.True;
-                    items.Add((mk!, isActive, confirmed));
+                    foreach (var it in itemsEl.EnumerateArray())
+                    {
+                        var mk = ReadString(it, "markKey") ?? ReadString(it, "id");
+                        if (string.IsNullOrWhiteSpace(mk)) continue;
+                        var isActive = !it.TryGetProperty("isActive", out var ia) || ia.ValueKind != JsonValueKind.False;
+                        var confirmed = it.TryGetProperty("confirmed", out var cf) && cf.ValueKind == JsonValueKind.True;
+                        items.Add((mk!, isActive, confirmed));
+                    }
                 }
                 s.ReviewProfile(id, reviewedBy, note, items);
                 return Results.Ok(new { ok = true, profileId = id, status = "reviewed" });

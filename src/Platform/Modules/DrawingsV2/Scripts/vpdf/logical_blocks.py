@@ -28,7 +28,7 @@ import os
 import re
 import subprocess
 import sys
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 if hasattr(sys.stdout, "buffer"):
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
@@ -322,6 +322,11 @@ def _is_valid_marking(t: str) -> bool:
         return False                                   # 乱码特征（RK+n 2 / 2'0+88）
     if re.search(r"[\u4e00-\u9fff]{2,}", s):
         return True                                    # ≥2 连续中文
+    if re.search(r"[\u4e00-\u9fff]", s) and \
+            len(re.sub(r"[-_./:\s]", "", s)) >= 2:
+        return True                                    # 分隔符隔开的中文词组 ≥2 字（开/关；2026-10-01 实证：
+                                                       # 「开/关」被斜杠隔开不满足连续双汉字、长度 3 不满足
+                                                       # 结构化编码 ≥5，被误杀 → JQ 面板开/关假黄根因）
     if re.fullmatch(r"[A-Za-z]{1,3}", s):
         return False                                   # 纯字母 ≤3 位 → 噪声（GD / GYD）
     if re.search(r"[A-Za-z]", s) and re.search(r"\d", s) and len(s) >= 4:
@@ -688,6 +693,12 @@ def _elements_in_block(page, bb, W, H, img_rects, ocr_on=True, meta: Optional[Di
     #   ③ 簇内行数 ≥ 3（多行菜单网格）——单行/竖排铭牌文字不触发。
     # 66 实测：UI 15 条、合并 bbox 占块 11.9%、5 行 → 触发；铭牌 3 条单行 → 不触发。
     # 72 实测：端子丝印走文本层（a 类），本判据只作用 OCR 元素，天然不误伤（用户拍板算打标）。
+    # ⚠ 2026-09-30 续（指令C·JQ 面板图块）：效果图中屏显文字极小（med_h≈1.7pt）导致
+    #   gap_thr 失真放大、屏显(上)+按键丝印(下)被误并为一整簇 → 整簇面积占比仅 2.6% ≤ 0.25
+    #   触发转灰 → 块内 curve_text 全灰 → 块被误判空、整块舍弃（与用户「面板含真实打标不可舍弃」冲突）。
+    #   兜底（见函数末尾 _lcd_rescue_kept）：若转灰后块内 curve_text 全灭，按最大纵向间隙切分，
+    #   仅保留「非屏显网格」一侧（稀疏 <LCD_MENU_MIN_N 条）作为真实按键丝印参与匹配，屏显侧仍转灰。
+    #   该兜底仅在「整块变灰」时触发，64（合并簇面积>0.25 本来就不灰）、66（无 curve_text）等不受影响。
     els = _gray_out_lcd_menu_clusters(els, rect, meta)
 
     return els
@@ -755,6 +766,47 @@ def _gray_out_lcd_menu_clusters(els, block_rect, meta):
             els[i]["participate"] = 0
             els[i]["lcd_menu"] = 1       # 审计标记
         meta["lcd_menu_cluster"] = len(gray)
+
+    # --- 兜底（指令C·JQ 面板图块不可整块舍弃）---
+    # 上述判据把块内【全部】curve_text 转灰 → 块将被判空、整块舍弃；但块实为
+    # 「屏显(网格)+按键丝印(稀疏)」混合面板时，按键丝印是真实激光打标，不可舍弃。
+    # 处置：按 y 中心最大纵向间隙把候选一分为二，仅保留【非屏显网格】一侧
+    #       （条数 < LCD_MENU_MIN_N，即稀疏、不成像菜单网格）→ 恢复原参与；屏显侧维持转灰。
+    # 对称性：屏显在上/在下均成立（split 后两侧各自独立判定）。
+    # 触发条件严格：仅当「块内 curve_text 全灭」才介入；否则原逻辑不变（64/66 等不受影响）。
+    cand = [i for i, e in enumerate(els)
+            if e.get("kind") == "curve_text" and e.get("bbox_norm")]
+    if any(els[i].get("participate") == 1 for i in cand):
+        return els                                   # 未整块变灰，维持原判据
+    if len(cand) < 2:
+        return els                                   # 单条以下无切分意义
+    x0, y0, x1, y1 = block_rect.x0, block_rect.y0, block_rect.x1, block_rect.y1
+    cen = []
+    for i in cand:
+        bn = els[i]["bbox_norm"]
+        cy = y0 + (bn[1] + bn[3] / 2.0) * (y1 - y0)
+        cen.append((cy, i))
+    cen.sort(key=lambda t: t[0])
+    # 找最大纵向间隙
+    gap_max, split_at = -1.0, -1
+    for k in range(1, len(cen)):
+        g = cen[k][0] - cen[k - 1][0]
+        if g > gap_max:
+            gap_max, split_at = g, k
+    if split_at <= 0:
+        return els
+    top = [i for _, i in cen[:split_at]]
+    bot = [i for _, i in cen[split_at:]]
+    rescued = 0
+    for grp in (top, bot):
+        if len(grp) >= LCD_MENU_MIN_N:
+            continue                                # 该侧仍是屏显网格 → 维持转灰
+        for i in grp:
+            els[i]["participate"] = 1               # 稀疏侧 = 按键丝印 → 恢复参与
+            els[i].pop("lcd_menu", None)            # 撤销屏显标记
+            rescued += 1
+    if rescued:
+        meta["lcd_menu_rescue"] = rescued
     return els
 
 
@@ -773,38 +825,72 @@ def run_separation(pdf_path: str) -> Dict[str, Any]:
         return json.load(f)
 
 
-def _load_override(path: str) -> List[Dict[str, Any]]:
-    """读取人工块框 override JSON → 归一化为 pg['blocks'] 同构条目。"""
+def _load_override(path: str) -> Tuple[List[Dict[str, Any]], List[str], List[Tuple[str, str]]]:
+    """读取人工块框 override JSON → (归一化块条目, drop_elements 文本列表, replace_elements 对)。
+
+    坐标两可（H5 逻辑图块复核界面 2026-09-30 起 norm 由前端直出）：
+      - bbox_pt: [x0,y0,x1,y1]（pt，显示系）—— 既有 66/72/63 手标文件用此口径，优先；
+      - norm:    [x,y,w,h]（0~1 页面归一化）—— 在 extract_logical_blocks 内按 page.rect 转换。
+    drop_elements（2026-10-01 元素级人工剔除）：OCR 对纯图形（如散热槽纹）的幻觉读法
+      （63 实证：「昆日图公司」「昆日公公司」conf≈0.5~0.59，图纸中并无此文字），
+      按 _core_norm 匹配后剔除；可独立于 blocks 使用（不写 blocks 即沿用自动分块）。
+    replace_elements（2026-10-05 元素级人工改写）：outline_ocr 对转曲小字的形近误读
+      （63 实证：「APP下载」竖排小字被读成「APP下戴」，conf 0.702；900dpi 目视核实图纸为「下载」），
+      按 _core_norm 全等匹配后改写 text；不改变坐标与 kind。
+    """
     with io.open(path, encoding="utf-8") as f:
         data = json.load(f)
+    drops: List[str] = []
+    if isinstance(data, dict) and isinstance(data.get("drop_elements"), list):
+        drops = [str(t).strip() for t in data["drop_elements"] if str(t).strip()]
+    replaces: List[Tuple[str, str]] = []
+    if isinstance(data, dict) and isinstance(data.get("replace_elements"), list):
+        for it in data["replace_elements"]:
+            if not isinstance(it, dict):
+                continue
+            fnd = str(it.get("find") or "").strip()
+            rep = str(it.get("text") or "").strip()
+            if fnd and rep and _core_norm(fnd) != _core_norm(rep):
+                replaces.append((_core_norm(fnd), rep))
     items = data.get("blocks") if isinstance(data, dict) else data
     if not isinstance(items, list) or not items:
+        if drops or replaces:
+            return [], drops, replaces      # 仅剔除/改写元素、块沿用自动分块
         raise ValueError("override 文件缺少非空 blocks 数组：%s" % path)
     out: List[Dict[str, Any]] = []
     for i, it in enumerate(items):
         bb = it.get("bbox_pt") or it.get("bbox")
-        if not isinstance(bb, list) or len(bb) != 4:
-            raise ValueError("override blocks[%d] 缺 bbox_pt[x0,y0,x1,y1]" % i)
-        x0, y0, x1, y1 = (float(v) for v in bb)
-        if not (x1 > x0 and y1 > y0):
-            raise ValueError("override blocks[%d] bbox 非法：%s" % (i, bb))
-        out.append({
-            "idx": i,
-            "bbox_pt": [x0, y0, x1, y1],
+        nm = it.get("norm")
+        entry: Dict[str, Any]
+        if isinstance(bb, list) and len(bb) == 4:
+            x0, y0, x1, y1 = (float(v) for v in bb)
+            if not (x1 > x0 and y1 > y0):
+                raise ValueError("override blocks[%d] bbox 非法：%s" % (i, bb))
+            entry = {"idx": i, "bbox_pt": [x0, y0, x1, y1]}
+        elif isinstance(nm, list) and len(nm) == 4:
+            entry = {"idx": i, "_norm": [float(v) for v in nm]}
+        else:
+            raise ValueError("override blocks[%d] 缺 bbox_pt[x0,y0,x1,y1] 或 norm[x,y,w,h]" % i)
+        entry.update({
             "name": it.get("name"),
             "view_hint": it.get("view_hint"),
             "has_marking": it.get("has_marking"),
             "_origin": "override",
         })
-    return out
+        out.append(entry)
+    return out, drops, replaces
 
 
 def extract_logical_blocks(pdf_path: str, page_index: int = 0,
                            ocr_on: bool = True,
-                           override_blocks: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
+                           override_blocks: Optional[List[Dict[str, Any]]] = None,
+                           drop_elements: Optional[List[str]] = None,
+                           replace_elements: Optional[List[Tuple[str, str]]] = None) -> Dict[str, Any]:
     """产出 `logical-blocks/1` 契约。
 
     override_blocks 非空时跳过 v8.4 部位分离，直接用人工块框
+    drop_elements 非空时按 _core_norm 剔除对应 OCR 元素（元素级人工剔除，2026-10-01）
+    replace_elements 非空时按 _core_norm 全等改写元素文本（元素级人工改写，2026-10-05）
     （元素提取/5 分类/判空/命名链路与自动分块完全一致）。"""
     if fitz is None:
         raise RuntimeError("PyMuPDF(fitz) 不可用")
@@ -823,6 +909,16 @@ def extract_logical_blocks(pdf_path: str, page_index: int = 0,
         W, H = page.rect.width, page.rect.height
         if override_blocks:
             pg["width"], pg["height"] = W, H
+            # norm 口径的人工块框 → 按 remove_rotation 后页面尺寸转 bbox_pt（夹取到页内）
+            for _ob in override_blocks:
+                _nm = _ob.get("_norm")
+                if not _nm:
+                    continue
+                _nx, _ny, _nw, _nh = (min(max(float(v), 0.0), 1.0) for v in _nm)
+                _nw = min(max(_nw, 0.005), 1.0 - _nx)
+                _nh = min(max(_nh, 0.005), 1.0 - _ny)
+                _ob["bbox_pt"] = [_nx * W, _ny * H, (_nx + _nw) * W, (_ny + _nh) * H]
+                _ob.pop("_norm", None)
         img_rects = []
         try:
             for info in page.get_image_info():
@@ -850,6 +946,8 @@ def extract_logical_blocks(pdf_path: str, page_index: int = 0,
 
         blocks_out = []
         name_seen: Dict[str, int] = {}
+        drop_norms = {_core_norm(t) for t in (drop_elements or []) if _core_norm(t)}
+        replace_pairs = [(_core_norm(f), rep) for f, rep in (replace_elements or []) if _core_norm(f)]
         for b in pg["blocks"]:
             bb = b["bbox_pt"]
             if b.get("_origin") == "override":
@@ -859,6 +957,26 @@ def extract_logical_blocks(pdf_path: str, page_index: int = 0,
                 b["area_pct"] = (x1 - x0) * (y1 - y0) / (W * H) if (W and H) else 0.0
             meta: Dict[str, Any] = {}
             els = _elements_in_block(page, bb, W, H, img_rects, ocr_on=ocr_on, meta=meta, ctx=ctx)
+            # 【2026-10-05 元素级人工改写】override replace_elements：outline_ocr 对转曲
+            #   小字的形近误读（63「APP下载」→「APP下戴」）按 _core_norm 全等改写；
+            #   在 parts/name 计算前生效，块名随元素自然更新。
+            if replace_pairs:
+                for e in els:
+                    t = _core_norm(e.get("text", ""))
+                    if not t:
+                        continue
+                    for f, rep in replace_pairs:
+                        if t == f:
+                            e["text"] = rep
+                            meta["override_replaced"] = meta.get("override_replaced", 0) + 1
+            # 【2026-10-01 元素级人工剔除】override drop_elements：
+            #   OCR 对纯图形（散热槽纹等）的幻觉读法（63「昆日图公司/昆日公公司」）按
+            #   _core_norm 匹配剔除；在 parts/has_marking 计算前生效，块名随元素自然更新。
+            if drop_norms:
+                _before = len(els)
+                els = [e for e in els if _core_norm(e.get("text", "")) not in drop_norms]
+                if len(els) != _before:
+                    meta["override_dropped"] = _before - len(els)
             # 阅读序：从上到下、从左到右
             parts = [e for e in els if e["participate"] == 1 and e["text"]]
             parts.sort(key=lambda e: (e["bbox_norm"][1] if e["bbox_norm"] else 9,
@@ -1015,13 +1133,16 @@ def main(argv: List[str]) -> int:
         return 2
 
     ovr = None
+    drops = None
+    replaces = None
     if override:
         if not os.path.exists(override):
             print("override 文件不存在：%s" % override)
             return 2
-        ovr = _load_override(override)
+        ovr, drops, replaces = _load_override(override)
 
-    res = extract_logical_blocks(pdf, ocr_on=not no_ocr, override_blocks=ovr)
+    res = extract_logical_blocks(pdf, ocr_on=not no_ocr, override_blocks=ovr,
+                                 drop_elements=drops, replace_elements=replaces)
     if json_only:
         # C# 侧 V2Python.RunAsync 用 ExtractJson 切「首个 { 到最后 }」，
         # 若再打印摘要行会被包进 JSON 区间 → 必须独占 stdout。

@@ -35,7 +35,10 @@ COLORS = {
     "gray":   (128, 135, 136),
 }
 DEFAULT_COLOR = (128, 135, 136)
-SKIP_KINDS = ("qr", "icon")
+SKIP_KINDS = ("qr", "icon", "photo_extra_code")
+# 【QR 标示规则统一（2026-09-30）】照片上一律不画码/图标框，仅结论卡片说明：
+#   跳过图纸侧 c 类元素（qr/icon）**与**照片多出的码（photo_extra_code）——
+#   与 H5 drawPhotoAnnotations 的跳过名单保持一致，避免两处标示不一致。
 
 
 def _collect_items(response):

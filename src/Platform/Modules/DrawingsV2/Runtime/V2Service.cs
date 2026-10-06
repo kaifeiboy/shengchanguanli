@@ -545,6 +545,66 @@ public sealed class V2Service
     }
 
     /// <summary>
+    /// 逻辑图块复核（2026-09-30 H5 待复核界面）：保存人工块框 override 并按其重提取落库。
+    /// body: { blocks: [ { bboxPt:[x0,y0,x1,y1] | norm:[x,y,w,h], name?, viewHint?, hasMarking? } ], note?, ocr? }
+    /// <para>- bboxPt（pt，显示系）与 norm（0~1 页面归一化）二选一；norm 由 Python 侧按 page.rect 转换；</para>
+    /// <para>- name 缺省 = 交由提取链路按块内打标内容重新命名（「块以内容命名」范式）；</para>
+    /// <para>- hasMarking=false 写 has_marking:0（强制判空位，Python 记 override_forced_empty）；
+    /// true/缺省不写（交由自动判据）；</para>
+    /// <para>- 写入 data/drawingsv2_blocks_override/{profileId}.json 后整体覆盖该档案全部块（幂等）。</para>
+    /// </summary>
+    public async Task<object> SaveBlocksOverrideAsync(long profileId, JsonElement body, CancellationToken ct = default)
+    {
+        var loc = _store.GetProfileLocation(profileId)
+                  ?? throw new V2Exception($"档案不存在：{profileId}");
+        if (string.IsNullOrWhiteSpace(loc.pdfPath) || !File.Exists(loc.pdfPath))
+            throw new V2Exception($"档案 {profileId} 的图纸不存在：{loc.pdfPath}");
+
+        if (!body.TryGetProperty("blocks", out var blocksEl) || blocksEl.ValueKind != JsonValueKind.Array)
+            throw new V2Exception("缺少 blocks（人工块框数组）");
+        if (blocksEl.GetArrayLength() == 0)
+            throw new V2Exception("blocks 不能为空：至少保留一个逻辑图块");
+
+        var outBlocks = new List<JsonObject>();
+        foreach (var b in blocksEl.EnumerateArray())
+        {
+            var pt = ReadDoubleArray(b, "bboxPt");
+            var norm = pt is null ? ReadDoubleArray(b, "norm") : null;
+            if (pt is not { Length: 4 } && norm is not { Length: 4 })
+                throw new V2Exception("图块缺少 bboxPt[x0,y0,x1,y1] 或 norm[x,y,w,h] 坐标");
+
+            var jo = new JsonObject();
+            if (pt is { Length: 4 })
+                jo["bbox_pt"] = new JsonArray(pt.Select(v => (JsonNode)Math.Round(v, 2)).ToArray());
+            else
+                jo["norm"] = new JsonArray(norm!.Select(v => (JsonNode)Math.Round(v, 6)).ToArray());
+
+            var name = Str(b, "name");
+            var viewHint = Str(b, "viewHint") ?? Str(b, "view_hint");
+            if (!string.IsNullOrWhiteSpace(name)) jo["name"] = name;
+            if (!string.IsNullOrWhiteSpace(viewHint)) jo["view_hint"] = viewHint;
+            if (b.TryGetProperty("hasMarking", out var hm) && hm.ValueKind == JsonValueKind.False)
+                jo["has_marking"] = 0;
+            outBlocks.Add(jo);
+        }
+
+        var dir = Path.Combine(Path.GetDirectoryName(_store.DbPath) ?? ".", "drawingsv2_blocks_override");
+        Directory.CreateDirectory(dir);
+        var overridePath = Path.Combine(dir, $"{profileId}.json");
+        var root = new JsonObject
+        {
+            ["note"] = Str(body, "note") ?? "H5 逻辑图块复核人工调整",
+            ["saved_at"] = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+            ["algo"] = "manual-block-review/1",
+            ["blocks"] = new JsonArray(outBlocks.Select(b => (JsonNode)b).ToArray())
+        };
+        await File.WriteAllTextAsync(overridePath, root.ToJsonString(new JsonSerializerOptions { WriteIndented = true }), ct);
+
+        var ocrOn = !body.TryGetProperty("ocr", out var oc) || oc.ValueKind != JsonValueKind.False;
+        return await ExtractLogicalBlocksAsync(profileId, ocrOn, ct);
+    }
+
+    /// <summary>
     /// P2 · 读取某档案的逻辑图块（默认含元素）。
     /// <paramref name="hasMarkingOnly"/> 为 true 时只返回参与匹配的块 —— 即 P3 命中检索的候选集。
     /// </summary>
@@ -709,6 +769,17 @@ public sealed class V2Service
         var pdf = loc.Value.pdfPath;
         if (string.IsNullOrWhiteSpace(pdf) || !File.Exists(pdf)) return null;
         return (key, pdf);
+    }
+
+    /// <summary>逻辑图块复核弹窗：渲染档案图纸某页 PNG（复用既有的 RenderDrawingPageAsync）。</summary>
+    public Task<byte[]?> RenderProfilePageAsync(long id, int pageIndex = 0, CancellationToken ct = default)
+    {
+        var loc = _store.GetProfileLocation(id)
+                  ?? throw new V2Exception($"档案不存在：{id}");
+        var pdf = loc.pdfPath;
+        if (string.IsNullOrWhiteSpace(pdf) || !File.Exists(pdf))
+            throw new V2Exception($"档案 {id} 的图纸不存在：{pdf}");
+        return _py.RenderDrawingPageAsync(pdf, pageIndex, ct);
     }
 
 
@@ -1042,7 +1113,11 @@ public sealed class V2Service
 
         if (string.IsNullOrWhiteSpace(view))
         {
-            return new
+            // ★ 2026-09-30 问题1修复（历史记录失效）：此提前返回路径此前 recordId=null 且
+            //   从不调 SaveCompare —— 13:48 之后的比对全部未落库（历史列表消失）。
+            //   现按正常路径同款方式落库：counts 留空，历史列表 MergeBlockMatchCounts 会从
+            //   response_json.blockMatch.top 派生 green/red/yellow/gray（与缩略图配图同源）。
+            var earlyResponse = new
             {
                 recordId = (long?)null,
                 profileId,
@@ -1055,17 +1130,62 @@ public sealed class V2Service
                     : "未启用全图观测，无法进行对象判定。",
                 viewCandidates,
                 photo = photoPhys,
-                // ★ 2026-09-28：补 photoUrl，使 H5 照片回显可加载（此前只返绝对路径 photoPhys，浏览器无法加载 → 无照片显示）
                 photoUrl = $"/drawingsv2-photos/{Path.GetRelativePath(PhotoDir, photoPhys).Replace('\\', '/')}",
-                photoSha256 = photoSha ?? Sha256Of(photoPhys),
+                photoSha256 = photoShaValue,
                 geometryApplied,
                 geometryMethod,
                 blockMatch = blockMatchDto,   // ★ 2026-09-28：view 缺失时仍返回型号驱动的逻辑图块结论
-                // ★ 2026-09-28：补齐图纸图像源，使 H5 图纸画布在型号驱动模式下可高亮命中块整体区域（drawingBbox 缺省走 blockMatch.top.blockNorm）
                 drawingPdfPath = _store.ProfilePdfPath(profileId) ?? ResolvePdf(drawingKey),
                 drawingPageIndex = 0,
                 verdicts = Array.Empty<object>()
             };
+            // 落库失败不得影响本次返回（与「并入失败不得影响主判定」同口径）
+            try
+            {
+                var earlyUsable = false;
+                var earlyQuality = new List<string>();
+                var earlyCounts = new Dictionary<string, int>();
+                var earlyDetector = "none";
+                var earlyDegraded = false;
+                if (obsDoc is not null)
+                {
+                    if (obsDoc.RootElement.TryGetProperty("quality", out var eqEl))
+                    {
+                        if (eqEl.TryGetProperty("usable", out var euEl) && euEl.ValueKind == JsonValueKind.True) earlyUsable = true;
+                        if (eqEl.TryGetProperty("reasons", out var erEl) && erEl.ValueKind == JsonValueKind.Array)
+                            foreach (var rqEl in erEl.EnumerateArray())
+                                if (rqEl.ValueKind == JsonValueKind.String) earlyQuality.Add(rqEl.GetString() ?? "");
+                    }
+                    if (obsDoc.RootElement.TryGetProperty("diagnostics", out var edEl))
+                    {
+                        if (edEl.TryGetProperty("code_detector", out var ecEl) && ecEl.ValueKind == JsonValueKind.String) earlyDetector = ecEl.GetString() ?? "none";
+                        if (edEl.TryGetProperty("code_degraded", out var egEl) && egEl.ValueKind == JsonValueKind.True) earlyDegraded = true;
+                    }
+                }
+                var rjEarly = JsonSerializer.Serialize(earlyResponse, ResponseJsonCamel);
+                var earlyId = _store.SaveCompare(
+                    profileId, drawingKey, photoPhys, photoShaValue, photoName,
+                    earlyUsable, earlyDetector, earlyDegraded, 0.0,
+                    earlyCounts, earlyQuality, "[]",
+                    selectedView: null, sessionId: sessionId,
+                    paramsSnapshotJson: JsonSerializer.Serialize(new
+                    {
+                        result = "NeedsReview",
+                        requiresViewSelection = true,
+                        geometryMethod,
+                        geometryApplied,
+                        photoName
+                    }, ResponseJsonCamel),
+                    responseJson: rjEarly);
+                if (JsonNode.Parse(rjEarly) is JsonObject joEarly)
+                {
+                    joEarly["recordId"] = earlyId;
+                    _store.UpdateCompareResponse(earlyId, joEarly.ToJsonString());
+                    return joEarly;
+                }
+            }
+            catch { /* 落库失败不影响本次返回 */ }
+            return earlyResponse;
         }
 
         // P0：文本锚点配准变换（null = 未校正）。仅在视图级配准分支内计算。
